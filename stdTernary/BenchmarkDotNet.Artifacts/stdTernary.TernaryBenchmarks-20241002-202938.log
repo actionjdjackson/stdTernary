@@ -1,0 +1,570 @@
+// Validating benchmarks:
+// ***** BenchmarkRunner: Start   *****
+// ***** Found 5 benchmark(s) in total *****
+// ***** Building 1 exe(s) in Parallel: Start   *****
+// start dotnet  restore /p:UseSharedCompilation=false /p:BuildInParallel=false /m:1 /p:Deterministic=true /p:Optimize=true /p:IntermediateOutputPath="/Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/obj/Release/net8.0/" /p:OutDir="/Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/bin/Release/net8.0/" /p:OutputPath="/Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/bin/Release/net8.0/" in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796
+// command took 1.76 sec and exited with 0
+// start dotnet  build -c Release --no-restore /p:UseSharedCompilation=false /p:BuildInParallel=false /m:1 /p:Deterministic=true /p:Optimize=true /p:IntermediateOutputPath="/Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/obj/Release/net8.0/" /p:OutDir="/Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/bin/Release/net8.0/" /p:OutputPath="/Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/bin/Release/net8.0/" --output "/Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/bin/Release/net8.0/" in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796
+// command took 6.3 sec and exited with 0
+// ***** Done, took 00:00:08 (8.13 sec)   *****
+// Found 5 benchmarks:
+//   TernaryBenchmarks.TestIntTAddition: DefaultJob
+//   TernaryBenchmarks.TestIntTSubtraction: DefaultJob
+//   TernaryBenchmarks.TestIntTMultiplication: DefaultJob
+//   TernaryBenchmarks.TestIntTDivision: DefaultJob
+//   TernaryBenchmarks.TestIntTModulus: DefaultJob
+
+// **************************
+// Benchmark: TernaryBenchmarks.TestIntTAddition: DefaultJob
+// *** Execute ***
+// Launch: 1 / 1
+// Execute: dotnet 4ca6f69e-428c-4519-b919-c96f686b4796.dll --anonymousPipes 103 104 --benchmarkName stdTernary.TernaryBenchmarks.TestIntTAddition --job Default --benchmarkId 0 in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/bin/Release/net8.0
+// Failed to set up high priority (Permission denied). In order to run benchmarks with high priority, make sure you have the right permissions.
+// BeforeAnythingElse
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.14.0
+// Runtime=.NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2,AES,BMI1,BMI2,FMA,LZCNT,PCLMUL,POPCNT VectorSize=256
+// Job: DefaultJob
+
+OverheadJitting  1: 1 op, 372073.00 ns, 372.0730 us/op
+WorkloadJitting  1: 1 op, 2481603.00 ns, 2.4816 ms/op
+
+OverheadJitting  2: 16 op, 245667.00 ns, 15.3542 us/op
+WorkloadJitting  2: 16 op, 5297538.00 ns, 331.0961 us/op
+
+WorkloadPilot    1: 16 op, 5221178.00 ns, 326.3236 us/op
+WorkloadPilot    2: 32 op, 9398120.00 ns, 293.6913 us/op
+WorkloadPilot    3: 64 op, 18485637.00 ns, 288.8381 us/op
+WorkloadPilot    4: 128 op, 35730523.00 ns, 279.1447 us/op
+WorkloadPilot    5: 256 op, 68386225.00 ns, 267.1337 us/op
+WorkloadPilot    6: 512 op, 138941063.00 ns, 271.3693 us/op
+WorkloadPilot    7: 1024 op, 84810108.00 ns, 82.8224 us/op
+WorkloadPilot    8: 2048 op, 162430193.00 ns, 79.3116 us/op
+WorkloadPilot    9: 4096 op, 322944432.00 ns, 78.8439 us/op
+WorkloadPilot   10: 8192 op, 656574907.00 ns, 80.1483 us/op
+
+OverheadWarmup   1: 8192 op, 17137.00 ns, 2.0919 ns/op
+OverheadWarmup   2: 8192 op, 16264.00 ns, 1.9854 ns/op
+OverheadWarmup   3: 8192 op, 16281.00 ns, 1.9874 ns/op
+OverheadWarmup   4: 8192 op, 16251.00 ns, 1.9838 ns/op
+OverheadWarmup   5: 8192 op, 16230.00 ns, 1.9812 ns/op
+OverheadWarmup   6: 8192 op, 17434.00 ns, 2.1282 ns/op
+OverheadWarmup   7: 8192 op, 16213.00 ns, 1.9791 ns/op
+
+OverheadActual   1: 8192 op, 16623.00 ns, 2.0292 ns/op
+OverheadActual   2: 8192 op, 16900.00 ns, 2.0630 ns/op
+OverheadActual   3: 8192 op, 16380.00 ns, 1.9995 ns/op
+OverheadActual   4: 8192 op, 16226.00 ns, 1.9807 ns/op
+OverheadActual   5: 8192 op, 16244.00 ns, 1.9829 ns/op
+OverheadActual   6: 8192 op, 16244.00 ns, 1.9829 ns/op
+OverheadActual   7: 8192 op, 16252.00 ns, 1.9839 ns/op
+OverheadActual   8: 8192 op, 38319.00 ns, 4.6776 ns/op
+OverheadActual   9: 8192 op, 16615.00 ns, 2.0282 ns/op
+OverheadActual  10: 8192 op, 17170.00 ns, 2.0959 ns/op
+OverheadActual  11: 8192 op, 16918.00 ns, 2.0652 ns/op
+OverheadActual  12: 8192 op, 16640.00 ns, 2.0313 ns/op
+OverheadActual  13: 8192 op, 16644.00 ns, 2.0317 ns/op
+OverheadActual  14: 8192 op, 16606.00 ns, 2.0271 ns/op
+OverheadActual  15: 8192 op, 16618.00 ns, 2.0286 ns/op
+
+WorkloadWarmup   1: 8192 op, 635485788.00 ns, 77.5739 us/op
+WorkloadWarmup   2: 8192 op, 635172047.00 ns, 77.5357 us/op
+WorkloadWarmup   3: 8192 op, 659214645.00 ns, 80.4705 us/op
+WorkloadWarmup   4: 8192 op, 629993038.00 ns, 76.9034 us/op
+WorkloadWarmup   5: 8192 op, 646293748.00 ns, 78.8933 us/op
+WorkloadWarmup   6: 8192 op, 630637408.00 ns, 76.9821 us/op
+
+// BeforeActualRun
+WorkloadActual   1: 8192 op, 649478015.00 ns, 79.2820 us/op
+WorkloadActual   2: 8192 op, 644492738.00 ns, 78.6734 us/op
+WorkloadActual   3: 8192 op, 648732088.00 ns, 79.1909 us/op
+WorkloadActual   4: 8192 op, 663852451.00 ns, 81.0367 us/op
+WorkloadActual   5: 8192 op, 635042637.00 ns, 77.5199 us/op
+WorkloadActual   6: 8192 op, 628663736.00 ns, 76.7412 us/op
+WorkloadActual   7: 8192 op, 681612145.00 ns, 83.2046 us/op
+WorkloadActual   8: 8192 op, 633537333.00 ns, 77.3361 us/op
+WorkloadActual   9: 8192 op, 637215960.00 ns, 77.7852 us/op
+WorkloadActual  10: 8192 op, 644980018.00 ns, 78.7329 us/op
+WorkloadActual  11: 8192 op, 654824940.00 ns, 79.9347 us/op
+WorkloadActual  12: 8192 op, 684391564.00 ns, 83.5439 us/op
+WorkloadActual  13: 8192 op, 682464365.00 ns, 83.3086 us/op
+WorkloadActual  14: 8192 op, 674389021.00 ns, 82.3229 us/op
+WorkloadActual  15: 8192 op, 675724347.00 ns, 82.4859 us/op
+WorkloadActual  16: 8192 op, 685293395.00 ns, 83.6540 us/op
+WorkloadActual  17: 8192 op, 683355694.00 ns, 83.4174 us/op
+WorkloadActual  18: 8192 op, 705870498.00 ns, 86.1658 us/op
+WorkloadActual  19: 8192 op, 693656234.00 ns, 84.6748 us/op
+WorkloadActual  20: 8192 op, 634408884.00 ns, 77.4425 us/op
+WorkloadActual  21: 8192 op, 646223854.00 ns, 78.8847 us/op
+WorkloadActual  22: 8192 op, 656343247.00 ns, 80.1200 us/op
+WorkloadActual  23: 8192 op, 695162126.00 ns, 84.8587 us/op
+WorkloadActual  24: 8192 op, 683431801.00 ns, 83.4267 us/op
+WorkloadActual  25: 8192 op, 663199014.00 ns, 80.9569 us/op
+WorkloadActual  26: 8192 op, 649049010.00 ns, 79.2296 us/op
+WorkloadActual  27: 8192 op, 668292185.00 ns, 81.5786 us/op
+WorkloadActual  28: 8192 op, 640739051.00 ns, 78.2152 us/op
+WorkloadActual  29: 8192 op, 644267547.00 ns, 78.6459 us/op
+WorkloadActual  30: 8192 op, 658708822.00 ns, 80.4088 us/op
+WorkloadActual  31: 8192 op, 630314829.00 ns, 76.9427 us/op
+WorkloadActual  32: 8192 op, 652667267.00 ns, 79.6713 us/op
+WorkloadActual  33: 8192 op, 634570430.00 ns, 77.4622 us/op
+WorkloadActual  34: 8192 op, 633853222.00 ns, 77.3747 us/op
+WorkloadActual  35: 8192 op, 649373105.00 ns, 79.2692 us/op
+
+// AfterActualRun
+WorkloadResult   1: 8192 op, 649461397.00 ns, 79.2800 us/op
+WorkloadResult   2: 8192 op, 644476120.00 ns, 78.6714 us/op
+WorkloadResult   3: 8192 op, 648715470.00 ns, 79.1889 us/op
+WorkloadResult   4: 8192 op, 663835833.00 ns, 81.0346 us/op
+WorkloadResult   5: 8192 op, 635026019.00 ns, 77.5178 us/op
+WorkloadResult   6: 8192 op, 628647118.00 ns, 76.7392 us/op
+WorkloadResult   7: 8192 op, 681595527.00 ns, 83.2026 us/op
+WorkloadResult   8: 8192 op, 633520715.00 ns, 77.3341 us/op
+WorkloadResult   9: 8192 op, 637199342.00 ns, 77.7831 us/op
+WorkloadResult  10: 8192 op, 644963400.00 ns, 78.7309 us/op
+WorkloadResult  11: 8192 op, 654808322.00 ns, 79.9327 us/op
+WorkloadResult  12: 8192 op, 684374946.00 ns, 83.5419 us/op
+WorkloadResult  13: 8192 op, 682447747.00 ns, 83.3066 us/op
+WorkloadResult  14: 8192 op, 674372403.00 ns, 82.3208 us/op
+WorkloadResult  15: 8192 op, 675707729.00 ns, 82.4839 us/op
+WorkloadResult  16: 8192 op, 685276777.00 ns, 83.6520 us/op
+WorkloadResult  17: 8192 op, 683339076.00 ns, 83.4154 us/op
+WorkloadResult  18: 8192 op, 705853880.00 ns, 86.1638 us/op
+WorkloadResult  19: 8192 op, 693639616.00 ns, 84.6728 us/op
+WorkloadResult  20: 8192 op, 634392266.00 ns, 77.4405 us/op
+WorkloadResult  21: 8192 op, 646207236.00 ns, 78.8827 us/op
+WorkloadResult  22: 8192 op, 656326629.00 ns, 80.1180 us/op
+WorkloadResult  23: 8192 op, 695145508.00 ns, 84.8566 us/op
+WorkloadResult  24: 8192 op, 683415183.00 ns, 83.4247 us/op
+WorkloadResult  25: 8192 op, 663182396.00 ns, 80.9549 us/op
+WorkloadResult  26: 8192 op, 649032392.00 ns, 79.2276 us/op
+WorkloadResult  27: 8192 op, 668275567.00 ns, 81.5766 us/op
+WorkloadResult  28: 8192 op, 640722433.00 ns, 78.2132 us/op
+WorkloadResult  29: 8192 op, 644250929.00 ns, 78.6439 us/op
+WorkloadResult  30: 8192 op, 658692204.00 ns, 80.4068 us/op
+WorkloadResult  31: 8192 op, 630298211.00 ns, 76.9407 us/op
+WorkloadResult  32: 8192 op, 652650649.00 ns, 79.6693 us/op
+WorkloadResult  33: 8192 op, 634553812.00 ns, 77.4602 us/op
+WorkloadResult  34: 8192 op, 633836604.00 ns, 77.3726 us/op
+WorkloadResult  35: 8192 op, 649356487.00 ns, 79.2671 us/op
+// GC:  14 0 0 118555360 8192
+// Threading:  0 0 8192
+
+// AfterAll
+// Benchmark Process 93114 has exited with code 0.
+
+Mean = 80.384 μs, StdErr = 0.444 μs (0.55%), N = 35, StdDev = 2.630 μs
+Min = 76.739 μs, Q1 = 78.429 μs, Median = 79.669 μs, Q3 = 82.843 μs, Max = 86.164 μs
+IQR = 4.415 μs, LowerFence = 71.807 μs, UpperFence = 89.465 μs
+ConfidenceInterval = [78.783 μs; 81.984 μs] (CI 99.9%), Margin = 1.600 μs (1.99% of Mean)
+Skewness = 0.44, Kurtosis = 1.92, MValue = 2.4
+
+// ** Remained 4 (80.0%) benchmark(s) to run. Estimated finish 2024-10-02 20:32 (0h 1m from now) **
+// **************************
+// Benchmark: TernaryBenchmarks.TestIntTSubtraction: DefaultJob
+// *** Execute ***
+// Launch: 1 / 1
+// Execute: dotnet 4ca6f69e-428c-4519-b919-c96f686b4796.dll --anonymousPipes 105 106 --benchmarkName stdTernary.TernaryBenchmarks.TestIntTSubtraction --job Default --benchmarkId 1 in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/bin/Release/net8.0
+// Failed to set up high priority (Permission denied). In order to run benchmarks with high priority, make sure you have the right permissions.
+// BeforeAnythingElse
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.14.0
+// Runtime=.NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2,AES,BMI1,BMI2,FMA,LZCNT,PCLMUL,POPCNT VectorSize=256
+// Job: DefaultJob
+
+OverheadJitting  1: 1 op, 465931.00 ns, 465.9310 us/op
+WorkloadJitting  1: 1 op, 2279449.00 ns, 2.2794 ms/op
+
+OverheadJitting  2: 16 op, 230345.00 ns, 14.3966 us/op
+WorkloadJitting  2: 16 op, 7100242.00 ns, 443.7651 us/op
+
+WorkloadPilot    1: 16 op, 5640522.00 ns, 352.5326 us/op
+WorkloadPilot    2: 32 op, 11860508.00 ns, 370.6409 us/op
+WorkloadPilot    3: 64 op, 23182418.00 ns, 362.2253 us/op
+WorkloadPilot    4: 128 op, 46156993.00 ns, 360.6015 us/op
+WorkloadPilot    5: 256 op, 87890636.00 ns, 343.3228 us/op
+WorkloadPilot    6: 512 op, 143813700.00 ns, 280.8861 us/op
+WorkloadPilot    7: 1024 op, 134833615.00 ns, 131.6735 us/op
+WorkloadPilot    8: 2048 op, 278001166.00 ns, 135.7428 us/op
+WorkloadPilot    9: 4096 op, 520507751.00 ns, 127.0771 us/op
+
+OverheadWarmup   1: 4096 op, 8994.00 ns, 2.1958 ns/op
+OverheadWarmup   2: 4096 op, 8176.00 ns, 1.9961 ns/op
+OverheadWarmup   3: 4096 op, 8186.00 ns, 1.9985 ns/op
+OverheadWarmup   4: 4096 op, 8187.00 ns, 1.9988 ns/op
+OverheadWarmup   5: 4096 op, 23370.00 ns, 5.7056 ns/op
+OverheadWarmup   6: 4096 op, 8185.00 ns, 1.9983 ns/op
+OverheadWarmup   7: 4096 op, 31529.00 ns, 7.6975 ns/op
+OverheadWarmup   8: 4096 op, 8380.00 ns, 2.0459 ns/op
+
+OverheadActual   1: 4096 op, 8575.00 ns, 2.0935 ns/op
+OverheadActual   2: 4096 op, 8379.00 ns, 2.0457 ns/op
+OverheadActual   3: 4096 op, 8183.00 ns, 1.9978 ns/op
+OverheadActual   4: 4096 op, 8197.00 ns, 2.0012 ns/op
+OverheadActual   5: 4096 op, 9534.00 ns, 2.3276 ns/op
+OverheadActual   6: 4096 op, 8577.00 ns, 2.0940 ns/op
+OverheadActual   7: 4096 op, 8573.00 ns, 2.0930 ns/op
+OverheadActual   8: 4096 op, 8595.00 ns, 2.0984 ns/op
+OverheadActual   9: 4096 op, 9653.00 ns, 2.3567 ns/op
+OverheadActual  10: 4096 op, 8580.00 ns, 2.0947 ns/op
+OverheadActual  11: 4096 op, 8561.00 ns, 2.0901 ns/op
+OverheadActual  12: 4096 op, 8589.00 ns, 2.0969 ns/op
+OverheadActual  13: 4096 op, 8557.00 ns, 2.0891 ns/op
+OverheadActual  14: 4096 op, 8557.00 ns, 2.0891 ns/op
+OverheadActual  15: 4096 op, 8568.00 ns, 2.0918 ns/op
+
+WorkloadWarmup   1: 4096 op, 509917124.00 ns, 124.4915 us/op
+WorkloadWarmup   2: 4096 op, 506208637.00 ns, 123.5861 us/op
+WorkloadWarmup   3: 4096 op, 512907544.00 ns, 125.2216 us/op
+WorkloadWarmup   4: 4096 op, 515012746.00 ns, 125.7355 us/op
+WorkloadWarmup   5: 4096 op, 508948722.00 ns, 124.2551 us/op
+WorkloadWarmup   6: 4096 op, 500748012.00 ns, 122.2529 us/op
+WorkloadWarmup   7: 4096 op, 505437758.00 ns, 123.3979 us/op
+WorkloadWarmup   8: 4096 op, 536881656.00 ns, 131.0746 us/op
+WorkloadWarmup   9: 4096 op, 509873217.00 ns, 124.4808 us/op
+
+// BeforeActualRun
+WorkloadActual   1: 4096 op, 504037068.00 ns, 123.0559 us/op
+WorkloadActual   2: 4096 op, 508003152.00 ns, 124.0242 us/op
+WorkloadActual   3: 4096 op, 516810827.00 ns, 126.1745 us/op
+WorkloadActual   4: 4096 op, 507212467.00 ns, 123.8312 us/op
+WorkloadActual   5: 4096 op, 509613394.00 ns, 124.4173 us/op
+WorkloadActual   6: 4096 op, 505561746.00 ns, 123.4282 us/op
+WorkloadActual   7: 4096 op, 518688371.00 ns, 126.6329 us/op
+WorkloadActual   8: 4096 op, 502272385.00 ns, 122.6251 us/op
+WorkloadActual   9: 4096 op, 513167709.00 ns, 125.2851 us/op
+WorkloadActual  10: 4096 op, 507255251.00 ns, 123.8416 us/op
+WorkloadActual  11: 4096 op, 524886589.00 ns, 128.1461 us/op
+WorkloadActual  12: 4096 op, 509988222.00 ns, 124.5088 us/op
+WorkloadActual  13: 4096 op, 506933129.00 ns, 123.7630 us/op
+WorkloadActual  14: 4096 op, 503206425.00 ns, 122.8531 us/op
+WorkloadActual  15: 4096 op, 521788421.00 ns, 127.3898 us/op
+
+// AfterActualRun
+WorkloadResult   1: 4096 op, 504028495.00 ns, 123.0538 us/op
+WorkloadResult   2: 4096 op, 507994579.00 ns, 124.0221 us/op
+WorkloadResult   3: 4096 op, 516802254.00 ns, 126.1724 us/op
+WorkloadResult   4: 4096 op, 507203894.00 ns, 123.8291 us/op
+WorkloadResult   5: 4096 op, 509604821.00 ns, 124.4152 us/op
+WorkloadResult   6: 4096 op, 505553173.00 ns, 123.4261 us/op
+WorkloadResult   7: 4096 op, 518679798.00 ns, 126.6308 us/op
+WorkloadResult   8: 4096 op, 502263812.00 ns, 122.6230 us/op
+WorkloadResult   9: 4096 op, 513159136.00 ns, 125.2830 us/op
+WorkloadResult  10: 4096 op, 507246678.00 ns, 123.8395 us/op
+WorkloadResult  11: 4096 op, 524878016.00 ns, 128.1440 us/op
+WorkloadResult  12: 4096 op, 509979649.00 ns, 124.5068 us/op
+WorkloadResult  13: 4096 op, 506924556.00 ns, 123.7609 us/op
+WorkloadResult  14: 4096 op, 503197852.00 ns, 122.8510 us/op
+WorkloadResult  15: 4096 op, 521779848.00 ns, 127.3877 us/op
+// GC:  9 0 0 78938848 4096
+// Threading:  0 0 4096
+
+// AfterAll
+// Benchmark Process 93438 has exited with code 0.
+
+Mean = 124.663 μs, StdErr = 0.438 μs (0.35%), N = 15, StdDev = 1.697 μs
+Min = 122.623 μs, Q1 = 123.593 μs, Median = 124.022 μs, Q3 = 125.728 μs, Max = 128.144 μs
+IQR = 2.134 μs, LowerFence = 120.392 μs, UpperFence = 128.929 μs
+ConfidenceInterval = [122.849 μs; 126.477 μs] (CI 99.9%), Margin = 1.814 μs (1.46% of Mean)
+Skewness = 0.7, Kurtosis = 2.1, MValue = 2
+
+// ** Remained 3 (60.0%) benchmark(s) to run. Estimated finish 2024-10-02 20:31 (0h 1m from now) **
+// **************************
+// Benchmark: TernaryBenchmarks.TestIntTMultiplication: DefaultJob
+// *** Execute ***
+// Launch: 1 / 1
+// Execute: dotnet 4ca6f69e-428c-4519-b919-c96f686b4796.dll --anonymousPipes 105 106 --benchmarkName stdTernary.TernaryBenchmarks.TestIntTMultiplication --job Default --benchmarkId 2 in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/bin/Release/net8.0
+// Failed to set up high priority (Permission denied). In order to run benchmarks with high priority, make sure you have the right permissions.
+// BeforeAnythingElse
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.14.0
+// Runtime=.NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2,AES,BMI1,BMI2,FMA,LZCNT,PCLMUL,POPCNT VectorSize=256
+// Job: DefaultJob
+
+OverheadJitting  1: 1 op, 262977.00 ns, 262.9770 us/op
+WorkloadJitting  1: 1 op, 9720686.00 ns, 9.7207 ms/op
+
+OverheadJitting  2: 16 op, 199924.00 ns, 12.4953 us/op
+WorkloadJitting  2: 16 op, 101112357.00 ns, 6.3195 ms/op
+
+WorkloadPilot    1: 16 op, 95005952.00 ns, 5.9379 ms/op
+WorkloadPilot    2: 32 op, 190013484.00 ns, 5.9379 ms/op
+WorkloadPilot    3: 64 op, 230143759.00 ns, 3.5960 ms/op
+WorkloadPilot    4: 128 op, 368661258.00 ns, 2.8802 ms/op
+WorkloadPilot    5: 256 op, 743881076.00 ns, 2.9058 ms/op
+
+OverheadWarmup   1: 256 op, 2006.00 ns, 7.8359 ns/op
+OverheadWarmup   2: 256 op, 825.00 ns, 3.2227 ns/op
+OverheadWarmup   3: 256 op, 891.00 ns, 3.4805 ns/op
+OverheadWarmup   4: 256 op, 833.00 ns, 3.2539 ns/op
+OverheadWarmup   5: 256 op, 856.00 ns, 3.3438 ns/op
+OverheadWarmup   6: 256 op, 835.00 ns, 3.2617 ns/op
+
+OverheadActual   1: 256 op, 941.00 ns, 3.6758 ns/op
+OverheadActual   2: 256 op, 879.00 ns, 3.4336 ns/op
+OverheadActual   3: 256 op, 1102.00 ns, 4.3047 ns/op
+OverheadActual   4: 256 op, 844.00 ns, 3.2969 ns/op
+OverheadActual   5: 256 op, 902.00 ns, 3.5234 ns/op
+OverheadActual   6: 256 op, 864.00 ns, 3.3750 ns/op
+OverheadActual   7: 256 op, 897.00 ns, 3.5039 ns/op
+OverheadActual   8: 256 op, 889.00 ns, 3.4727 ns/op
+OverheadActual   9: 256 op, 870.00 ns, 3.3984 ns/op
+OverheadActual  10: 256 op, 890.00 ns, 3.4766 ns/op
+OverheadActual  11: 256 op, 875.00 ns, 3.4180 ns/op
+OverheadActual  12: 256 op, 871.00 ns, 3.4023 ns/op
+OverheadActual  13: 256 op, 857.00 ns, 3.3477 ns/op
+OverheadActual  14: 256 op, 877.00 ns, 3.4258 ns/op
+OverheadActual  15: 256 op, 871.00 ns, 3.4023 ns/op
+
+WorkloadWarmup   1: 256 op, 736128171.00 ns, 2.8755 ms/op
+WorkloadWarmup   2: 256 op, 747632503.00 ns, 2.9204 ms/op
+WorkloadWarmup   3: 256 op, 723992264.00 ns, 2.8281 ms/op
+WorkloadWarmup   4: 256 op, 732051658.00 ns, 2.8596 ms/op
+WorkloadWarmup   5: 256 op, 734693941.00 ns, 2.8699 ms/op
+WorkloadWarmup   6: 256 op, 731067698.00 ns, 2.8557 ms/op
+
+// BeforeActualRun
+WorkloadActual   1: 256 op, 737859723.00 ns, 2.8823 ms/op
+WorkloadActual   2: 256 op, 743136610.00 ns, 2.9029 ms/op
+WorkloadActual   3: 256 op, 722637600.00 ns, 2.8228 ms/op
+WorkloadActual   4: 256 op, 724002743.00 ns, 2.8281 ms/op
+WorkloadActual   5: 256 op, 771525740.00 ns, 3.0138 ms/op
+WorkloadActual   6: 256 op, 720287968.00 ns, 2.8136 ms/op
+WorkloadActual   7: 256 op, 739311927.00 ns, 2.8879 ms/op
+WorkloadActual   8: 256 op, 733909975.00 ns, 2.8668 ms/op
+WorkloadActual   9: 256 op, 734727662.00 ns, 2.8700 ms/op
+WorkloadActual  10: 256 op, 740357660.00 ns, 2.8920 ms/op
+WorkloadActual  11: 256 op, 720907357.00 ns, 2.8160 ms/op
+WorkloadActual  12: 256 op, 715526763.00 ns, 2.7950 ms/op
+WorkloadActual  13: 256 op, 736158899.00 ns, 2.8756 ms/op
+WorkloadActual  14: 256 op, 750650069.00 ns, 2.9322 ms/op
+WorkloadActual  15: 256 op, 771836954.00 ns, 3.0150 ms/op
+
+// AfterActualRun
+WorkloadResult   1: 256 op, 737858846.00 ns, 2.8823 ms/op
+WorkloadResult   2: 256 op, 743135733.00 ns, 2.9029 ms/op
+WorkloadResult   3: 256 op, 722636723.00 ns, 2.8228 ms/op
+WorkloadResult   4: 256 op, 724001866.00 ns, 2.8281 ms/op
+WorkloadResult   5: 256 op, 720287091.00 ns, 2.8136 ms/op
+WorkloadResult   6: 256 op, 739311050.00 ns, 2.8879 ms/op
+WorkloadResult   7: 256 op, 733909098.00 ns, 2.8668 ms/op
+WorkloadResult   8: 256 op, 734726785.00 ns, 2.8700 ms/op
+WorkloadResult   9: 256 op, 740356783.00 ns, 2.8920 ms/op
+WorkloadResult  10: 256 op, 720906480.00 ns, 2.8160 ms/op
+WorkloadResult  11: 256 op, 715525886.00 ns, 2.7950 ms/op
+WorkloadResult  12: 256 op, 736158022.00 ns, 2.8756 ms/op
+WorkloadResult  13: 256 op, 750649192.00 ns, 2.9322 ms/op
+// GC:  11 0 0 95873536 256
+// Threading:  0 0 256
+
+// AfterAll
+// Benchmark Process 93599 has exited with code 0.
+
+Mean = 2.860 ms, StdErr = 0.011 ms (0.40%), N = 13, StdDev = 0.041 ms
+Min = 2.795 ms, Q1 = 2.823 ms, Median = 2.870 ms, Q3 = 2.888 ms, Max = 2.932 ms
+IQR = 0.065 ms, LowerFence = 2.725 ms, UpperFence = 2.986 ms
+ConfidenceInterval = [2.811 ms; 2.910 ms] (CI 99.9%), Margin = 0.049 ms (1.73% of Mean)
+Skewness = -0.05, Kurtosis = 1.64, MValue = 2
+
+// ** Remained 2 (40.0%) benchmark(s) to run. Estimated finish 2024-10-02 20:31 (0h 0m from now) **
+// **************************
+// Benchmark: TernaryBenchmarks.TestIntTDivision: DefaultJob
+// *** Execute ***
+// Launch: 1 / 1
+// Execute: dotnet 4ca6f69e-428c-4519-b919-c96f686b4796.dll --anonymousPipes 105 106 --benchmarkName stdTernary.TernaryBenchmarks.TestIntTDivision --job Default --benchmarkId 3 in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/bin/Release/net8.0
+// Failed to set up high priority (Permission denied). In order to run benchmarks with high priority, make sure you have the right permissions.
+// BeforeAnythingElse
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.14.0
+// Runtime=.NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2,AES,BMI1,BMI2,FMA,LZCNT,PCLMUL,POPCNT VectorSize=256
+// Job: DefaultJob
+
+OverheadJitting  1: 1 op, 281181.00 ns, 281.1810 us/op
+WorkloadJitting  1: 1 op, 5277604.00 ns, 5.2776 ms/op
+
+OverheadJitting  2: 16 op, 263183.00 ns, 16.4489 us/op
+WorkloadJitting  2: 16 op, 30283028.00 ns, 1.8927 ms/op
+
+WorkloadPilot    1: 16 op, 50297850.00 ns, 3.1436 ms/op
+WorkloadPilot    2: 32 op, 115748703.00 ns, 3.6171 ms/op
+
+System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.
+ ---> System.DivideByZeroException: Attempt to divide by zero in IntT division operation.
+   at stdTernary.IntT.DIV(IntT divisor) in /Users/jacobjackson/Projects/stdTernary/stdTernary/stdTernary.cs:line 1152
+   at stdTernary.IntT.op_Division(IntT left, IntT right) in /Users/jacobjackson/Projects/stdTernary/stdTernary/stdTernary.cs:line 835
+   at stdTernary.TernaryBenchmarks.TestIntTDivision() in /Users/jacobjackson/Projects/stdTernary/stdTernary/Program.cs:line 65
+   at BenchmarkDotNet.Autogenerated.Runnable_3.WorkloadActionUnroll(Int64 invokeCount) in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/4ca6f69e-428c-4519-b919-c96f686b4796.notcs:line 863
+   at BenchmarkDotNet.Engines.Engine.Measure(Action`1 action, Int64 invokeCount)
+   at BenchmarkDotNet.Engines.Engine.RunIteration(IterationData data)
+   at BenchmarkDotNet.Engines.EngineStage.RunIteration(IterationMode mode, IterationStage stage, Int32 index, Int64 invokeCount, Int32 unrollFactor)
+   at BenchmarkDotNet.Engines.EnginePilotStage.RunAuto()
+   at BenchmarkDotNet.Engines.EnginePilotStage.Run()
+   at BenchmarkDotNet.Engines.Engine.Run()
+   at BenchmarkDotNet.Autogenerated.Runnable_3.Run(IHost host, String benchmarkName) in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/4ca6f69e-428c-4519-b919-c96f686b4796.notcs:line 754
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+   --- End of inner exception stack trace ---
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at BenchmarkDotNet.Autogenerated.UniqueProgramName.AfterAssemblyLoadingAttached(String[] args) in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/4ca6f69e-428c-4519-b919-c96f686b4796.notcs:line 57
+// AfterAll
+No Workload Results were obtained from the run.
+// Benchmark Process 93806 has exited with code 255.
+
+// ** Remained 1 (20.0%) benchmark(s) to run. Estimated finish 2024-10-02 20:31 (0h 0m from now) **
+// **************************
+// Benchmark: TernaryBenchmarks.TestIntTModulus: DefaultJob
+// *** Execute ***
+// Launch: 1 / 1
+// Execute: dotnet 4ca6f69e-428c-4519-b919-c96f686b4796.dll --anonymousPipes 105 106 --benchmarkName stdTernary.TernaryBenchmarks.TestIntTModulus --job Default --benchmarkId 4 in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/bin/Release/net8.0
+// Failed to set up high priority (Permission denied). In order to run benchmarks with high priority, make sure you have the right permissions.
+// BeforeAnythingElse
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.14.0
+// Runtime=.NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2,AES,BMI1,BMI2,FMA,LZCNT,PCLMUL,POPCNT VectorSize=256
+// Job: DefaultJob
+
+OverheadJitting  1: 1 op, 258993.00 ns, 258.9930 us/op
+WorkloadJitting  1: 1 op, 12510388.00 ns, 12.5104 ms/op
+
+OverheadJitting  2: 16 op, 542238.00 ns, 33.8899 us/op
+WorkloadJitting  2: 16 op, 136486137.00 ns, 8.5304 ms/op
+
+
+System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.
+ ---> System.DivideByZeroException: Attempt to divide by zero in IntT division operation.
+   at stdTernary.IntT.DIVREM(IntT divisor) in /Users/jacobjackson/Projects/stdTernary/stdTernary/stdTernary.cs:line 1187
+   at stdTernary.IntT.MOD(IntT divisor) in /Users/jacobjackson/Projects/stdTernary/stdTernary/stdTernary.cs:line 1138
+   at stdTernary.IntT.op_Modulus(IntT left, IntT right) in /Users/jacobjackson/Projects/stdTernary/stdTernary/stdTernary.cs:line 836
+   at stdTernary.TernaryBenchmarks.TestIntTModulus() in /Users/jacobjackson/Projects/stdTernary/stdTernary/Program.cs:line 77
+   at BenchmarkDotNet.Autogenerated.Runnable_4.WorkloadActionUnroll(Int64 invokeCount) in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/4ca6f69e-428c-4519-b919-c96f686b4796.notcs:line 1055
+   at BenchmarkDotNet.Engines.Engine.Measure(Action`1 action, Int64 invokeCount)
+   at BenchmarkDotNet.Engines.Engine.RunIteration(IterationData data)
+   at BenchmarkDotNet.Engines.EngineStage.RunIteration(IterationMode mode, IterationStage stage, Int32 index, Int64 invokeCount, Int32 unrollFactor)
+   at BenchmarkDotNet.Engines.EnginePilotStage.RunAuto()
+   at BenchmarkDotNet.Engines.EnginePilotStage.Run()
+   at BenchmarkDotNet.Engines.Engine.Run()
+   at BenchmarkDotNet.Autogenerated.Runnable_4.Run(IHost host, String benchmarkName) in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/4ca6f69e-428c-4519-b919-c96f686b4796.notcs:line 946
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+   --- End of inner exception stack trace ---
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at BenchmarkDotNet.Autogenerated.UniqueProgramName.AfterAssemblyLoadingAttached(String[] args) in /Users/jacobjackson/Projects/stdTernary/stdTernary/bin/Release/net8.0/4ca6f69e-428c-4519-b919-c96f686b4796/4ca6f69e-428c-4519-b919-c96f686b4796.notcs:line 57
+// AfterAll
+No Workload Results were obtained from the run.
+// Benchmark Process 93807 has exited with code 255.
+
+// ** Remained 0 (0.0%) benchmark(s) to run. Estimated finish 2024-10-02 20:30 (0h 0m from now) **
+// ***** BenchmarkRunner: Finish  *****
+
+// * Export *
+  BenchmarkDotNet.Artifacts/results/stdTernary.TernaryBenchmarks-report.csv
+  BenchmarkDotNet.Artifacts/results/stdTernary.TernaryBenchmarks-report-github.md
+  BenchmarkDotNet.Artifacts/results/stdTernary.TernaryBenchmarks-report.html
+
+// * Detailed results *
+TernaryBenchmarks.TestIntTAddition: DefaultJob
+Runtime = .NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2; GC = Concurrent Workstation
+Mean = 80.384 μs, StdErr = 0.444 μs (0.55%), N = 35, StdDev = 2.630 μs
+Min = 76.739 μs, Q1 = 78.429 μs, Median = 79.669 μs, Q3 = 82.843 μs, Max = 86.164 μs
+IQR = 4.415 μs, LowerFence = 71.807 μs, UpperFence = 89.465 μs
+ConfidenceInterval = [78.783 μs; 81.984 μs] (CI 99.9%), Margin = 1.600 μs (1.99% of Mean)
+Skewness = 0.44, Kurtosis = 1.92, MValue = 2.4
+-------------------- Histogram --------------------
+[75.684 μs ; 77.252 μs) | @@
+[77.252 μs ; 79.362 μs) | @@@@@@@@@@@@@@@
+[79.362 μs ; 81.559 μs) | @@@@@@
+[81.559 μs ; 83.669 μs) | @@@@@@@@@
+[83.669 μs ; 86.473 μs) | @@@
+---------------------------------------------------
+
+TernaryBenchmarks.TestIntTSubtraction: DefaultJob
+Runtime = .NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2; GC = Concurrent Workstation
+Mean = 124.663 μs, StdErr = 0.438 μs (0.35%), N = 15, StdDev = 1.697 μs
+Min = 122.623 μs, Q1 = 123.593 μs, Median = 124.022 μs, Q3 = 125.728 μs, Max = 128.144 μs
+IQR = 2.134 μs, LowerFence = 120.392 μs, UpperFence = 128.929 μs
+ConfidenceInterval = [122.849 μs; 126.477 μs] (CI 99.9%), Margin = 1.814 μs (1.46% of Mean)
+Skewness = 0.7, Kurtosis = 2.1, MValue = 2
+-------------------- Histogram --------------------
+[122.442 μs ; 125.512 μs) | @@@@@@@@@@@
+[125.512 μs ; 129.047 μs) | @@@@
+---------------------------------------------------
+
+TernaryBenchmarks.TestIntTMultiplication: DefaultJob
+Runtime = .NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2; GC = Concurrent Workstation
+Mean = 2.860 ms, StdErr = 0.011 ms (0.40%), N = 13, StdDev = 0.041 ms
+Min = 2.795 ms, Q1 = 2.823 ms, Median = 2.870 ms, Q3 = 2.888 ms, Max = 2.932 ms
+IQR = 0.065 ms, LowerFence = 2.725 ms, UpperFence = 2.986 ms
+ConfidenceInterval = [2.811 ms; 2.910 ms] (CI 99.9%), Margin = 0.049 ms (1.73% of Mean)
+Skewness = -0.05, Kurtosis = 1.64, MValue = 2
+-------------------- Histogram --------------------
+[2.783 ms ; 2.856 ms) | @@@@@
+[2.856 ms ; 2.955 ms) | @@@@@@@@
+---------------------------------------------------
+
+TernaryBenchmarks.TestIntTDivision: DefaultJob
+Runtime = .NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2; GC = Concurrent Workstation
+There are not any results runs
+
+TernaryBenchmarks.TestIntTModulus: DefaultJob
+Runtime = .NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2; GC = Concurrent Workstation
+There are not any results runs
+
+// * Summary *
+
+BenchmarkDotNet v0.14.0, macOS Sonoma 14.5 (23F79) [Darwin 23.5.0]
+Intel Core i9-9880H CPU 2.30GHz, 1 CPU, 16 logical and 8 physical cores
+.NET SDK 8.0.402
+  [Host]     : .NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2
+
+
+| Method                 | Mean        | Error     | StdDev    | Gen0    | Allocated |
+|----------------------- |------------:|----------:|----------:|--------:|----------:|
+| TestIntTAddition       |    80.38 μs |  1.600 μs |  2.630 μs |  1.7090 |  14.13 KB |
+| TestIntTSubtraction    |   124.66 μs |  1.814 μs |  1.697 μs |  2.1973 |  18.82 KB |
+| TestIntTMultiplication | 2,860.42 μs | 49.435 μs | 41.281 μs | 42.9688 | 365.73 KB |
+| TestIntTDivision       |          NA |        NA |        NA |      NA |        NA |
+| TestIntTModulus        |          NA |        NA |        NA |      NA |        NA |
+
+Benchmarks with issues:
+  TernaryBenchmarks.TestIntTDivision: DefaultJob
+  TernaryBenchmarks.TestIntTModulus: DefaultJob
+
+// * Hints *
+Outliers
+  TernaryBenchmarks.TestIntTMultiplication: Default -> 2 outliers were removed (3.01 ms, 3.01 ms)
+
+// * Legends *
+  Mean      : Arithmetic mean of all measurements
+  Error     : Half of 99.9% confidence interval
+  StdDev    : Standard deviation of all measurements
+  Gen0      : GC Generation 0 collects per 1000 operations
+  Allocated : Allocated memory per single operation (managed only, inclusive, 1KB = 1024B)
+  1 μs      : 1 Microsecond (0.000001 sec)
+
+// * Diagnostic Output - MemoryDiagnoser *
+
+
+// ***** BenchmarkRunner: End *****
+Run time: 00:01:02 (62.62 sec), executed benchmarks: 5
+
+Global total time: 00:01:11 (71.26 sec), executed benchmarks: 5
+// * Artifacts cleanup *
+Artifacts cleanup is finished
