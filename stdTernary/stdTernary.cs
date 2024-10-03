@@ -1741,6 +1741,12 @@ namespace stdTernary
             return new FloatT(trits);
         }
 
+        public FloatT MOD(FloatT divisor)
+        {
+            (_, var rem) = DIVREM(divisor);
+            return rem;
+        }
+
         public (FloatT, FloatT) DIVREM(FloatT divisor)
         {
             switch (COMPARET(divisor, 0).Value)

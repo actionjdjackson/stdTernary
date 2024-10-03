@@ -1,4 +1,6 @@
 namespace stdTernary.Tests;
+
+using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using stdTernary;
 
@@ -547,6 +549,26 @@ using stdTernary;
             result = a / b;
             shouldEqual = 1.57079633679;
             Assert.IsTrue(ApproxEqual(shouldEqual, result), "Expected PI / 2 = 1.570796, but returned {0} / {1} = {2}", a, b, result);
+        }
+
+        [TestMethod]
+        public void TestFloatTModulus()
+        {
+            FloatT a = 10.0;
+            FloatT b = 0.126;
+            var result = a % b;
+            var shouldEqual = 0.046;
+            Assert.IsTrue(result == shouldEqual, "Expected 10.0 % 0.126 to be 0.046, but returned {0} % {1} = {2}", a, b, result);
+            a = 127.458;
+            b = 14.234;
+            result = a % b;
+            shouldEqual = 13.586;
+            Assert.IsTrue(result == shouldEqual, "Expected 127.458 % 0.126 = 14.234, but returned {0} % {1} = {2}", a, b, result);
+            a = 1000;
+            b = 5;
+            result = a % b;
+            shouldEqual = 0;
+            Assert.IsTrue(result == shouldEqual, "Expected 1000 % 5 = 0, but returned {0} % {1} = {2}", a, b, result);
         }
 
         public bool ApproxEqual(FloatT expected, FloatT actual)
