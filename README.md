@@ -7,11 +7,11 @@ Since the binary computer operates in bytes, even when dealing with boolean valu
 All bitwise and bytewise operators have been overriden for trits and trytes. I am currently using the `*` operator on trits for XNOR/MULTIPLY and have not used the XOR `^` operator in its place, since XOR is a 
 specifically binary operation, according to Stack Overflow. The structs are `Trit` and `Tryte` - and the `Tryte` can be modified easily to be any number of trits you want, up to 10 trits with the current implementation. Each `Tryte` holds a combination of an array of `Trit`s and a `short` value for binary equivalent. All math is done in Ternary.
 
-Includes a customizable `IntT` struct that can have any number of total trits in its implementation. It follows the same convention as the `Tryte`, but is able to work with non-multiples of trytes - like 21-trit or 32-trit integers.
+Includes a customizable `IntT` struct that can have any number of total trits in its implementation. It follows the same convention as the `Tryte`, but is able to work with non-multiples of trytes - like 21-trit or 32-trit integers. All math is done in Ternary.
 
 Also includes a customizable `FloatT` struct that can have any number of total trits, separated into a exponent and a significand, 1/4 going to the exponent and 3/4 going to the significand (mantissa). It doesn't have to be a multiple of 3, though that is preferable (27 is a nice number, currently using 24). The `FloatT` struct holds a combination of an array of `Trit`s for the exponent and the signficand and the whole float combined, and a `double` for binary equivalent. All math is done in Ternary.
 
-Also includes most of the `Math` functions specifically for use with these `FloatT`s in a static class called `MathT`. I also added a `Log3` function and trit increment/decrement for `FloatT`s.
+Also includes most of the `Math` functions specifically for use with these `FloatT`s and some for use with `IntT`s and `Tryte`s in a static class called `MathT`. I also added a `Log3` function and trit increment/decrement for `FloatT`s.
 
 The `string` conversion is for interoperability with my "Action Ternary Simulator" which runs on strings of `+, -, and 0` characters and does all the math in Ternary.
 
