@@ -569,6 +569,11 @@ using stdTernary;
             result = a % b;
             shouldEqual = 0;
             Assert.IsTrue(result == shouldEqual, "Expected 1000 % 5 = 0, but returned {0} % {1} = {2}", a, b, result);
+            a = MathT.PI;
+            b = MathT.E;
+            result = a % b;
+            shouldEqual = 0.4233108251308;
+            Assert.IsTrue(ApproxEqual(shouldEqual, result), "Expected PI % E = 0.4233108, but returned {0} % {1} = {2}", a, b, result);
         }
 
         public bool ApproxEqual(FloatT expected, FloatT actual)
