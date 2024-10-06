@@ -365,6 +365,9 @@ using stdTernary;
             b = -2;
             result = a / b;
             Assert.IsTrue(result == -73, "Expected a = 147 / b = -2 to be -73, but returned {0} / {1} = {2}", a, b, result);
+            b = 158;
+            result = a / b;
+            Assert.IsTrue(result == 0, "Expected 147 / 158 to be 0,  but returned {0} / {1} = {2}", a, b, result);
         }
 
         [TestMethod]
@@ -390,6 +393,10 @@ using stdTernary;
             b = 6;
             result = a % b;
             Assert.IsTrue(result == 0, "Expected a = 24 % b = 6 to be 0, but returned {0} % {1} = {2}", a, b, result);
+            a = 3;
+            b = 5;
+            result = a % b;
+            Assert.IsTrue(result == 3, "Expected 3 % 5 = 3, but returned {0} % {1} = {2}", a, b, result);
         }
 
         [TestMethod]
@@ -548,7 +555,12 @@ using stdTernary;
             b = 2.0;
             result = a / b;
             shouldEqual = 1.57079633679;
-            Assert.IsTrue(ApproxEqual(shouldEqual, result), "Expected PI / 2 = 1.570796, but returned {0} / {1} = {2}", a, b, result);
+            Assert.IsTrue(ApproxEqual(shouldEqual, result), "Expected PI / 2 to be about 1.570796, but returned {0} / {1} = {2}", a, b, result);
+            a = 5;
+            b = 7;
+            result = a / b;
+            shouldEqual = 0.71428;
+            Assert.IsTrue(ApproxEqual(shouldEqual, result), "Expected 5 / 7 to be about 0.71428, but returned {0} / {1} = {2}", a, b, result);
         }
 
         [TestMethod]
@@ -574,6 +586,11 @@ using stdTernary;
             result = a % b;
             shouldEqual = 0.4233108251308;
             Assert.IsTrue(ApproxEqual(shouldEqual, result), "Expected PI % E = 0.4233108, but returned {0} % {1} = {2}", a, b, result);
+            a = 3;
+            b = 5;
+            result = a % b;
+            shouldEqual = 3;
+            Assert.IsTrue(result == shouldEqual, "Expected 3 % 5 = 3, but returned {0} % {1} = {2}", a, b, result);
         }
 
         public bool ApproxEqual(FloatT expected, FloatT actual)

@@ -788,7 +788,7 @@ namespace stdTernary
 
     /// <summary>
     /// The IntT struct is a modifiable general purpose Balanced Ternary integer, with an array of trits and a long for the values it holds.
-    /// All the math is done in binary and converted to ternary. Trit-shifting is done in Ternary. Can be explicitly cast to a string of +, -, 0's
+    /// All the math is done ternary and Trit-shifting is done in Ternary. Can be explicitly cast to a string of +, -, 0's
     /// </summary>
     public struct IntT
     {
@@ -1779,18 +1779,21 @@ namespace stdTernary
                     }
                     else
                     {
-                        return (new FloatT(0), new FloatT(0));
+                        return (new FloatT(0), new FloatT(this.floatt));
                     }
             }
         }
-
 
         public FloatT DIV(FloatT divisor)
         {
             (var quotient, var remainder) = this.DIVREM(divisor);
             if (COMPARET(remainder, 0).Value != Trit.TritVal.z)
             {
-                remainder *= MathT.Pow(10, (FloatT)this.ExpectedNDigitsOfPrecision() + 3);
+                //remainder *= MathT.Pow(10, (FloatT)this.ExpectedNDigitsOfPrecision() + 3);
+                do
+                {
+                    remainder *= 10;
+                } while (remainder < (FloatT)(IntT.MaxValue / 10));
                 IntT rem = (IntT)remainder;
                 var remdiv = rem.DIV((IntT)(divisor * 100000));
                 var remdivstr = remdiv.LongValue.ToString();
