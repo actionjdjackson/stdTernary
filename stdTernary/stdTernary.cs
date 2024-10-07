@@ -1797,7 +1797,8 @@ namespace stdTernary
                 IntT rem = (IntT)remainder;
                 var remdiv = rem.DIV((IntT)(divisor * 100000));
                 var remdivstr = remdiv.LongValue.ToString();
-                remdivstr = "0." + remdivstr;
+                remdivstr = remdivstr[0] == '-' ? "-0." + remdivstr[1..] : "0." + remdivstr;
+                //remdivstr = "0." + remdivstr;
                 FloatT remdivfloat = double.Parse(remdivstr);
                 quotient += remdivfloat;
             }

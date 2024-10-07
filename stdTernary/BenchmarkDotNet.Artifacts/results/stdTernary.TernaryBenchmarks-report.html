@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>stdTernary.TernaryBenchmarks-20241002-205549</title>
+<title>stdTernary.TernaryBenchmarks-20241006-182242</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -22,13 +22,19 @@ Intel Core i9-9880H CPU 2.30GHz, 1 CPU, 16 logical and 8 physical cores
 <pre><code></code></pre>
 
 <table>
-<thead><tr><th>Method          </th><th>Mean   </th><th>Error  </th><th>StdDev  </th><th>Gen0</th><th>Allocated</th>
+<thead><tr><th>Method            </th><th>Mean    </th><th>Error  </th><th>StdDev   </th><th>Median  </th><th>Gen0</th><th>Allocated</th>
 </tr>
-</thead><tbody><tr><td>TestIntTAddition</td><td>8.852 &mu;s</td><td>0.1740 &mu;s</td><td>0.3181 &mu;s</td><td>0.1678</td><td>1.41 KB</td>
-</tr><tr><td>TestIntTSubtraction</td><td>13.472 &mu;s</td><td>0.2591 &mu;s</td><td>0.2880 &mu;s</td><td>0.2136</td><td>1.88 KB</td>
-</tr><tr><td>TestIntTMultiplication</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td>
-</tr><tr><td>TestIntTDivision</td><td>44,783.337 &mu;s</td><td>6,976.8186 &mu;s</td><td>19,563.7486 &mu;s</td><td>400.0000</td><td>3639.33 KB</td>
-</tr><tr><td>TestIntTModulus</td><td>48,241.258 &mu;s</td><td>6,383.7833 &mu;s</td><td>17,689.4347 &mu;s</td><td>375.0000</td><td>3222.86 KB</td>
+</thead><tbody><tr><td>TestIntTAddition</td><td>870.6 &mu;s</td><td>17.38 &mu;s</td><td>30.43 &mu;s</td><td>859.0 &mu;s</td><td>16.6016</td><td>140.63 KB</td>
+</tr><tr><td>TestIntTSubtraction</td><td>1,307.8 &mu;s</td><td>24.28 &mu;s</td><td>23.84 &mu;s</td><td>1,309.9 &mu;s</td><td>21.4844</td><td>187.5 KB</td>
+</tr><tr><td>TestIntTMultiplication</td><td>29,994.8 &mu;s</td><td>597.58 &mu;s</td><td>1,077.55 &mu;s</td><td>29,616.0 &mu;s</td><td>437.5000</td><td>3691.43 KB</td>
+</tr><tr><td>TestIntTDivision</td><td>6,451,045.2 &mu;s</td><td>400,232.90 &mu;s</td><td>1,167,498.24 &mu;s</td><td>6,423,793.8 &mu;s</td><td>57000.0000</td><td>471782.98 KB</td>
+</tr><tr><td>TestIntTModulus</td><td>7,713,429.2 &mu;s</td><td>585,930.35 &mu;s</td><td>1,681,144.13 &mu;s</td><td>7,412,070.9 &mu;s</td><td>86000.0000</td><td>710028.95 KB</td>
+</tr><tr><td>TestIntTPower</td><td>143,226.0 &mu;s</td><td>1,142.98 &mu;s</td><td>1,069.14 &mu;s</td><td>143,668.3 &mu;s</td><td>1750.0000</td><td>15704.39 KB</td>
+</tr><tr><td>TestFloatTAddition</td><td>36,747.8 &mu;s</td><td>505.60 &mu;s</td><td>472.94 &mu;s</td><td>36,894.9 &mu;s</td><td>1153.8462</td><td>9518.4 KB</td>
+</tr><tr><td>TestFloatTSubtraction</td><td>30,752.3 &mu;s</td><td>1,084.56 &mu;s</td><td>3,197.84 &mu;s</td><td>29,852.7 &mu;s</td><td>1142.8571</td><td>9873.72 KB</td>
+</tr><tr><td>TestFloatTMultiplication</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td>
+</tr><tr><td>TestFloatTDivision</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td>
+</tr><tr><td>TestFloatTModulus</td><td>4,295.8 &mu;s</td><td>37.49 &mu;s</td><td>35.07 &mu;s</td><td>4,303.8 &mu;s</td><td>148.4375</td><td>1231.45 KB</td>
 </tr></tbody></table>
 </body>
 </html>
