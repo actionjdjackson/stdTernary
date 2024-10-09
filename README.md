@@ -11,13 +11,15 @@ Includes a customizable `IntT` struct that can have any number of total trits in
 
 Also includes a customizable `FloatT` struct that can have any number of total trits, separated into a exponent and a significand, 1/4 going to the exponent and 3/4 going to the significand (mantissa). It doesn't have to be a multiple of 3, though that is preferable (27 is a nice number, currently using 24). The `FloatT` struct holds a combination of an array of `Trit`s for the exponent and the signficand and the whole float combined, and a `double` for binary equivalent. All math is done in Ternary.
 
+Also includes a `CharT` struct with 12 trits for a `char` representation. It's just an integer value stored as an array of `Trit`s that corresponds to a UTF-16 character.
+
 Also includes most of the `Math` functions specifically for use with these `FloatT`s and some for use with `IntT`s and `Tryte`s in a static class called `MathT`. I also added a `Log3` function and trit increment/decrement for `FloatT`s.
 
 The `string` conversion is for interoperability with my "Action Ternary Simulator" which runs on strings of `+, -, and 0` characters and does all the math in Ternary.
 
 Will possibly create an unbalanced ternary version of all of this.
 
-`Tryte` and `FloatT` and `IntT` have modifiable static integer values which is where you can "customize" them to certain sizes - `N_TRITS_PER_TRYTE`, and `N_TOTAL_TRITS_FLOAT` (`N_TRITS_SIGNIFICAND` and `N_TRITS_EXPONENT` too), and `N_TRITS_PER_INT` respectively.
+`Tryte` and `FloatT` and `IntT` and `CharT` have modifiable static integer values which is where you can "customize" them to certain sizes - `N_TRITS_PER_TRYTE`, and `N_TOTAL_TRITS_FLOAT` (`N_TRITS_SIGNIFICAND` and `N_TRITS_EXPONENT` too), and `N_TRITS_PER_INT`, and `N_TRITS_PER_CHAR` respectively.
 
 I throw a lot of Exceptions when dealing with numbers outside the range of the Balanced Ternary stucts' acceptable values - which is annoying so I might change it to a "zero" value whenever the values are too large (either positive or negative) and type casting is involved.
 
