@@ -124,12 +124,30 @@ using stdTernary;
             Assert.IsTrue(result, "Expected 98 <= 98 and 98 >= 98, but returned {0}", result);
             a = 148;
             var result2 = Tryte.COMPARET(a, b).Value;
+
+            Tryte.COMPARET(a, b)
+                            .Larger(() => Assert.IsTrue(true))
+                            .Equal(() => Assert.IsTrue(false))
+                            .Smaller(() => Assert.IsTrue(false));
+
             Assert.IsTrue(result2 == Trit.TritVal.p, "Expected 148 <=> 98 to be p, but returned {0} <=> {1} = {2}", a, b, result2);
             result2 = Tryte.COMPARET(b, a).Value;
+
+            Tryte.COMPARET(b, a)
+                            .Larger(() => Assert.IsTrue(false))
+                            .Equal(() => Assert.IsTrue(false))
+                            .Smaller(() => Assert.IsTrue(true));
+
             Assert.IsTrue(result2 == Trit.TritVal.n, "Expected 98 <=> 148 to be n, but returned {0} <=> {1} = {2}", a, b, result2);
             a = 12;
             b = 12;
             result2 = Tryte.COMPARET(a, b).Value;
+
+            Tryte.COMPARET(a, b)
+                            .Larger(() => Assert.IsTrue(false))
+                            .Equal(() => Assert.IsTrue(true))
+                            .Smaller(() => Assert.IsTrue(false));
+
             Assert.IsTrue(result2 == Trit.TritVal.z, "Expected 0 <=> 0 to be z, but returned {0} <=> {1} = {2}", a, b, result2);
         }
 
@@ -276,13 +294,30 @@ using stdTernary;
             Assert.IsTrue(result, "Expected 982343 <= 982343 and 982343 >= 982343 to be true, but returned {0}", result);
             a = 1480234000;
             var result2 = IntT.COMPARET(a, b).Value;
+
+            IntT.COMPARET(a, b)
+                            .Larger(() => Assert.IsTrue(true))
+                            .Equal(() => Assert.IsTrue(false))
+                            .Smaller(() => Assert.IsTrue(false));
+
+            IntT.COMPARET(a, b)
+                            .Smaller(() => Assert.IsTrue(false))
+                            .Else(() => Assert.IsTrue(true));
+            
             Assert.IsTrue(result2 == Trit.TritVal.p, "Expected 148 <=> 98 to be p, but returned {0} <=> {1} = {2}", a, b, result2);
             result2 = IntT.COMPARET(b, a).Value;
             Assert.IsTrue(result2 == Trit.TritVal.n, "Expected 98 <=> 148 to be n, but returned {0} <=> {1} = {2}", a, b, result2);
             a = 1200033;
             b = 1200033;
+
+            IntT.COMPARET(a, b)
+                            .Larger(() => Assert.IsTrue(false))
+                            .Equal(() => Assert.IsTrue(true))
+                            .Smaller(() => Assert.IsTrue(false));
+
             result2 = IntT.COMPARET(a, b).Value;
             Assert.IsTrue(result2 == Trit.TritVal.z, "Expected 0 <=> 0 to be z, but returned {0} <=> {1} = {2}", a, b, result2);
+
         }
 
         [TestMethod]
@@ -454,11 +489,33 @@ using stdTernary;
             result = b != a;
             Assert.IsTrue(result, "Expected 3.8 != 1.75 to be true, but returned {0} == {1} = {2}", b, c, result);
             var result2 = FloatT.COMPARET(a, b).Value;
+            
+            FloatT.COMPARET(a, b)
+                            .Larger(() => Assert.IsTrue(false))
+                            .Equal(() => Assert.IsTrue(false))
+                            .Smaller(() => Assert.IsTrue(true));
+
             Assert.IsTrue(result2 == Trit.TritVal.n, "Expected 1.75 <=> 3.8 to be n, but returned COMPARET({0}, {1}).Value = {2}", a, b, result2);
             result2 = FloatT.COMPARET(b, a).Value;
+
+            FloatT.COMPARET(b, a)
+                            .Larger(() => Assert.IsTrue(true))
+                            .Equal(() => Assert.IsTrue(false))
+                            .Smaller(() => Assert.IsTrue(false));
+
             Assert.IsTrue(result2 == Trit.TritVal.p, "Expected 3.8 <=> 1.75 to be p, but returned COMPARET({0}, {1}).Value = {2}", a, b, result2);
             result2 = FloatT.COMPARET(b, c).Value;
-            Assert.IsTrue(result2 == Trit.TritVal.z, "Expected 3.8 <=> 3.8 to be z, but returned COMPARET({0}, {1}).Value = {2}", a, b, result2);
+
+            FloatT.COMPARET(b, c)
+                            .Larger(() => Assert.IsTrue(false))
+                            .Equal(() => Assert.IsTrue(true))
+                            .Smaller(() => Assert.IsTrue(false));
+
+            FloatT.COMPARET(b, c)
+                            .Larger(() => Assert.IsTrue(false))
+                            .Else(() => Assert.IsTrue(true));
+
+            Assert.IsTrue(result2 == Trit.TritVal.z, "Expected 3.8 <=> 3.8 to be z, but returned COMPARET({0}, {1}).Value = {2}", b, c, result2);
         }
 
         [TestMethod]

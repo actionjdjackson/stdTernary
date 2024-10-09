@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
+
 namespace stdTernary
 {
     /// <summary>
@@ -42,6 +43,52 @@ namespace stdTernary
         public static implicit operator Trit(sbyte sb) => (sb <= 1 && sb >= -1) ? new Trit(sb) : throw new ArithmeticException("Tried to assign a value too big for Trit - keep it to -1, 0, or 1");
         public static implicit operator int(Trit trit) => (int)trit.trit;
         public static implicit operator Trit(int @int) => (@int <= 1 && @int >= -1) ? new Trit(@int) : throw new ArithmeticException("Tried to assign a value too big for Trit -  keep it to -1, 0, or 1");
+
+
+        public Trit Larger(Action func)
+        {
+            if (Value == TritVal.p)
+            {
+                func();
+                return this;
+            }
+            else
+            {
+                return this;
+            }
+        }
+
+        public Trit Smaller(Action func)
+        {
+            if (Value == TritVal.n)
+            {
+                func();
+                return this;
+            }
+            else
+            {
+                return this;
+            }
+        }
+
+        public Trit Equal(Action func)
+        {
+            if (Value == TritVal.z)
+            {
+                func();
+                return this;
+            }
+            else
+            {
+                return this;
+            }
+        }
+
+        public Trit Else(Action func)
+        {
+            func();
+            return this;
+        } 
 
         public override int GetHashCode()
         {
@@ -842,7 +889,7 @@ namespace stdTernary
         public static IntT operator -(IntT intt) => intt.INVERT();
         public static IntT operator ~(IntT intt) => intt.INVERT();
         public static implicit operator long(IntT intt) => (intt <= long.MaxValue && intt >= long.MinValue) ? intt.longValue : throw new ArithmeticException("Converting a IntT to a long value failed because it was outside the range of the long max/min values");
-        public static implicit operator IntT(long @int) => (@int <= MaxValue && @int >= MinValue) ? new IntT(@int) : throw new ArithmeticException("Converting a long value to a IntT failed because it was outside the range of the IntT implementation");
+        public static implicit operator IntT(long @int) => (@int <= MaxValue && @int >= MinValue) ? new IntT(@int) : throw new ArithmeticException("Converting a long value to a IntT failed because it was outside the range of the IntT implementation: " + @int.ToString());
         public static implicit operator int(IntT intt) => (intt <= int.MaxValue && intt >= int.MinValue) ? (int)intt.longValue : throw new ArithmeticException("Converting a IntT to an int failed because the value was outside the range of the int max/min values");
         public static implicit operator IntT(int @int) => (@int <= MaxValue && @int >= MinValue) ? new IntT(@int) : throw new ArithmeticException("Converting an int value to a IntT failed because it was outside the range of the IntT implementation");
         ///public static implicit operator short(IntT intt) => (intt <= short.MaxValue && intt >= short.MinValue) ? (short)intt.longValue : throw new ArithmeticException("Converting a IntT to a short failed because the value was outside the range of the short max/min values");
@@ -1386,8 +1433,8 @@ namespace stdTernary
         public static FloatT operator +(FloatT floatt) => MathT.Abs(floatt);
         public static FloatT operator -(FloatT floatt) => floatt.INVERTSIG();
 
-        public static explicit operator IntT(FloatT floatt) => (Math.Round(floatt.DoubleValue, 0) <= IntT.MaxValue && Math.Round(floatt.DoubleValue, 0) >= IntT.MinValue) ? (long)Math.Round(floatt.DoubleValue, 0) : throw new ArithmeticException("Double Value of FloatT is too big for an IntT of size " + IntT.N_TRITS_PER_INT + " trits");
-        public static explicit operator FloatT(IntT intt) => (intt <= FloatT.MaxValue && intt >= FloatT.MinValue) ? (double)intt.LongValue : throw new ArithmeticException("IntT value too big for a FloatT with an exponent of size " + N_TRITS_EXPONENT + " trits");
+        public static explicit operator IntT(FloatT floatt) => (Math.Round(floatt.DoubleValue, 0) <= IntT.MaxValue && Math.Round(floatt.DoubleValue, 0) >= IntT.MinValue) ? new IntT((long)Math.Round(floatt.DoubleValue, 0)) : throw new ArithmeticException("Double Value of FloatT is too big for an IntT of size " + IntT.N_TRITS_PER_INT + " trits");
+        public static explicit operator FloatT(IntT intt) => (intt <= FloatT.MaxValue && intt >= FloatT.MinValue) ? new FloatT((double)intt.LongValue) : throw new ArithmeticException("IntT value too big for a FloatT with an exponent of size " + N_TRITS_EXPONENT + " trits");
         public static implicit operator double(FloatT floatt) => floatt.DoubleValue;
         public static implicit operator FloatT(double doubleVal) => new FloatT(doubleVal);
         public static explicit operator string(FloatT floatt) => floatt.FloatTString;

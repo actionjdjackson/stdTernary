@@ -9,7 +9,42 @@ namespace stdTernary
     {
         private static void Main(string[] args)
         {
-            var summary = BenchmarkRunner.Run<TernaryBenchmarks>();
+            IntT a = 120;
+            IntT b = 60;
+            IntT.COMPARET(a, b)
+                        .Larger(() => {Console.WriteLine("a was larger than b");})
+                        .Equal(() => {Console.WriteLine("a was equal to b");})
+                        .Smaller(() => {Console.WriteLine("a was smaller than b");});
+            IntT.COMPARET(b, a)
+                        .Larger(() => {Console.WriteLine("b was larger than a");})
+                        .Equal(() => {Console.WriteLine("b was equal to a");})
+                        .Smaller(() => {Console.WriteLine("b was smaller than a");});
+            b = 120;
+            IntT.COMPARET(a, b)
+                        .Larger(() => {Console.WriteLine("a was larger than b");})
+                        .Equal(() => {Console.WriteLine("a was equal to b");})
+                        .Smaller(() => { Console.WriteLine("a was smaller than b");});
+
+            FloatT c = 3.14159;
+            FloatT d = 2.71828;
+            FloatT.COMPARET(c, d)
+                        .Larger(() => {Console.WriteLine("c was larger than d");})
+                        .Equal(() => {Console.WriteLine("c was equal to d");})
+                        .Smaller(() => {Console.WriteLine("c was smaller than d");});
+            FloatT.COMPARET(d, c)
+                        .Larger(() => {Console.WriteLine("d was larger than c");})
+                        .Equal(() => {Console.WriteLine("d was equal to c");})
+                        .Smaller(() => {Console.WriteLine("d was smaller than c");});
+            d = 3.14159;
+            FloatT.COMPARET(c, d)
+                        .Larger(() => {Console.WriteLine("c was larger than d");})
+                        .Equal(() => {Console.WriteLine("c was equal to d");})
+                        .Smaller(() => { Console.WriteLine("c was smaller than d");});    
+            FloatT.COMPARET(c, d)
+                        .Smaller(() => {Console.WriteLine("c was smaller than d");})
+                        .Else(() => {Console.WriteLine("c was not smaller than d, took the else branch");});
+
+            //var summary = BenchmarkRunner.Run<TernaryBenchmarks>();
         }
     }
 
