@@ -406,6 +406,10 @@ using stdTernary;
             IntT b = 10;
             var result = MathT.Pow(a, b);
             Assert.IsTrue(result == 9765625, "Expected 5 to the power of 10 to be 9765625, but returned {0} ^ {1} = {2}", a, b, result);
+            a = 3;
+            b = 23;
+            result = MathT.Pow(a, b);
+            Assert.IsTrue(result == 94143178827, "Expected 3 to the power of 23 to be 94143178827, but returned {0} ^ {1} = {2}", a, b, result);
         }
     }
 
