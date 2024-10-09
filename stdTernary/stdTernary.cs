@@ -503,7 +503,7 @@ namespace stdTernary
 
         public override string ToString()
         {
-            return new string(TryteString) + " which equals " + shortValue;
+            return new string(TryteString) + " = " + shortValue;
         }
 
         public string ConvertToStringRepresentation()
@@ -941,7 +941,7 @@ namespace stdTernary
 
         public override string ToString()
         {
-            return IntTString + " which equals " + longValue;
+            return IntTString + " = " + longValue;
         }
 
         public override bool Equals(object obj)
@@ -962,9 +962,22 @@ namespace stdTernary
                 intt = value;
                 longValue = ConvertBalancedTritsToInteger(value);
             }
+            else if (value.Length < N_TRITS_PER_INT)
+            {
+                intt = new Trit[N_TRITS_PER_INT];
+                for (int i = 0; i < N_TRITS_PER_INT - value.Length; i++)
+                {
+                    intt[i] = new Trit(0);
+                }
+                for (int i = N_TRITS_PER_INT - value.Length; i < N_TRITS_PER_INT; i++)
+                {
+                    intt[i] = value[i - (N_TRITS_PER_INT - value.Length)];
+                }
+                longValue = ConvertBalancedTritsToInteger(intt);
+            }
             else
             {
-                throw new ArgumentException("Trit array passed to IntT SetValue method was not the expected size - should be " + N_TRITS_PER_INT + " trits in length", "value");
+                throw new ArgumentException("Trit array passed to IntT SetValue method was not the expected size - should be " + N_TRITS_PER_INT + " trits in length or less", "value");
             }
         }
 
@@ -1911,7 +1924,7 @@ namespace stdTernary
 
         public override string ToString()
         {
-            return FloatTString + " which equals " + doubleValue;
+            return FloatTString + " = " + doubleValue;
         }
 
         private readonly void SetAllExponentTrits(sbyte t)
@@ -2361,7 +2374,241 @@ namespace stdTernary
 
     }
 
+    /// <summary>
+    /// The CharT struct is a general purpose ternary character conforming to the UTF-16 standard used in C#. It uses an array of Trits and a char 
+    /// for values it holds. The Trits represent an integer value which in turn represents a UTF-16 character.
+    /// </summary>
+    public struct CharT
+    {
+        /// <summary>
+        /// Number of trits the CharT uses
+        /// </summary>
+        public static byte N_TRITS_PER_CHAR = 12;
 
+        /// <summary>
+        /// The trit array that represents the value the CharT holds
+        /// </summary>
+        private Trit[] chart = new Trit[N_TRITS_PER_CHAR];
+
+        /// <summary>
+        /// The UTF-16 character the value represents in the CharT
+        /// </summary>
+        private char charValue;
+
+        public Trit[] Value { get => chart; set => SetValue(value); }
+        public string CharTString { get => ConvertToStringRepresentation(); }
+        public char CharValue { get => charValue; set => SetValue(value); }
+
+        public static bool operator ==(CharT left, CharT right) => COMPARET(left, right).Value == Trit.TritVal.z;
+        public static bool operator !=(CharT left, CharT right) => COMPARET(left, right).Value != Trit.TritVal.z;
+        public static bool operator ==(CharT left, char right) => left.charValue == right;
+        public static bool operator !=(CharT left, char right) => left.charValue != right;
+        public static implicit operator char(CharT chart) => chart.CharValue;
+        public static implicit operator CharT(char @char) => new CharT(@char);
+        public static explicit operator string(CharT chart) => chart.CharTString;
+        public static explicit operator CharT(string str) => new CharT(str);
+
+        /// <summary>
+        /// Constructor for the CharT struct, taking an array of Trits
+        /// </summary>
+        /// <param name="value">The value passed in as an array of Trits</param>
+        public CharT(Trit[] value)
+        {
+            if (value.Length == N_TRITS_PER_CHAR)
+            {
+                chart = value;
+                charValue = (char)ConvertBalancedTritsToInteger(value);
+            }
+            else if (value.Length < N_TRITS_PER_CHAR)
+            {
+                chart = new Trit[N_TRITS_PER_CHAR];
+                for (int i = 0; i < N_TRITS_PER_CHAR - value.Length; i++)
+                {
+                    chart[i] = new Trit(0);
+                }
+                for (int i = N_TRITS_PER_CHAR - value.Length; i < N_TRITS_PER_CHAR; i++)
+                {
+                    chart[i] = value[i - (N_TRITS_PER_CHAR - value.Length)];
+                }
+                charValue = (char)ConvertBalancedTritsToInteger(chart);
+            }
+            else
+            {
+                throw new ArgumentException("Trit array passed to CharT SetValue method was not the expected size - should be " + N_TRITS_PER_CHAR + " trits in length or less", "value");
+            }
+        }
+
+        /// <summary>
+        /// Constructor for the CharT struct, taking a string of chars (0, +, -)
+        /// </summary>
+        /// <param name="value">The value passed in as a string of chars (0, +, -)</param>
+        public CharT(string value)
+        {
+            if (value.Length == N_TRITS_PER_CHAR)
+            {
+                chart = new Trit[N_TRITS_PER_CHAR];
+                for (int i = 0; i < N_TRITS_PER_CHAR; i++)
+                {
+                    chart[i] = value[i] switch
+                    {
+                        '+' => new Trit(1),
+                        '-' => new Trit(-1),
+                        '0' => new Trit(0),
+                        _ => throw new ArgumentException("Invalid character encountered in a balanced ternary char array. Please stick to +, -, 0's", "value"),
+                    };
+                }
+                charValue = (char)ConvertBalancedTritsToInteger(chart);
+            }
+            else
+            {
+                throw new ArgumentException("Char array passed to CharT SetValue method was not the expected size - should be " + N_TRITS_PER_CHAR + " chars in length", "value");
+            }
+        }
+
+        /// <summary>
+        /// Constructor for the CharT struct, taking a long binary integer
+        /// </summary>
+        /// <param name="value">The value passed in, as a char</param>
+        public CharT(char value)
+        {
+            charValue = value;
+            chart = ConvertIntegerToBalancedTrits((int)value);
+        }
+
+        public void SetValue(char value)
+        {
+            charValue = value;
+            chart = ConvertIntegerToBalancedTrits((int)value);
+        }
+
+        public void SetValue(Trit[] value)
+        {
+            if (value.Length == N_TRITS_PER_CHAR)
+            {
+                chart = value;
+                charValue = (char)ConvertBalancedTritsToInteger(value);
+            }
+            else if (value.Length < N_TRITS_PER_CHAR)
+            {
+                chart = new Trit[N_TRITS_PER_CHAR];
+                for (int i = 0; i < N_TRITS_PER_CHAR - value.Length; i++)
+                {
+                    chart[i] = new Trit(0);
+                }
+                for (int i = N_TRITS_PER_CHAR - value.Length; i < N_TRITS_PER_CHAR; i++)
+                {
+                    chart[i] = value[i - (N_TRITS_PER_CHAR - value.Length)];
+                }
+                charValue = (char)ConvertBalancedTritsToInteger(chart);
+            }
+            else
+            {
+                throw new ArgumentException("Trit array passed to CharT SetValue method was not the expected size - should be " + N_TRITS_PER_CHAR + " trits in length or less", "value");
+            }
+        }
+
+        public override string ToString()
+        {
+            return CharTString + " which signifies the character " + charValue;
+        }
+
+        public string ConvertToStringRepresentation()
+        {
+            var temp = "";
+            for (int i = 0; i < N_TRITS_PER_CHAR; i++)
+            {
+                switch (this.chart[i].Value)
+                {
+                    case Trit.TritVal.n:
+                        temp += "-";
+                        break;
+                    case Trit.TritVal.p:
+                        temp += "+";
+                        break;
+                    case Trit.TritVal.z:
+                        temp += "0";
+                        break;
+                }
+            }
+            return temp;
+        }
+
+        public static int ConvertBalancedTritsToInteger(Trit[] trits)
+        {
+            int sum = 0;
+            short exponent = (short)(N_TRITS_PER_CHAR - 1);
+            foreach (var trit in trits)
+            {
+                sum += (int)((sbyte)trit.Value * Math.Pow(3, exponent));   //exponent increases as the invisible index increases, and adds to the sum if the trit is -1 or 1
+                exponent--;
+            }
+            return sum;
+        }
+
+        public static Trit[] ConvertIntegerToBalancedTrits(int intValue)
+        {
+            Trit[] trits = new Trit[N_TRITS_PER_CHAR];
+            int workValue = Math.Abs(intValue);     //easier to work with a positive number...
+            byte i = 0;     //easier to start with index 0 - greater numbers on the right
+            while (workValue != 0)
+            {
+                switch (workValue % 3)
+                {
+                    case 0:
+                        trits[i] = new Trit(0);
+                        break;
+                    case 1:
+                        trits[i] = new Trit(1);
+                        break;
+                    case 2:
+                        trits[i] = new Trit(-1);
+                        break;
+                }
+                workValue = (workValue + 1) / 3;
+                i++;
+            }
+            for (int j = i; j < N_TRITS_PER_CHAR; j++)
+            {
+                trits[j] = new Trit(0);   //...add zeros to fill in to make the length match the N_TRITS_PER_INT static value
+            }
+            if (intValue < 0)   //...and invert if it was negative
+            {
+                for (int n = 0; n < N_TRITS_PER_CHAR; n++)
+                {
+                    trits[n] = !trits[n];
+                }
+            }
+            Array.Reverse(trits);    //...and reverse the trit order so greater numbers are on the left
+            return trits;
+        }
+
+        public static Trit COMPARET(CharT a, CharT b)
+        {
+            for (byte i = 0; i < N_TRITS_PER_CHAR; i++)
+            {
+                if (a.chart[i] > b.chart[i])
+                {
+                    return new Trit(1);
+                }
+                else if (a.chart[i] < b.chart[i])
+                {
+                    return new Trit(-1);
+                }
+            }
+            return new Trit(0);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is CharT charT &&
+                   EqualityComparer<Trit[]>.Default.Equals(chart, charT.chart);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+    }
 
     // FloatT/IntT/Tryte versions of most Math functions, also including a log3, ILogT, and trit increment/decrement
     public static class MathT

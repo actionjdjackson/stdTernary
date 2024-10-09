@@ -410,6 +410,20 @@ using stdTernary;
     }
 
     [TestClass]
+    public class UnitTestCharT
+    {
+        [TestMethod]
+        public void TestCharT()
+        {
+            CharT a = 'a';
+            CharT b = 'b';
+            var result = b - a;
+            Assert.IsTrue(result == 1, "Expected b - a to be 1, but it wasn't");
+            Assert.IsTrue(a.CharValue == 'a' && b.CharValue == 'b', "Expected a to be a and b to be b, but it wasn't");
+        }
+    }
+
+    [TestClass]
     public class UnitTestFloatT
     {
         [TestMethod]
