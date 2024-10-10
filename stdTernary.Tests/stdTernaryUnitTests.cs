@@ -60,6 +60,21 @@ using stdTernary;
         }
 
         [TestMethod]
+        public void TestTritXOR()
+        {
+            Trit a = 1;
+            Trit b = -1;
+            Assert.IsTrue((a ^ b).Value == Trit.TritVal.p, "Expected 1 ^ -1 to be 1");
+            b = 1;
+            Assert.IsTrue((a ^ b).Value == Trit.TritVal.n, "Expected 1 ^ 1 to be -1");
+            b = 0;
+            Assert.IsTrue((a ^ b).Value == Trit.TritVal.z, "Expected 1 ^ 0 to be 0");
+            a = -1;
+            b = -1;
+            Assert.IsTrue((a ^ b).Value == Trit.TritVal.n, "Expected -1 ^ -1 to br -1");
+        }
+
+        [TestMethod]
         public void TestXNOR()
         {
             Trit a = 1;
@@ -269,6 +284,16 @@ using stdTernary;
         }
 
         [TestMethod]
+        public void TestTryteXOR()
+        {
+            Tryte a = (Tryte)"+-0-+0";
+            Tryte b = (Tryte)"--+0-0";
+            var result = a ^ b;
+            var stringResult = (string)result;
+            Assert.IsTrue(stringResult == "+-00+0", "Expected +-0-+0 ^ --+0-0 to be +-00+0, but returned {0} ^ {1} = {2}", a, b, result);
+        }
+
+        [TestMethod]
         public void TestTryteNegation()
         {
             Tryte a = 128;
@@ -290,6 +315,8 @@ using stdTernary;
             IntT b = IntT.MinValue;
             var result = a + b;
             Assert.IsTrue(result == 0, "Expected Max + Min values to equal zero, but returned {0} + {1} = {2}", a, b, result);
+            Assert.ThrowsException<OverflowException>(() => result = a + 1);
+            Assert.ThrowsException<OverflowException>(() => result = b - 1);
         }
 
         [TestMethod]
@@ -471,6 +498,25 @@ using stdTernary;
             var result = b - a;
             Assert.IsTrue(result == 1, "Expected b - a to be 1, but it wasn't");
             Assert.IsTrue(a.CharValue == 'a' && b.CharValue == 'b', "Expected a to be a and b to be b, but it wasn't");
+        }
+    }
+
+    [TestClass]
+    public class UnitTestConversions
+    {
+        [TestMethod]
+        public void TestConversions()
+        {
+            IntT a = 25;
+            FloatT b = 100.0;
+            Tryte c = 12;
+            var result = (FloatT)a;
+            Assert.IsTrue(result == 25.0, "Expected FloatT conversion from IntT to be 25.0");
+            var result2 = (IntT)b;
+            Assert.IsTrue(result2 == 100, "Expected IntT conversion from FloatT to be 100");
+            var result3 = (IntT)c;
+            Assert.IsTrue(result3 == 12, "Expected IntT conversion from Tryte to be 12");
+            
         }
     }
 

@@ -24,6 +24,7 @@ namespace stdTernary
 
         public static Trit operator &(Trit left, Trit right) => left.AND(right);
         public static Trit operator |(Trit left, Trit right) => left.OR(right);
+        public static Trit operator ^(Trit left, Trit right) => left.XOR(right);
         public static Trit operator ~(Trit trit) => trit.NEG();
         public static Trit operator !(Trit trit) => trit.NEG();
         public static Trit operator *(Trit left, Trit right) => left.MULT(right);
@@ -168,6 +169,22 @@ namespace stdTernary
             return new Trit((sbyte)(((sbyte)trit) * -1));
         }
 
+        public Trit XOR(Trit t)
+        {
+            if (this.trit == TritVal.z || t.trit == TritVal.z)
+            {
+                return new Trit(0);
+            }
+            else if (this.trit == t.trit)
+            {
+                return new Trit(-1);
+            }
+            else
+            {
+                return new Trit(1);
+            }
+        }
+
         public Trit SUM(Trit t)
         {
             if (this.trit == t.Value)
@@ -300,8 +317,8 @@ namespace stdTernary
 
     /// <summary>
     /// A customizable Balanced Ternary tryte data type/struct with a range of 2 - 10 trits per tryte. Bytewise operators have been overridden
-    /// for everything except ^ (XOR) - which is a specifically binary operation. I might use ^ for XNOR/MULTIPLY but not sure. There is a
-    /// COMPARISON method which is for the <=> spaceship operator - a ternary comparison - but C# doesn't allow custom operators.
+    /// for everything. There is a COMPARISON (COMPARET) method which is for the <=> spaceship operator - a ternary comparison - but C# doesn't 
+    /// allow custom operators.
     /// </summary>
     public struct Tryte
     {
@@ -332,6 +349,7 @@ namespace stdTernary
 
         public static Tryte operator &(Tryte left, Tryte right) => left.AND(right);
         public static Tryte operator |(Tryte left, Tryte right) => left.OR(right);
+        public static Tryte operator ^(Tryte left, Tryte right) => left.XOR(right);
         public static Tryte operator ~(Tryte tryte) => tryte.INVERT();
         public static bool operator ==(Tryte left, Tryte right) => COMPARET(left, right).Value == Trit.TritVal.z;
         public static bool operator ==(Tryte left, int right) => left.shortValue == right;
@@ -793,6 +811,16 @@ namespace stdTernary
             return newTryte;
         }
 
+        public Tryte XOR(Tryte t)
+        {
+            var newTryte = new Tryte(0);
+            for (int i = 0; i < N_TRITS_PER_TRYTE; i++)
+            {
+                newTryte.tryte[i] = this.tryte[i] ^ t.tryte[i];
+            }
+            return newTryte;
+        }
+
         /// <summary>
         /// Balanced Ternary Comparison operator method - returns 1 if tryte1 is larger, -1 if it is smaller, and 0 if the trytes are equal.
         /// Supposed to be used with the spaceship operator <=> but custom operators are not allowed in C#
@@ -892,6 +920,7 @@ namespace stdTernary
         public static implicit operator IntT(long @int) => (@int <= MaxValue && @int >= MinValue) ? new IntT(@int) : throw new ArithmeticException("Converting a long value to a IntT failed because it was outside the range of the IntT implementation: " + @int.ToString());
         public static implicit operator int(IntT intt) => (intt <= int.MaxValue && intt >= int.MinValue) ? (int)intt.longValue : throw new ArithmeticException("Converting a IntT to an int failed because the value was outside the range of the int max/min values");
         public static implicit operator IntT(int @int) => (@int <= MaxValue && @int >= MinValue) ? new IntT(@int) : throw new ArithmeticException("Converting an int value to a IntT failed because it was outside the range of the IntT implementation");
+        public static explicit operator IntT(Tryte tryte) => new IntT(tryte.ShortValue);
         ///public static implicit operator short(IntT intt) => (intt <= short.MaxValue && intt >= short.MinValue) ? (short)intt.longValue : throw new ArithmeticException("Converting a IntT to a short failed because the value was outside the range of the short max/min values");
         //public static implicit operator IntT(short @int) => (@int <= MaxValue && @int >= MinValue) ? new IntT(@int) : throw new ArithmeticException("Converting a short value to a IntT failed because it was outside the range of the IntT implementation");
         public static explicit operator string(IntT intt) => intt.IntTString;
@@ -1434,7 +1463,7 @@ namespace stdTernary
         public static FloatT operator -(FloatT floatt) => floatt.INVERTSIG();
 
         public static explicit operator IntT(FloatT floatt) => (Math.Round(floatt.DoubleValue, 0) <= IntT.MaxValue && Math.Round(floatt.DoubleValue, 0) >= IntT.MinValue) ? new IntT((long)Math.Round(floatt.DoubleValue, 0)) : throw new ArithmeticException("Double Value of FloatT is too big for an IntT of size " + IntT.N_TRITS_PER_INT + " trits");
-        public static explicit operator FloatT(IntT intt) => (intt <= FloatT.MaxValue && intt >= FloatT.MinValue) ? new FloatT((double)intt.LongValue) : throw new ArithmeticException("IntT value too big for a FloatT with an exponent of size " + N_TRITS_EXPONENT + " trits");
+        public static explicit operator FloatT(IntT intt) => ((double)intt <= FloatT.MaxValue && (double)intt >= FloatT.MinValue) ? new FloatT(intt.LongValue) : throw new ArithmeticException("IntT value too big for a FloatT with an exponent of size " + N_TRITS_EXPONENT + " trits");
         public static implicit operator double(FloatT floatt) => floatt.DoubleValue;
         public static implicit operator FloatT(double doubleVal) => new FloatT(doubleVal);
         public static explicit operator string(FloatT floatt) => floatt.FloatTString;
