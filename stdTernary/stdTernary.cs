@@ -46,6 +46,32 @@ namespace stdTernary
         public static implicit operator Trit(int @int) => (@int <= 1 && @int >= -1) ? new Trit(@int) : throw new ArithmeticException("Tried to assign a value too big for Trit -  keep it to -1, 0, or 1");
 
 
+        public Trit LargerOrEqual(Action func)
+        {
+            if (Value != TritVal.n)
+            {
+                func();
+                return this;
+            }
+            else
+            {
+                return this;
+            }
+        }
+
+        public Trit SmallerOrEqual(Action func)
+        {
+            if (Value != TritVal.p)
+            {
+                func();
+                return this;
+            }
+            else
+            {
+                return this;
+            }
+        }
+
         public Trit Larger(Action func)
         {
             if (Value == TritVal.p)
