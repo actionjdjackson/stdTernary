@@ -152,6 +152,18 @@ using stdTernary;
         }
 
         [TestMethod]
+        public void TestTryteTritShift()
+        {
+            Tryte a = (Tryte)"+-+0-+";
+            var result = a << 2;
+            Assert.IsTrue(result == (Tryte)"+0-+00", "Expected trit shift left by 2, but it wasn't");
+            result = a >> 4;
+            Assert.IsTrue(result == (Tryte)"0000+-", "Expected trit shift right by 4, but it wasn't");
+            result = a << 6;
+            Assert.IsTrue(result == (Tryte)"000000", "Expected a full wipe (trit shift left by 6), but it wasn't");
+        }
+
+        [TestMethod]
         public void TestTryteAddition()
         {
             Tryte a = 127;
@@ -324,11 +336,11 @@ using stdTernary;
         public void TestTritShift()
         {
             IntT a = (IntT)"000+-+0-++00-+0++-+00-+0";
-            var result = a.SHIFTLEFT(2);
+            var result = a << 2;
             Assert.IsTrue((string)result == "0+-+0-++00-+0++-+00-+000", "Expected shift left of 2 trits, but it didn't work");
-            result = a.SHIFTLEFT(5);
+            result = a << 5;
             Assert.IsTrue((string)result == "+0-++00-+0++-+00-+000000", "Expected shift left of 5 trits, but it didn't work");
-            result = a.SHIFTRIGHT(5);
+            result = a >> 5;
             Assert.IsTrue((string)result == "00000000+-+0-++00-+0++-+", "Expected shift right of 5 trits, but it didn't work");
         }
 
@@ -336,7 +348,7 @@ using stdTernary;
         public void TestInversion()
         {
             IntT a = 147;
-            var result = a.INVERT();
+            var result = ~a;
             Assert.IsTrue(result == -147, "Expected inversion of 147 to be -147, but returned {0} => {1}", a, result);
         }
 
