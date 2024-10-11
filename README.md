@@ -12,7 +12,7 @@ Also includes a customizable `FloatT` struct that can have any number of total t
 
 Also includes a `CharT` struct with 12 trits for a `char` representation. It's just an integer value stored as an array of `Trit`s that corresponds to a UTF-16 character.
 
-Also includes most of the `Math` functions specifically for use with these `FloatT`s and some for use with `IntT`s and `Tryte`s in a static class called `MathT`. I also added a `Log3` function and trit increment/decrement for `FloatT`s.
+Also includes most of the `Math` functions specifically for use with these `FloatT`s and some for use with `IntT`s and `Tryte`s in a static class called `MathT`. I also added a `Log3` function and an `ILogT` function and trit increment/decrement functions for `FloatT`s.
 
 The `string` conversion is for interoperability with my "Action Ternary Simulator" which runs on strings of `+, -, and 0` characters and does all the math in Ternary. Also for quick visualization of the ternary values as symbols and checking the outputs of functions like `SHIFTRIGHT` or `SHIFTLEFT` or trit increment/decrement.
 
