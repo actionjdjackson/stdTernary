@@ -373,18 +373,22 @@ namespace stdTernary
         public string TryteString { get => ConvertToStringRepresentation(); }
         public short ShortValue { get => shortValue; set => SetValue(value); }
 
+        public const Trit.TritVal Equal = Trit.TritVal.z;
+        public const Trit.TritVal Smaller = Trit.TritVal.n;
+        public const Trit.TritVal Larger = Trit.TritVal.p;
+
         public static Tryte operator &(Tryte left, Tryte right) => left.AND(right);
         public static Tryte operator |(Tryte left, Tryte right) => left.OR(right);
         public static Tryte operator ^(Tryte left, Tryte right) => left.XOR(right);
         public static Tryte operator ~(Tryte tryte) => tryte.INVERT();
-        public static bool operator ==(Tryte left, Tryte right) => COMPARET(left, right).Value == Trit.TritVal.z;
+        public static bool operator ==(Tryte left, Tryte right) => COMPARET(left, right).Value == Equal;
         public static bool operator ==(Tryte left, int right) => left.shortValue == right;
-        public static bool operator !=(Tryte left, Tryte right) => COMPARET(left, right).Value != Trit.TritVal.z;
+        public static bool operator !=(Tryte left, Tryte right) => COMPARET(left, right).Value != Equal;
         public static bool operator !=(Tryte left, int right) => left.shortValue != right;
-        public static bool operator >(Tryte left, Tryte right) => COMPARET(left, right).Value == Trit.TritVal.p;
-        public static bool operator <(Tryte left, Tryte right) => COMPARET(left, right).Value == Trit.TritVal.n;
-        public static bool operator >=(Tryte left, Tryte right) => COMPARET(left, right).Value != Trit.TritVal.n;
-        public static bool operator <=(Tryte left, Tryte right) => COMPARET(left, right).Value != Trit.TritVal.p;
+        public static bool operator >(Tryte left, Tryte right) => COMPARET(left, right).Value == Larger;
+        public static bool operator <(Tryte left, Tryte right) => COMPARET(left, right).Value == Smaller;
+        public static bool operator >=(Tryte left, Tryte right) => COMPARET(left, right).Value != Smaller;
+        public static bool operator <=(Tryte left, Tryte right) => COMPARET(left, right).Value != Larger;
         public static bool operator >(Tryte left, int right) => left.shortValue > right;
         public static bool operator <(Tryte left, int right) => left.shortValue < right;
         public static bool operator >=(Tryte left, int right) => left.shortValue >= right;
@@ -918,14 +922,18 @@ namespace stdTernary
         public string IntTString { get => ConvertToStringRepresentation(); }
         public long LongValue { get => longValue; set => SetValue(value); }
 
-        public static bool operator ==(IntT left, IntT right) => COMPARET(left, right).Value == Trit.TritVal.z;
-        public static bool operator !=(IntT left, IntT right) => COMPARET(left, right).Value != Trit.TritVal.z;
+        public const Trit.TritVal Equal = Trit.TritVal.z;
+        public const Trit.TritVal Smaller = Trit.TritVal.n;
+        public const Trit.TritVal Larger = Trit.TritVal.p;
+
+        public static bool operator ==(IntT left, IntT right) => COMPARET(left, right).Value == Equal;
+        public static bool operator !=(IntT left, IntT right) => COMPARET(left, right).Value != Equal;
         public static bool operator ==(IntT left, int right) => left.longValue == right;
         public static bool operator !=(IntT left, int right) => left.longValue != right;
-        public static bool operator >(IntT left, IntT right) => COMPARET(left, right).Value == Trit.TritVal.p;
-        public static bool operator <(IntT left, IntT right) => COMPARET(left, right).Value == Trit.TritVal.n;
-        public static bool operator >=(IntT left, IntT right) => COMPARET(left, right).Value != Trit.TritVal.n;
-        public static bool operator <=(IntT left, IntT right) => COMPARET(left, right).Value != Trit.TritVal.p;
+        public static bool operator >(IntT left, IntT right) => COMPARET(left, right).Value == Larger;
+        public static bool operator <(IntT left, IntT right) => COMPARET(left, right).Value == Smaller;
+        public static bool operator >=(IntT left, IntT right) => COMPARET(left, right).Value != Smaller;
+        public static bool operator <=(IntT left, IntT right) => COMPARET(left, right).Value != Larger;
         public static bool operator >(IntT left, int right) => left.longValue > right;
         public static bool operator <(IntT left, int right) => left.longValue < right;
         public static bool operator >=(IntT left, int right) => left.longValue >= right;
@@ -1466,14 +1474,18 @@ namespace stdTernary
         public Trit[] Value { get => floatt; set => SetValue(value); }
         public string FloatTString { get => ConvertToStringRepresentation(); }
 
-        public static bool operator ==(FloatT left, FloatT right) => COMPARET(left, right).Value == Trit.TritVal.z;
-        public static bool operator !=(FloatT left, FloatT right) => COMPARET(left, right).Value != Trit.TritVal.z;
+        public const Trit.TritVal Equal = Trit.TritVal.z;
+        public const Trit.TritVal Smaller = Trit.TritVal.n;
+        public const Trit.TritVal Larger = Trit.TritVal.p;
+
+        public static bool operator ==(FloatT left, FloatT right) => COMPARET(left, right).Value == Equal;
+        public static bool operator !=(FloatT left, FloatT right) => COMPARET(left, right).Value != Equal;
         public static bool operator ==(FloatT left, double right) => left.doubleValue == right;
         public static bool operator !=(FloatT left, double right) => left.doubleValue != right;
-        public static bool operator >(FloatT left, FloatT right) => COMPARET(left, right).Value == Trit.TritVal.p;
-        public static bool operator <(FloatT left, FloatT right) => COMPARET(left, right).Value == Trit.TritVal.n;
-        public static bool operator >=(FloatT left, FloatT right) => COMPARET(left, right).Value != Trit.TritVal.n;
-        public static bool operator <=(FloatT left, FloatT right) => COMPARET(left, right).Value != Trit.TritVal.p;
+        public static bool operator >(FloatT left, FloatT right) => COMPARET(left, right).Value == Larger;
+        public static bool operator <(FloatT left, FloatT right) => COMPARET(left, right).Value == Smaller;
+        public static bool operator >=(FloatT left, FloatT right) => COMPARET(left, right).Value != Smaller;
+        public static bool operator <=(FloatT left, FloatT right) => COMPARET(left, right).Value != Larger;
         public static bool operator >(FloatT left, double right) => left.doubleValue > right;
         public static bool operator <(FloatT left, double right) => left.doubleValue < right;
         public static bool operator >=(FloatT left, double right) => left.doubleValue >= right;
@@ -2501,8 +2513,12 @@ namespace stdTernary
         public string CharTString { get => ConvertToStringRepresentation(); }
         public char CharValue { get => charValue; set => SetValue(value); }
 
-        public static bool operator ==(CharT left, CharT right) => COMPARET(left, right).Value == Trit.TritVal.z;
-        public static bool operator !=(CharT left, CharT right) => COMPARET(left, right).Value != Trit.TritVal.z;
+        public const Trit.TritVal Equal = Trit.TritVal.z;
+        public const Trit.TritVal Smaller = Trit.TritVal.n;
+        public const Trit.TritVal Larger = Trit.TritVal.p;
+
+        public static bool operator ==(CharT left, CharT right) => COMPARET(left, right).Value == Equal;
+        public static bool operator !=(CharT left, CharT right) => COMPARET(left, right).Value != Equal;
         public static bool operator ==(CharT left, char right) => left.charValue == right;
         public static bool operator !=(CharT left, char right) => left.charValue != right;
         public static implicit operator char(CharT chart) => chart.CharValue;

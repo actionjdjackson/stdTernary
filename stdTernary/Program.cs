@@ -1,6 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Running;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using stdTernary;
 
 namespace stdTernary
@@ -11,6 +12,39 @@ namespace stdTernary
         {
             IntT a = 120;
             IntT b = 60;
+
+            switch(IntT.COMPARET(a, b).Value)
+            {
+                case IntT.Larger:
+                    { Console.WriteLine("a was larger than b"); }
+                break;
+                case IntT.Smaller:
+                    { Console.WriteLine("a was smaller than b"); }
+                break;
+                case IntT.Equal:
+                    { Console.WriteLine("a was equal to b"); }
+                break;
+                default:
+                    { Console.WriteLine("else branch was executed"); }
+                break;
+            }
+
+            switch(IntT.COMPARET(b, a).Value)
+            {
+                case IntT.Larger:
+                    { Console.WriteLine("b was larger than a"); }
+                break;
+                case IntT.Smaller:
+                    { Console.WriteLine("b was smaller than a"); }
+                break;
+                case IntT.Equal:
+                    { Console.WriteLine("b was equal to a"); }
+                break;
+                default:
+                    { Console.WriteLine("else branch was executed"); }
+                break;
+            }
+
             IntT.COMPARET(a, b)
                         .Larger(() => {Console.WriteLine("a was larger than b");})
                         .Equal(() => {Console.WriteLine("a was equal to b");})
@@ -23,6 +57,7 @@ namespace stdTernary
             IntT.COMPARET(a, b)
                         .Larger(() => {Console.WriteLine("a was larger than b");})
                         .Equal(() => {Console.WriteLine("a was equal to b");})
+                        .LargerOrEqual(() => {Console.WriteLine("a was larger than or equal to b");})
                         .Smaller(() => { Console.WriteLine("a was smaller than b");});
 
             FloatT c = 3.14159;
