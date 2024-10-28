@@ -8,19 +8,19 @@ Intel Core i9-9880H CPU 2.30GHz, 1 CPU, 16 logical and 8 physical cores
 
 
 ```
-| Method                   | Mean           | Error         | StdDev          | Median         | Gen0       | Allocated    |
-|------------------------- |---------------:|--------------:|----------------:|---------------:|-----------:|-------------:|
-| TestIntTAddition         |       870.6 μs |      17.38 μs |        30.43 μs |       859.0 μs |    16.6016 |    140.63 KB |
-| TestIntTSubtraction      |     1,307.8 μs |      24.28 μs |        23.84 μs |     1,309.9 μs |    21.4844 |     187.5 KB |
-| TestIntTMultiplication   |    29,994.8 μs |     597.58 μs |     1,077.55 μs |    29,616.0 μs |   437.5000 |   3691.43 KB |
-| TestIntTDivision         | 6,451,045.2 μs | 400,232.90 μs | 1,167,498.24 μs | 6,423,793.8 μs | 57000.0000 | 471782.98 KB |
-| TestIntTModulus          | 7,713,429.2 μs | 585,930.35 μs | 1,681,144.13 μs | 7,412,070.9 μs | 86000.0000 | 710028.95 KB |
-| TestIntTPower            |   143,226.0 μs |   1,142.98 μs |     1,069.14 μs |   143,668.3 μs |  1750.0000 |  15704.39 KB |
-| TestFloatTAddition       |    36,747.8 μs |     505.60 μs |       472.94 μs |    36,894.9 μs |  1153.8462 |    9518.4 KB |
-| TestFloatTSubtraction    |    30,752.3 μs |   1,084.56 μs |     3,197.84 μs |    29,852.7 μs |  1142.8571 |   9873.72 KB |
-| TestFloatTMultiplication |             NA |            NA |              NA |             NA |         NA |           NA |
-| TestFloatTDivision       |             NA |            NA |              NA |             NA |         NA |           NA |
-| TestFloatTModulus        |     4,295.8 μs |      37.49 μs |        35.07 μs |     4,303.8 μs |   148.4375 |   1231.45 KB |
+| Method                   | Mean            | Error           | StdDev          | Gen0        | Gen1      | Allocated    |
+|------------------------- |----------------:|----------------:|----------------:|------------:|----------:|-------------:|
+| TestIntTAddition         |        203.8 μs |         3.96 μs |         5.01 μs |      8.5449 |         - |     70.31 KB |
+| TestIntTSubtraction      |        218.0 μs |         4.20 μs |         4.13 μs |     11.4746 |         - |     93.75 KB |
+| TestIntTMultiplication   |      1,818.8 μs |        32.04 μs |        34.28 μs |    216.7969 |         - |   1781.25 KB |
+| TestIntTDivision         |    438,071.5 μs |    35,025.34 μs |   102,723.28 μs |  35000.0000 |         - | 291309.86 KB |
+| TestIntTModulus          |    422,855.5 μs |    27,560.72 μs |    80,830.83 μs |  46500.0000 |         - | 380739.43 KB |
+| TestIntTPower            |      8,487.1 μs |       145.03 μs |       128.57 μs |    953.1250 |         - |   7861.48 KB |
+| TestFloatTAddition       |     11,165.4 μs |       222.62 μs |       312.08 μs |    562.5000 |         - |   4657.75 KB |
+| TestFloatTSubtraction    |     10,916.6 μs |       207.33 μs |       203.62 μs |    562.5000 |         - |   4718.79 KB |
+| TestFloatTMultiplication |              NA |              NA |              NA |          NA |        NA |           NA |
+| TestFloatTDivision       |              NA |              NA |              NA |          NA |        NA |           NA |
+| TestFloatTModulus        | 15,540,848.0 μs | 1,885,404.20 μs | 5,224,446.55 μs | 831000.0000 | 4000.0000 | 6790614.8 KB |
 
 Benchmarks with issues:
   TernaryBenchmarks.TestFloatTMultiplication: DefaultJob

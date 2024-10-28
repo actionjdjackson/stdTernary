@@ -79,14 +79,14 @@ namespace stdTernary
                         .Smaller(() => {Console.WriteLine("c was smaller than d");})
                         .Else(() => {Console.WriteLine("c was not smaller than d, took the else branch");});
 
-            //var summary = BenchmarkRunner.Run<TernaryBenchmarks>();
+            var summary = BenchmarkRunner.Run<TernaryBenchmarks>();
         }
     }
 
     [MemoryDiagnoser]
     public class TernaryBenchmarks
     {
-        int nIterations = 1000;
+        int nIterations = 500;
         Random r = new Random();
 
         [Benchmark]
@@ -174,8 +174,8 @@ namespace stdTernary
         {
             for (int i = 0; i < nIterations; i++)
             {
-                FloatT a = r.NextDouble() * r.Next(-10000, 10000);
-                FloatT b = r.NextDouble() * r.Next(-10000, 10000);
+                FloatT a = r.NextSingle() * r.Next(-10000, 10000);
+                FloatT b = r.NextSingle() * r.Next(-10000, 10000);
                 var c = a + b;
             }
         }
@@ -185,8 +185,8 @@ namespace stdTernary
         {
             for (int i = 0; i < nIterations; i++)
             {
-                FloatT a = r.NextDouble() * r.Next(-10000, 10000);
-                FloatT b = r.NextDouble() * r.Next(-10000, 10000);
+                FloatT a = r.NextSingle() * r.Next(-10000, 10000);
+                FloatT b = r.NextSingle() * r.Next(-10000, 10000);
                 var c = a - b;
             }
         }
@@ -196,8 +196,8 @@ namespace stdTernary
         {
             for (int i = 0; i < nIterations; i++)
             {
-                FloatT a = r.NextDouble() * r.Next(-10000, 10000);
-                FloatT b = r.NextDouble() * r.Next(-10000, 10000);
+                FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-10000, 10000));
+                FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-10000, 10000));
                 var c = a * b;
             }
         }
@@ -207,8 +207,8 @@ namespace stdTernary
         {
             for (int i = 0; i < nIterations; i++)
             {
-                FloatT a = r.NextDouble() * r.Next(-10000, 10000);
-                FloatT b = r.NextDouble() * r.Next(-100, 100);
+                FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-10000, 10000));
+                FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-100, 100));
                 try
                 {
                     var c = a / b;                
@@ -225,8 +225,8 @@ namespace stdTernary
         {
             for (int i = 0; i < nIterations; i++)
             {
-                FloatT a = r.NextDouble() * r.Next(-10000, 10000);
-                FloatT b = r.NextDouble() * r.Next(-100, 100);
+                FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-10000, 10000));
+                FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-100, 100));
                 try
                 {
                     var c = a % b;                

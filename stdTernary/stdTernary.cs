@@ -367,11 +367,11 @@ namespace stdTernary
         /// <summary>
         /// The Tryte vaue represented by a short binary integer
         /// </summary>
-        private short shortValue;
+        //private short shortValue;
 
         public Trit[] Value { get => tryte; set => SetValue(value); }
         public string TryteString { get => ConvertToStringRepresentation(); }
-        public short ShortValue { get => shortValue; set => SetValue(value); }
+        public short ShortValue { get => ConvertBalancedTritsToInteger(tryte); set => SetValue(value); }
 
         public const Trit.TritVal Equal = Trit.TritVal.z;
         public const Trit.TritVal Smaller = Trit.TritVal.n;
@@ -382,17 +382,17 @@ namespace stdTernary
         public static Tryte operator ^(Tryte left, Tryte right) => left.XOR(right);
         public static Tryte operator ~(Tryte tryte) => tryte.INVERT();
         public static bool operator ==(Tryte left, Tryte right) => COMPARET(left, right).Value == Equal;
-        public static bool operator ==(Tryte left, int right) => left.shortValue == right;
+        public static bool operator ==(Tryte left, int right) => left.ShortValue == right;
         public static bool operator !=(Tryte left, Tryte right) => COMPARET(left, right).Value != Equal;
-        public static bool operator !=(Tryte left, int right) => left.shortValue != right;
+        public static bool operator !=(Tryte left, int right) => left.ShortValue != right;
         public static bool operator >(Tryte left, Tryte right) => COMPARET(left, right).Value == Larger;
         public static bool operator <(Tryte left, Tryte right) => COMPARET(left, right).Value == Smaller;
         public static bool operator >=(Tryte left, Tryte right) => COMPARET(left, right).Value != Smaller;
         public static bool operator <=(Tryte left, Tryte right) => COMPARET(left, right).Value != Larger;
-        public static bool operator >(Tryte left, int right) => left.shortValue > right;
-        public static bool operator <(Tryte left, int right) => left.shortValue < right;
-        public static bool operator >=(Tryte left, int right) => left.shortValue >= right;
-        public static bool operator <=(Tryte left, int right) => left.shortValue <= right;
+        public static bool operator >(Tryte left, int right) => left.ShortValue > right;
+        public static bool operator <(Tryte left, int right) => left.ShortValue < right;
+        public static bool operator >=(Tryte left, int right) => left.ShortValue >= right;
+        public static bool operator <=(Tryte left, int right) => left.ShortValue <= right;
         public static Tryte operator +(Tryte left, Tryte right) => left.ADD(right);
         public static Tryte operator *(Tryte left, Tryte right) => left.MULT(right);
         public static Tryte operator -(Tryte left, Tryte right) => left.SUB(right);
@@ -404,27 +404,19 @@ namespace stdTernary
         public static Tryte operator --(Tryte tryte) => tryte - 1;
         public static Tryte operator +(Tryte tryte) => MathT.Abs(tryte);
         public static Tryte operator -(Tryte tryte) => ~tryte;
-        public static implicit operator short(Tryte tryte) => tryte.shortValue;
+        public static implicit operator short(Tryte tryte) => tryte.ShortValue;
         public static implicit operator Tryte(short shortValue) => (shortValue <= MaxValue && shortValue >= MinValue) ? new Tryte(shortValue) : throw new ArithmeticException("Tried to assign to a tryte a short that has a magnitude too big for a tryte of " + N_TRITS_PER_TRYTE + " trits");
-        public static implicit operator int(Tryte tryte) => tryte.shortValue;
+        public static implicit operator int(Tryte tryte) => tryte.ShortValue;
         public static implicit operator Tryte(int intValue) => (intValue <= MaxValue && intValue >= MinValue) ? new Tryte((short)intValue) : throw new ArithmeticException("Tried to assign to a tryte an int that has a magnitude too big for a tryte of " + N_TRITS_PER_TRYTE + " trits");
         public static explicit operator string(Tryte tryte) => tryte.TryteString;
         public static explicit operator Tryte(string str) => new Tryte(str);
-        public static implicit operator double(Tryte tryte) => tryte.shortValue;
+        public static implicit operator double(Tryte tryte) => tryte.ShortValue;
 
         public Tryte(Trit[] value)
         {
             if (value.Length == N_TRITS_PER_TRYTE)
             {
                 this.tryte = value;
-                short sum = 0;
-                short exponent = (short)(N_TRITS_PER_TRYTE - 1);
-                foreach (var trit in value)
-                {
-                    sum += (short)((sbyte)trit.Value * Math.Pow(3, exponent));   //exponent increases as the invisible index increases, and adds to the sum if the trit is -1 or 1
-                    exponent--;
-                }
-                shortValue = sum;
             }
             else
             {
@@ -432,11 +424,22 @@ namespace stdTernary
             }
         }
 
+        public short ConvertBalancedTritsToInteger(Trit[] value)
+        {
+            short sum = 0;
+            short exponent = (short)(N_TRITS_PER_TRYTE - 1);
+            foreach (var trit in value)
+            {
+                sum += (short)((sbyte)trit.Value * Math.Pow(3, exponent));   //exponent increases as the invisible index increases, and adds to the sum if the trit is -1 or 1
+                exponent--;
+            }
+            return sum;
+        }
+
         public Tryte(short value)
         {
             if (value <= MaxValue && value >= MinValue)
             {
-                shortValue = value;
                 this.tryte = ConvertIntegerToBalancedTrits(value);
             }
             else
@@ -450,18 +453,18 @@ namespace stdTernary
             if (value.Length == N_TRITS_PER_TRYTE)
             {
                 tryte = new Trit[N_TRITS_PER_TRYTE];
-                short sum = 0;
-                short exponent = (short)(N_TRITS_PER_TRYTE - 1);
+                // short sum = 0;
+                // short exponent = (short)(N_TRITS_PER_TRYTE - 1);
                 for (int i = 0; i < value.Length; i++)
                 {
                     switch (value[i])
                     {
                         case '+':
-                            sum += (short)Math.Pow(3, exponent);
+                            //sum += (short)Math.Pow(3, exponent);
                             tryte[i] = new Trit(1);
                             break;
                         case '-':
-                            sum -= (short)Math.Pow(3, exponent);
+                            //sum -= (short)Math.Pow(3, exponent);
                             tryte[i] = new Trit(-1);
                             break;
                         case '0':
@@ -470,9 +473,9 @@ namespace stdTernary
                         default:
                             throw new ArgumentException("Invalid character encountered in a balanced ternary char array. Please stick to +, -, 0's", "value");
                     }
-                    exponent--;
+                    //exponent--;
                 }
-                shortValue = sum;
+                //shortValue = sum;
             }
             else
             {
@@ -485,14 +488,14 @@ namespace stdTernary
             if (value.Length == N_TRITS_PER_TRYTE)
             {
                 this.tryte = value;
-                short sum = 0;
-                short exponent = (short)(N_TRITS_PER_TRYTE - 1);
-                foreach (var trit in value)
-                {
-                    sum += (short)((sbyte)trit.Value * Math.Pow(3, exponent));   //exponent increases as the invisible index increases, and adds to the sum if the trit is -1 or 1
-                    exponent--;
-                }
-                shortValue = sum;
+                // short sum = 0;
+                // short exponent = (short)(N_TRITS_PER_TRYTE - 1);
+                // foreach (var trit in value)
+                // {
+                //     sum += (short)((sbyte)trit.Value * Math.Pow(3, exponent));   //exponent increases as the invisible index increases, and adds to the sum if the trit is -1 or 1
+                //     exponent--;
+                // }
+                // shortValue = sum;
             }
             else
             {
@@ -505,18 +508,18 @@ namespace stdTernary
             if (value.Length == N_TRITS_PER_TRYTE)
             {
                 tryte = new Trit[N_TRITS_PER_TRYTE];
-                short sum = 0;
-                short exponent = (short)(N_TRITS_PER_TRYTE - 1);
+                // short sum = 0;
+                // short exponent = (short)(N_TRITS_PER_TRYTE - 1);
                 for (int i = 0; i < value.Length; i++)
                 {
                     switch (value[i])
                     {
                         case '+':
-                            sum += (short)Math.Pow(3, exponent);
+                            //sum += (short)Math.Pow(3, exponent);
                             tryte[i] = new Trit(1);
                             break;
                         case '-':
-                            sum -= (short)Math.Pow(3, exponent);
+                            //sum -= (short)Math.Pow(3, exponent);
                             tryte[i] = new Trit(-1);
                             break;
                         case '0':
@@ -525,9 +528,9 @@ namespace stdTernary
                         default:
                             throw new ArgumentException("Invalid character encountered in a balanced ternary char array. Please stick to +, -, 0's", "value");
                     }
-                    exponent--;
+                    //exponent--;
                 }
-                shortValue = sum;
+                //shortValue = sum;
             }
             else
             {
@@ -539,7 +542,7 @@ namespace stdTernary
         {
             if (value <= MaxValue && value >= MinValue)
             {
-                shortValue = value;
+                //shortValue = value;
                 this.tryte = ConvertIntegerToBalancedTrits(value);
             }
             else
@@ -598,7 +601,7 @@ namespace stdTernary
 
         public override string ToString()
         {
-            return new string(TryteString) + " = " + shortValue;
+            return new string(TryteString) + " = " + ShortValue;
         }
 
         public string ConvertToStringRepresentation()
@@ -916,11 +919,11 @@ namespace stdTernary
         /// <summary>
         /// The binary representation of the value of hte IntT as a long integer
         /// </summary>
-        private long longValue;
+        //private long longValue;
 
         public Trit[] Value { get => intt; set => SetValue(value); }
         public string IntTString { get => ConvertToStringRepresentation(); }
-        public long LongValue { get => longValue; set => SetValue(value); }
+        public long LongValue { get => ConvertBalancedTritsToInteger(intt); set => SetValue(value); }
 
         public const Trit.TritVal Equal = Trit.TritVal.z;
         public const Trit.TritVal Smaller = Trit.TritVal.n;
@@ -928,16 +931,16 @@ namespace stdTernary
 
         public static bool operator ==(IntT left, IntT right) => COMPARET(left, right).Value == Equal;
         public static bool operator !=(IntT left, IntT right) => COMPARET(left, right).Value != Equal;
-        public static bool operator ==(IntT left, int right) => left.longValue == right;
-        public static bool operator !=(IntT left, int right) => left.longValue != right;
+        public static bool operator ==(IntT left, int right) => left.LongValue == right;
+        public static bool operator !=(IntT left, int right) => left.LongValue != right;
         public static bool operator >(IntT left, IntT right) => COMPARET(left, right).Value == Larger;
         public static bool operator <(IntT left, IntT right) => COMPARET(left, right).Value == Smaller;
         public static bool operator >=(IntT left, IntT right) => COMPARET(left, right).Value != Smaller;
         public static bool operator <=(IntT left, IntT right) => COMPARET(left, right).Value != Larger;
-        public static bool operator >(IntT left, int right) => left.longValue > right;
-        public static bool operator <(IntT left, int right) => left.longValue < right;
-        public static bool operator >=(IntT left, int right) => left.longValue >= right;
-        public static bool operator <=(IntT left, int right) => left.longValue <= right;
+        public static bool operator >(IntT left, int right) => left.LongValue > right;
+        public static bool operator <(IntT left, int right) => left.LongValue < right;
+        public static bool operator >=(IntT left, int right) => left.LongValue >= right;
+        public static bool operator <=(IntT left, int right) => left.LongValue <= right;
         public static IntT operator +(IntT left, IntT right) => left.ADD(right);
         public static IntT operator -(IntT left, IntT right) => left.SUB(right);
         public static IntT operator *(IntT left, IntT right) => left.MULT(right);
@@ -950,16 +953,16 @@ namespace stdTernary
         public static IntT operator +(IntT intt) => MathT.Abs(intt);
         public static IntT operator -(IntT intt) => intt.INVERT();
         public static IntT operator ~(IntT intt) => intt.INVERT();
-        public static implicit operator long(IntT intt) => (intt <= long.MaxValue && intt >= long.MinValue) ? intt.longValue : throw new ArithmeticException("Converting a IntT to a long value failed because it was outside the range of the long max/min values");
+        public static implicit operator long(IntT intt) => (intt <= long.MaxValue && intt >= long.MinValue) ? intt.LongValue : throw new ArithmeticException("Converting a IntT to a long value failed because it was outside the range of the long max/min values");
         public static implicit operator IntT(long @int) => (@int <= MaxValue && @int >= MinValue) ? new IntT(@int) : throw new ArithmeticException("Converting a long value to a IntT failed because it was outside the range of the IntT implementation: " + @int.ToString());
-        public static implicit operator int(IntT intt) => (intt <= int.MaxValue && intt >= int.MinValue) ? (int)intt.longValue : throw new ArithmeticException("Converting a IntT to an int failed because the value was outside the range of the int max/min values");
+        public static implicit operator int(IntT intt) => (intt <= int.MaxValue && intt >= int.MinValue) ? (int)intt.LongValue : throw new ArithmeticException("Converting a IntT to an int failed because the value was outside the range of the int max/min values");
         public static implicit operator IntT(int @int) => (@int <= MaxValue && @int >= MinValue) ? new IntT(@int) : throw new ArithmeticException("Converting an int value to a IntT failed because it was outside the range of the IntT implementation");
         public static explicit operator IntT(Tryte tryte) => new IntT(tryte.ShortValue);
         ///public static implicit operator short(IntT intt) => (intt <= short.MaxValue && intt >= short.MinValue) ? (short)intt.longValue : throw new ArithmeticException("Converting a IntT to a short failed because the value was outside the range of the short max/min values");
         //public static implicit operator IntT(short @int) => (@int <= MaxValue && @int >= MinValue) ? new IntT(@int) : throw new ArithmeticException("Converting a short value to a IntT failed because it was outside the range of the IntT implementation");
         public static explicit operator string(IntT intt) => intt.IntTString;
         public static explicit operator IntT(string str) => new IntT(str);
-        public static explicit operator double(IntT intt) => intt.longValue;
+        public static explicit operator double(IntT intt) => intt.LongValue;
 
         /// <summary>
         /// Constructor for the IntT struct, taking an array of Trits
@@ -970,7 +973,7 @@ namespace stdTernary
             if (value.Length == N_TRITS_PER_INT)
             {
                 intt = value;
-                longValue = ConvertBalancedTritsToInteger(value);
+                //longValue = ConvertBalancedTritsToInteger(value);
             }
             else if (value.Length < N_TRITS_PER_INT)
             {
@@ -983,7 +986,7 @@ namespace stdTernary
                 {
                     intt[i] = value[i - (N_TRITS_PER_INT - value.Length)];
                 }
-                longValue = ConvertBalancedTritsToInteger(intt);
+                //longValue = ConvertBalancedTritsToInteger(intt);
             }
             else
             {
@@ -1010,7 +1013,7 @@ namespace stdTernary
                         _ => throw new ArgumentException("Invalid character encountered in a balanced ternary char array. Please stick to +, -, 0's", "value"),
                     };
                 }
-                longValue = ConvertBalancedTritsToInteger(intt);
+                //longValue = ConvertBalancedTritsToInteger(intt);
             }
             else
             {
@@ -1024,7 +1027,7 @@ namespace stdTernary
         /// <param name="value">The value passed in, as a long binary integer</param>
         public IntT(long value)
         {
-            longValue = value;
+            //longValue = value;
             intt = ConvertIntegerToBalancedTrits(value);
         }
 
@@ -1051,7 +1054,7 @@ namespace stdTernary
 
         public override string ToString()
         {
-            return IntTString + " = " + longValue;
+            return IntTString + " = " + LongValue;
         }
 
         public override bool Equals(object obj)
@@ -1070,7 +1073,7 @@ namespace stdTernary
             if (value.Length == N_TRITS_PER_INT)
             {
                 intt = value;
-                longValue = ConvertBalancedTritsToInteger(value);
+                //longValue = ConvertBalancedTritsToInteger(value);
             }
             else if (value.Length < N_TRITS_PER_INT)
             {
@@ -1083,7 +1086,7 @@ namespace stdTernary
                 {
                     intt[i] = value[i - (N_TRITS_PER_INT - value.Length)];
                 }
-                longValue = ConvertBalancedTritsToInteger(intt);
+                //longValue = ConvertBalancedTritsToInteger(intt);
             }
             else
             {
@@ -1095,7 +1098,7 @@ namespace stdTernary
         {
             if (value <= MaxValue && value >= MinValue)
             {
-                longValue = value;
+                //longValue = value;
                 intt = ConvertIntegerToBalancedTrits(value);
             }
             else
@@ -1118,7 +1121,7 @@ namespace stdTernary
                         _ => throw new ArgumentException("Invalid character encountered in a balanced ternary char array. Please stick to +, -, 0's", "value"),
                     };
                 }
-                longValue = ConvertBalancedTritsToInteger(intt);
+                //longValue = ConvertBalancedTritsToInteger(intt);
             }
             else
             {
@@ -1288,7 +1291,7 @@ namespace stdTernary
                         }
                         if (COMPARET(this, 0).Value == Trit.TritVal.n ^ COMPARET(divisor, 0).Value == Trit.TritVal.n)
                         {
-                            quot = ~quot;
+                            quot = -quot;
                         }
                         return quot;
                     }
@@ -1305,35 +1308,35 @@ namespace stdTernary
 
         public (IntT, IntT) DIVREM(IntT divisor)
         {
-            if (COMPARET(divisor, 0).Value == Trit.TritVal.z)
+            if (COMPARET(divisor, 0).Value == Equal)
             {
                 throw new DivideByZeroException("Attempt to divide by zero in IntT division operation.");
             }
-            else if (COMPARET(MathT.Abs(this), MathT.Abs(divisor)).Value == Trit.TritVal.p)
+            else if (COMPARET(MathT.Abs(this), MathT.Abs(divisor)).Value == Larger)
             {
                 var divd = MathT.Abs(this);
-                var divsr = MathT.Abs(divisor);
+                var divsr = MathT.Abs(divisor);    //make divsr negative for subtracting
                 var quot = new IntT(0);
                 var rem = new IntT(divd.Value);
 
-                while (COMPARET(rem, divsr).Value != Trit.TritVal.n)
+                while (COMPARET(rem, divsr).Value != Smaller)
                 {
-                    rem -= divsr;
+                    rem -= divsr;   //actually subtracting, as we made divsr negative
                     quot++;
                 }
-                if (COMPARET(this, 0).Value == Trit.TritVal.n ^ COMPARET(divisor, 0).Value == Trit.TritVal.n)
+                if (COMPARET(this, 0).Value == Smaller ^ COMPARET(divisor, 0).Value == Smaller)
                 {
-                    quot = ~quot;
+                    quot = -quot;
                 }
                 return (quot, rem);
             }
-            else if (COMPARET(this, divisor).Value == Trit.TritVal.z)
+            else if (COMPARET(this, divisor).Value == Equal)
             {
                 return (new IntT(1), new IntT(0));
             }
             else
             {
-                return (new IntT(0), new IntT(0));
+                return (new IntT(0), this);
             }
         }
 
@@ -1343,6 +1346,7 @@ namespace stdTernary
             this.intt.CopyTo(temp, 0);
             Array.Reverse(temp);
             var product = new IntT(0);
+            var invertedMultIntT = multIntT.INVERT();
             for (int i = 0; i < N_TRITS_PER_INT; i++)
             {
                 var trit = temp[i];
@@ -1350,7 +1354,7 @@ namespace stdTernary
                 switch (trit.Value)
                 {
                     case Trit.TritVal.n:
-                        temp2 = new IntT(multIntT.INVERT().Value);
+                        temp2 = new IntT(invertedMultIntT.Value);
                         break;
                     case Trit.TritVal.p:
                         temp2 = new IntT(multIntT.Value);
@@ -1468,9 +1472,9 @@ namespace stdTernary
         /// <summary>
         /// The FloatT value represented as a binary double
         /// </summary>
-        private double doubleValue;
+        //private double doubleValue;
 
-        public double DoubleValue { get => doubleValue; set => SetValue(value); }   //when we modify the three value types, they are calling the appropriate SetValue function for that type
+        public double DoubleValue { get => ConvertToDouble(); set => SetValue(value); }   //when we modify the three value types, they are calling the appropriate SetValue function for that type
         public Trit[] Value { get => floatt; set => SetValue(value); }
         public string FloatTString { get => ConvertToStringRepresentation(); }
 
@@ -1480,21 +1484,22 @@ namespace stdTernary
 
         public static bool operator ==(FloatT left, FloatT right) => COMPARET(left, right).Value == Equal;
         public static bool operator !=(FloatT left, FloatT right) => COMPARET(left, right).Value != Equal;
-        public static bool operator ==(FloatT left, double right) => left.doubleValue == right;
-        public static bool operator !=(FloatT left, double right) => left.doubleValue != right;
+        public static bool operator ==(FloatT left, double right) => left.DoubleValue == right;
+        public static bool operator !=(FloatT left, double right) => left.DoubleValue != right;
         public static bool operator >(FloatT left, FloatT right) => COMPARET(left, right).Value == Larger;
         public static bool operator <(FloatT left, FloatT right) => COMPARET(left, right).Value == Smaller;
         public static bool operator >=(FloatT left, FloatT right) => COMPARET(left, right).Value != Smaller;
         public static bool operator <=(FloatT left, FloatT right) => COMPARET(left, right).Value != Larger;
-        public static bool operator >(FloatT left, double right) => left.doubleValue > right;
-        public static bool operator <(FloatT left, double right) => left.doubleValue < right;
-        public static bool operator >=(FloatT left, double right) => left.doubleValue >= right;
-        public static bool operator <=(FloatT left, double right) => left.doubleValue <= right;
+        public static bool operator >(FloatT left, double right) => left.DoubleValue > right;
+        public static bool operator <(FloatT left, double right) => left.DoubleValue < right;
+        public static bool operator >=(FloatT left, double right) => left.DoubleValue >= right;
+        public static bool operator <=(FloatT left, double right) => left.DoubleValue <= right;
         public static FloatT operator +(FloatT left, FloatT right) => left.ADD(right);
         public static FloatT operator -(FloatT left, FloatT right) => left.SUB(right);
         public static FloatT operator *(FloatT left, FloatT right) => left.MULT(right);
         public static FloatT operator /(FloatT left, FloatT right) => left.DIV(right);
-        public static FloatT operator %(FloatT left, FloatT right) => new FloatT(left.doubleValue % right.doubleValue);
+        //public static FloatT operator %(FloatT left, FloatT right) => new FloatT(left.doubleValue % right.doubleValue);
+        public static FloatT operator %(FloatT left, FloatT right) => left.MOD(right);
         //public static FloatT operator ++(FloatT left) => new FloatT(left.doubleValue += 1); 
         //public static FloatT operator --(FloatT left) => new FloatT(left.doubleValue -= 1); //not sure if ++ or -- are appropriate for a floating point number
         public static FloatT operator +(FloatT floatt) => MathT.Abs(floatt);
@@ -1548,33 +1553,33 @@ namespace stdTernary
             significand = new Trit[N_TRITS_SIGNIFICAND];
             if (value == 0 || Math.Abs(value) < FloatT.Epsilon)
             {
-                doubleValue = 0;
+                //doubleValue = 0;
                 SetAllExponentTrits(-1);
                 SetAllSignificandTrits(0);
             }
             else if (double.IsPositiveInfinity(value) || value > FloatT.MaxValue)  //special cases like infinity, neg infinity, NaN/undefined
             {
-                doubleValue = double.PositiveInfinity;
+                //doubleValue = double.PositiveInfinity;
                 SetAllExponentTrits(1);
                 SetAllSignificandTrits(1);
             }
             else if (double.IsNegativeInfinity(value) || value < FloatT.MinValue)
             {
-                doubleValue = double.NegativeInfinity;
+                //doubleValue = double.NegativeInfinity;
                 SetAllExponentTrits(1);
                 SetAllSignificandTrits(-1);
             }
             else if (double.IsNaN(value))
             {
-                doubleValue = double.NaN;
+                //doubleValue = double.NaN;
                 SetAllExponentTrits(1);
                 SetAllSignificandTrits(0);
             }
             else     //real, nonzero numbers are calculated here
             {
-                this.doubleValue = value;
-                int exponentValueBase3 = (int)Math.Ceiling((Math.Log(Math.Abs(doubleValue)) - Math.Log(0.5)) / Math.Log(3));  //calculate the exponent of 3 (magnitude)
-                double significandValue = doubleValue / Math.Pow(3, exponentValueBase3);    //calculate the significand double value
+                //double doubleValue = value;
+                int exponentValueBase3 = (int)Math.Ceiling((Math.Log(Math.Abs(value)) - Math.Log(0.5)) / Math.Log(3));  //calculate the exponent of 3 (magnitude)
+                double significandValue = value / Math.Pow(3, exponentValueBase3);    //calculate the significand double value
                 double remainder;   //remainder is how much is left after coverting to balanced ternary
                 (significand, remainder) = ConvertDoubleToBalancedTritsWithRemainder(significandValue, N_TRITS_SIGNIFICAND); //significand in ternary floating point
                 exponent = ConvertIntegerToBalancedTrits(exponentValueBase3, N_TRITS_EXPONENT);    //exponent in ternary integer
@@ -1587,7 +1592,7 @@ namespace stdTernary
                 {
                     floatt[i] = significand[i - N_TRITS_EXPONENT];
                 }
-                doubleValue = RoundToNearestDigitOfPrecision(value, new Tryte(exponent));
+                //value = RoundToNearestDigitOfPrecision(value, new Tryte(exponent));
 
             }
         }
@@ -1607,7 +1612,17 @@ namespace stdTernary
                 {
                     floatt[i] = significand[i - N_TRITS_EXPONENT];
                 }
-                if (exponent.All(t => (sbyte)t.Value == 1))    //infinities and NaNs here
+            }
+            else
+            {
+                throw new ArgumentException("Exponent and/or significand length not the expected size, should be " + N_TRITS_EXPONENT + " trits and " + N_TRITS_SIGNIFICAND + " trits long, respectively.");
+            }
+        }
+
+        public double ConvertToDouble()
+        {
+            double doubleValue;
+            if (exponent.All(t => (sbyte)t.Value == 1))    //infinities and NaNs here
                 {
                     if (significand.All(t => (sbyte)t.Value == 1))
                     {
@@ -1637,11 +1652,7 @@ namespace stdTernary
                     doubleValue = significandValue * exponentValue; // multiply them together to get the final value
                     doubleValue = RoundToNearestDigitOfPrecision(doubleValue, new Tryte(exponent));  //round to nearest digit of precision
                 }
-            }
-            else
-            {
-                throw new ArgumentException("Exponent and/or significand length not the expected size, should be " + N_TRITS_EXPONENT + " trits and " + N_TRITS_SIGNIFICAND + " trits long, respectively.");
-            }
+            return doubleValue;
         }
 
         /// <summary>
@@ -1664,36 +1675,36 @@ namespace stdTernary
                     significand[i - N_TRITS_EXPONENT] = value[i];
                 }
 
-                if (exponent.All(t => (sbyte)t.Value == 1))    //infinities and NaNs here
-                {
-                    if (significand.All(t => (sbyte)t.Value == 1))
-                    {
-                        doubleValue = double.PositiveInfinity;
-                    }
-                    else if (significand.All(t => (sbyte)t.Value == -1))
-                    {
-                        doubleValue = double.NegativeInfinity;
-                    }
-                    else if (significand.All(t => t.Value == 0))
-                    {
-                        doubleValue = double.NaN;
-                    }
-                    else
-                    {
-                        doubleValue = 0;
-                    }
-                }
-                else if (significand.All(t => t.Value == 0) && exponent.All(t => (sbyte)t.Value == -1))    //zero case
-                {
-                    doubleValue = 0;
-                }
-                else      //real nonzero numbers calculated here
-                {
-                    double exponentValue = (double)Math.Pow(3, ConvertBalancedTritsToInteger(exponent));  //double for the exponent
-                    double significandValue = ConvertBalancedTritsToDouble(significand);    //and double for the significand
-                    doubleValue = significandValue * exponentValue; // multiply them together to get the final value
-                    doubleValue = RoundToNearestDigitOfPrecision(doubleValue, new Tryte(exponent));  //round to nearest digit of precision
-                }
+                // if (exponent.All(t => (sbyte)t.Value == 1))    //infinities and NaNs here
+                // {
+                //     if (significand.All(t => (sbyte)t.Value == 1))
+                //     {
+                //         doubleValue = double.PositiveInfinity;
+                //     }
+                //     else if (significand.All(t => (sbyte)t.Value == -1))
+                //     {
+                //         doubleValue = double.NegativeInfinity;
+                //     }
+                //     else if (significand.All(t => t.Value == 0))
+                //     {
+                //         doubleValue = double.NaN;
+                //     }
+                //     else
+                //     {
+                //         doubleValue = 0;
+                //     }
+                // }
+                // else if (significand.All(t => t.Value == 0) && exponent.All(t => (sbyte)t.Value == -1))    //zero case
+                // {
+                //     doubleValue = 0;
+                // }
+                // else      //real nonzero numbers calculated here
+                // {
+                //     double exponentValue = (double)Math.Pow(3, ConvertBalancedTritsToInteger(exponent));  //double for the exponent
+                //     double significandValue = ConvertBalancedTritsToDouble(significand);    //and double for the significand
+                //     doubleValue = significandValue * exponentValue; // multiply them together to get the final value
+                //     doubleValue = RoundToNearestDigitOfPrecision(doubleValue, new Tryte(exponent));  //round to nearest digit of precision
+                // }
 
             }
             else
@@ -1754,36 +1765,36 @@ namespace stdTernary
                     }
                 }
 
-                if (exponent.All(t => (sbyte)t.Value == 1))    //infinities and NaNs here
-                {
-                    if (significand.All(t => (sbyte)t.Value == 1))
-                    {
-                        doubleValue = double.PositiveInfinity;
-                    }
-                    else if (significand.All(t => (sbyte)t.Value == -1))
-                    {
-                        doubleValue = double.NegativeInfinity;
-                    }
-                    else if (significand.All(t => (sbyte)t.Value == 0))
-                    {
-                        doubleValue = double.NaN;
-                    }
-                    else
-                    {
-                        doubleValue = 0;
-                    }
-                }
-                else if (significand.All(t => t.Value == 0) && exponent.All(t => (sbyte)t.Value == -1))    //zero case
-                {
-                    doubleValue = 0;
-                }
-                else      //real nonzero numbers calculated here
-                {
-                    double exponentValue = (double)Math.Pow(3, ConvertBalancedTritsToInteger(exponent));  //integer for the exponent
-                    double significandValue = ConvertBalancedTritsToDouble(significand);    //and double for the significand
-                    doubleValue = significandValue * exponentValue; // multiply them together to get the final value
-                    doubleValue = RoundToNearestDigitOfPrecision(doubleValue, new Tryte(exponent));
-                }
+                // if (exponent.All(t => (sbyte)t.Value == 1))    //infinities and NaNs here
+                // {
+                //     if (significand.All(t => (sbyte)t.Value == 1))
+                //     {
+                //         doubleValue = double.PositiveInfinity;
+                //     }
+                //     else if (significand.All(t => (sbyte)t.Value == -1))
+                //     {
+                //         doubleValue = double.NegativeInfinity;
+                //     }
+                //     else if (significand.All(t => (sbyte)t.Value == 0))
+                //     {
+                //         doubleValue = double.NaN;
+                //     }
+                //     else
+                //     {
+                //         doubleValue = 0;
+                //     }
+                // }
+                // else if (significand.All(t => t.Value == 0) && exponent.All(t => (sbyte)t.Value == -1))    //zero case
+                // {
+                //     doubleValue = 0;
+                // }
+                // else      //real nonzero numbers calculated here
+                // {
+                //     double exponentValue = (double)Math.Pow(3, ConvertBalancedTritsToInteger(exponent));  //integer for the exponent
+                //     double significandValue = ConvertBalancedTritsToDouble(significand);    //and double for the significand
+                //     doubleValue = significandValue * exponentValue; // multiply them together to get the final value
+                //     doubleValue = RoundToNearestDigitOfPrecision(doubleValue, new Tryte(exponent));
+                // }
 
             }
             else
@@ -1920,7 +1931,7 @@ namespace stdTernary
                 do
                 {
                     remainder *= 10;
-                } while (remainder < (FloatT)(IntT.MaxValue / 10));
+                } while (remainder < (FloatT)(IntT.MaxValue / 100));
                 IntT rem = (IntT)remainder;
                 var remdiv = rem.DIV((IntT)(divisor * 100000));
                 var remdivstr = remdiv.LongValue.ToString();
@@ -2038,7 +2049,7 @@ namespace stdTernary
 
         public override string ToString()
         {
-            return FloatTString + " = " + doubleValue;
+            return FloatTString + " = " + DoubleValue;
         }
 
         private readonly void SetAllExponentTrits(sbyte t)
@@ -2081,31 +2092,31 @@ namespace stdTernary
         {
             if (value == 0 || Math.Abs(value) < FloatT.Epsilon)
             {
-                doubleValue = 0;
+                //doubleValue = 0;
                 SetAllExponentTritsTo(-1);
                 SetAllSignificandTritsTo(0);
             }
             else if (double.IsPositiveInfinity(value) || value > FloatT.MaxValue)  //special cases like infinity, neg infinity, NaN/undefined
             {
-                doubleValue = double.PositiveInfinity;
+                //doubleValue = double.PositiveInfinity;
                 SetAllExponentTritsTo(1);
                 SetAllSignificandTritsTo(1);
             }
             else if (double.IsNegativeInfinity(value) || value < FloatT.MinValue)
             {
-                doubleValue = double.NegativeInfinity;
+                //doubleValue = double.NegativeInfinity;
                 SetAllExponentTritsTo(1);
                 SetAllSignificandTritsTo(-1);
             }
             else if (double.IsNaN(value))
             {
-                doubleValue = double.NaN;
+                //doubleValue = double.NaN;
                 SetAllExponentTritsTo(1);
                 SetAllSignificandTritsTo(0);
             }
             else     //real, nonzero numbers are calculated here
             {
-                doubleValue = RoundToNearestDigitOfPrecision(value, new Tryte(exponent));
+                double doubleValue = RoundToNearestDigitOfPrecision(value, new Tryte(exponent));
                 int exponentValueBase3 = (int)Math.Ceiling((Math.Log(Math.Abs(doubleValue)) - Math.Log(0.5)) / Math.Log(3));  //calculate the exponent of 3 (magnitude)
                 double significandValue = doubleValue / Math.Pow(3, exponentValueBase3);    //calculate the significand double value
                 double remainder;   //remainder is how much is left after coverting to balanced ternary
@@ -2135,7 +2146,7 @@ namespace stdTernary
                 {
                     significand[i - N_TRITS_EXPONENT] = value[i];
                 }
-                CreateDoubleValueIncludingSpecialCases();   //...and converts them into a double including infinities and NaNs
+                //CreateDoubleValueIncludingSpecialCases();   //...and converts them into a double including infinities and NaNs
             }
             else
             {
@@ -2187,7 +2198,7 @@ namespace stdTernary
                             throw new ArgumentException("Invalid character in ternary char array passed to SetValue.", "value");
                     }
                 }
-                CreateDoubleValueIncludingSpecialCases();   //...and does the same conversion to double with special cases
+                //CreateDoubleValueIncludingSpecialCases();   //...and does the same conversion to double with special cases
             }
             else
             {
@@ -2200,35 +2211,35 @@ namespace stdTernary
         /// Takes into account special values like infinities and NaNs, and does so without needing to know how many
         /// total trits are involved - uses LINQ's All function.
         /// </summary>
-        private void CreateDoubleValueIncludingSpecialCases()
-        {
-            if (exponent.All(t => (sbyte)t.Value == 1))    //infinities and NaNs here
-            {
-                if (significand.All(t => (sbyte)t.Value == 1))
-                {
-                    doubleValue = double.PositiveInfinity;
-                }
-                else if (significand.All(t => (sbyte)t.Value == -1))
-                {
-                    doubleValue = double.NegativeInfinity;
-                }
-                else if (significand.All(t => (sbyte)t.Value == 0))
-                {
-                    doubleValue = double.NaN;
-                }
-            }
-            else if (significand.All(t => t.Value == 0) && exponent.All(t => (sbyte)t.Value == -1))    //zero case
-            {
-                doubleValue = 0;
-            }
-            else      //real nonzero numbers calculated here
-            {
-                double exponentValue = (double)Math.Pow(3, ConvertBalancedTritsToInteger(exponent));  //double for the exponent (incluing negative exponents)
-                double significandValue = ConvertBalancedTritsToDouble(significand);    //and double for the significand
-                doubleValue = significandValue * exponentValue; // multiply them together to get the final value
-                doubleValue = RoundToNearestDigitOfPrecision(doubleValue, new Tryte(exponent));
-            }
-        }
+        // private void CreateDoubleValueIncludingSpecialCases()
+        // {
+        //     if (exponent.All(t => (sbyte)t.Value == 1))    //infinities and NaNs here
+        //     {
+        //         if (significand.All(t => (sbyte)t.Value == 1))
+        //         {
+        //             doubleValue = double.PositiveInfinity;
+        //         }
+        //         else if (significand.All(t => (sbyte)t.Value == -1))
+        //         {
+        //             doubleValue = double.NegativeInfinity;
+        //         }
+        //         else if (significand.All(t => (sbyte)t.Value == 0))
+        //         {
+        //             doubleValue = double.NaN;
+        //         }
+        //     }
+        //     else if (significand.All(t => t.Value == 0) && exponent.All(t => (sbyte)t.Value == -1))    //zero case
+        //     {
+        //         doubleValue = 0;
+        //     }
+        //     else      //real nonzero numbers calculated here
+        //     {
+        //         double exponentValue = (double)Math.Pow(3, ConvertBalancedTritsToInteger(exponent));  //double for the exponent (incluing negative exponents)
+        //         double significandValue = ConvertBalancedTritsToDouble(significand);    //and double for the significand
+        //         doubleValue = significandValue * exponentValue; // multiply them together to get the final value
+        //         doubleValue = RoundToNearestDigitOfPrecision(doubleValue, new Tryte(exponent));
+        //     }
+        // }
 
 
         public static Trit[] ConvertIntegerToBalancedTrits(int integerValue, byte nTrits)
