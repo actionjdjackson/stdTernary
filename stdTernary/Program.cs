@@ -196,8 +196,8 @@ namespace stdTernary
         {
             for (int i = 0; i < nIterations; i++)
             {
-                FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-10000, 10000));
-                FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-10000, 10000));
+                FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
+                FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
                 var c = a * b;
             }
         }
@@ -207,7 +207,7 @@ namespace stdTernary
         {
             for (int i = 0; i < nIterations; i++)
             {
-                FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-10000, 10000));
+                FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
                 FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-100, 100));
                 try
                 {
@@ -225,7 +225,7 @@ namespace stdTernary
         {
             for (int i = 0; i < nIterations; i++)
             {
-                FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-10000, 10000));
+                FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
                 FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-100, 100));
                 try
                 {

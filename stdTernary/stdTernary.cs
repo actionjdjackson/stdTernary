@@ -786,42 +786,43 @@ namespace stdTernary
 
         public Tryte ADD(Tryte t)
         {
-            Trit[] sumTrits = new Trit[N_TRITS_PER_TRYTE];
-            sbyte carry = 0;
-            for (int i = N_TRITS_PER_TRYTE - 1; i >= 0; i--)
-            {
-                sbyte n = (sbyte)((sbyte)this.tryte[i].Value + (sbyte)t.Value[i].Value + carry);
-                switch (n)
-                {
-                    case 2:
-                        carry = 1;
-                        sumTrits[i] = -1;
-                        break;
-                    case -2:
-                        carry = -1;
-                        sumTrits[i] = 1;
-                        break;
-                    case 3:
-                        carry = 1;
-                        sumTrits[i] = 0;
-                        break;
-                    case -3:
-                        carry = -1;
-                        sumTrits[i] = 0;
-                        break;
-                    default:
-                        carry = 0;
-                        sumTrits[i] = n;
-                        break;
-                }
-            }
-            return carry switch
-            {
-                0 => new Tryte(sumTrits),
-                1 => throw new OverflowException("Tryte Integer Add Positive Overflow! You've gone beyond what an Tryte of size " + N_TRITS_PER_TRYTE + " trits can hold"),
-                -1 => throw new OverflowException("Tryte Integer Add Negative Overflow! You've gone beyond what an Tryte of size " + N_TRITS_PER_TRYTE + " trits can hold"),
-                _ => new Tryte(sumTrits),
-            };
+            return new Tryte(ConvertIntegerToBalancedTrits(this.ShortValue + t.ShortValue));
+            // Trit[] sumTrits = new Trit[N_TRITS_PER_TRYTE];
+            // sbyte carry = 0;
+            // for (int i = N_TRITS_PER_TRYTE - 1; i >= 0; i--)
+            // {
+            //     sbyte n = (sbyte)((sbyte)this.tryte[i].Value + (sbyte)t.Value[i].Value + carry);
+            //     switch (n)
+            //     {
+            //         case 2:
+            //             carry = 1;
+            //             sumTrits[i] = -1;
+            //             break;
+            //         case -2:
+            //             carry = -1;
+            //             sumTrits[i] = 1;
+            //             break;
+            //         case 3:
+            //             carry = 1;
+            //             sumTrits[i] = 0;
+            //             break;
+            //         case -3:
+            //             carry = -1;
+            //             sumTrits[i] = 0;
+            //             break;
+            //         default:
+            //             carry = 0;
+            //             sumTrits[i] = n;
+            //             break;
+            //     }
+            // }
+            // return carry switch
+            // {
+            //     0 => new Tryte(sumTrits),
+            //     1 => throw new OverflowException("Tryte Integer Add Positive Overflow! You've gone beyond what an Tryte of size " + N_TRITS_PER_TRYTE + " trits can hold"),
+            //     -1 => throw new OverflowException("Tryte Integer Add Negative Overflow! You've gone beyond what an Tryte of size " + N_TRITS_PER_TRYTE + " trits can hold"),
+            //     _ => new Tryte(sumTrits),
+            // };
         }
 
         public Tryte AND(Tryte t)
@@ -1373,42 +1374,43 @@ namespace stdTernary
 
         public IntT ADD(IntT addIntT)
         {
-            Trit[] sumTrits = new Trit[N_TRITS_PER_INT];
-            sbyte carry = 0;
-            for (int i = N_TRITS_PER_INT - 1; i >= 0; i--)
-            {
-                sbyte n = (sbyte)((sbyte)this.intt[i].Value + (sbyte)addIntT.Value[i].Value + carry);
-                switch (n)
-                {
-                    case 2:
-                        carry = 1;
-                        sumTrits[i] = -1;
-                        break;
-                    case -2:
-                        carry = -1;
-                        sumTrits[i] = 1;
-                        break;
-                    case 3:
-                        carry = 1;
-                        sumTrits[i] = 0;
-                        break;
-                    case -3:
-                        carry = -1;
-                        sumTrits[i] = 0;
-                        break;
-                    default:
-                        carry = 0;
-                        sumTrits[i] = n;
-                        break;
-                }
-            }
-            return carry switch
-            {
-                0 => new IntT(sumTrits),
-                1 => throw new OverflowException("IntT Integer Add Positive Overflow! You've gone beyond what an IntT of size " + N_TRITS_PER_INT + " trits can hold"),
-                -1 => throw new OverflowException("IntT Integer Add Negative Overflow! You've gone beyond what an IntT of size " + N_TRITS_PER_INT + " trits can hold"),
-                _ => new IntT(sumTrits),
-            };
+            return new IntT(this.LongValue + addIntT.LongValue);
+            // Trit[] sumTrits = new Trit[N_TRITS_PER_INT];
+            // sbyte carry = 0;
+            // for (int i = N_TRITS_PER_INT - 1; i >= 0; i--)
+            // {
+            //     sbyte n = (sbyte)((sbyte)this.intt[i].Value + (sbyte)addIntT.Value[i].Value + carry);
+            //     switch (n)
+            //     {
+            //         case 2:
+            //             carry = 1;
+            //             sumTrits[i] = -1;
+            //             break;
+            //         case -2:
+            //             carry = -1;
+            //             sumTrits[i] = 1;
+            //             break;
+            //         case 3:
+            //             carry = 1;
+            //             sumTrits[i] = 0;
+            //             break;
+            //         case -3:
+            //             carry = -1;
+            //             sumTrits[i] = 0;
+            //             break;
+            //         default:
+            //             carry = 0;
+            //             sumTrits[i] = n;
+            //             break;
+            //     }
+            // }
+            // return carry switch
+            // {
+            //     0 => new IntT(sumTrits),
+            //     1 => throw new OverflowException("IntT Integer Add Positive Overflow! You've gone beyond what an IntT of size " + N_TRITS_PER_INT + " trits can hold"),
+            //     -1 => throw new OverflowException("IntT Integer Add Negative Overflow! You've gone beyond what an IntT of size " + N_TRITS_PER_INT + " trits can hold"),
+            //     _ => new IntT(sumTrits),
+            // };
         }
 
     }
@@ -1933,7 +1935,7 @@ namespace stdTernary
                     remainder *= 10;
                 } while (remainder < (FloatT)(IntT.MaxValue / 100));
                 IntT rem = (IntT)remainder;
-                var remdiv = rem.DIV((IntT)(divisor * 100000));
+                var remdiv = rem.DIV((IntT)(divisor * 10000));
                 var remdivstr = remdiv.LongValue.ToString();
                 remdivstr = remdivstr[0] == '-' ? "-0." + remdivstr[1..] : "0." + remdivstr;
                 //remdivstr = "0." + remdivstr;
@@ -1975,7 +1977,7 @@ namespace stdTernary
             var floatBExp = new Tryte(f.exponent);
             switch (Tryte.COMPARET(floatAExp, floatBExp).Value)
             {
-                case Trit.TritVal.z:
+                case Tryte.Equal:
                     {
                         (var addedSigs, var carry) = AddSignificands(significand, f.significand);
                         Tryte newExp = floatAExp + carry;
@@ -1996,7 +1998,7 @@ namespace stdTernary
                         }
                     }
 
-                case Trit.TritVal.p:
+                case Tryte.Larger:
                     {
                         var diff = floatAExp - floatBExp;
                         var shifted = TritShiftRight(f.significand, diff);
@@ -2019,7 +2021,7 @@ namespace stdTernary
                         }
                     }
 
-                case Trit.TritVal.n:
+                case Tryte.Smaller:
                     {
                         var diff = floatBExp - floatAExp;
                         var shifted = TritShiftRight(significand, diff);

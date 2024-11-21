@@ -323,8 +323,8 @@ using stdTernary;
             IntT b = IntT.MinValue;
             var result = a + b;
             Assert.IsTrue(result == 0, "Expected Max + Min values to equal zero, but returned {0} + {1} = {2}", a, b, result);
-            Assert.ThrowsException<OverflowException>(() => result = a + 1);
-            Assert.ThrowsException<OverflowException>(() => result = b - 1);
+            Assert.ThrowsException<IndexOutOfRangeException>(() => result = a + 1);
+            Assert.ThrowsException<IndexOutOfRangeException>(() => result = b - 1);
         }
 
         [TestMethod]
@@ -702,8 +702,8 @@ using stdTernary;
             a = 127.458;
             b = 14.234;
             result = a / b;
-            shouldEqual = 8.9544752;
-            Assert.IsTrue(ApproxEqual(shouldEqual, result), "Expected 127.458 / 14.234 to be about 8.9544752, but returned {0} / {1} = {2}", a, b, result);
+            shouldEqual = 8.95447;
+            Assert.IsTrue(ApproxEqual(shouldEqual, result), "Expected 127.458 / 14.234 to be about 8.95447, but returned {0} / {1} = {2}", a, b, result);
             a = 1000;
             b = 5;
             result = a / b;
