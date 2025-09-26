@@ -1,22 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using BenchmarkDotNet.Jobs;
 
 namespace stdTernary
 {
+    
+    public enum TritVal : sbyte
+        {
+            p = 1,
+            n = -1,
+            z = 0
+        }
+
     /// <summary>
     /// Balanced Ternary Trit with sbyte enum as datatype for -1 , 1, and 0 values, and conversions for ints, sbytes, characters,
     /// and overridden operators for tritwise operations.
     /// </summary>
     public struct Trit
     {
-        public enum TritVal : sbyte
-        {
-            p = 1,
-            n = -1,
-            z = 0
-        }
         private TritVal trit;
 
         public TritVal Value { get => trit; set => SetValue(value); }
@@ -115,7 +117,7 @@ namespace stdTernary
         {
             func();
             return this;
-        } 
+        }
 
         public override int GetHashCode()
         {
@@ -231,7 +233,7 @@ namespace stdTernary
             }
             else
             {
-                throw new ArgumentException("Unknown state of trit in SUM operation.", "t");
+                throw new ArgumentException("Unknown state of trit in SUM operation.", nameof(t));
             }
         }
 
@@ -361,21 +363,23 @@ namespace stdTernary
         /// </summary>
         public static short MinValue = (short)-MaxValue;
         /// <summary>
-        /// The Tryte value represented by an array of Trits
+        /// The Tryte value represented by a packed uint
         /// </summary>
-        private Trit[] tryte;
-        /// <summary>
-        /// The Tryte vaue represented by a short binary integer
-        /// </summary>
-        //private short shortValue;
+        private uint packedTritsTryte;
 
-        public Trit[] Value { get => tryte; set => SetValue(value); }
+        public uint PackedTrits => packedTritsTryte;
+
+        public Trit[] Value
+        {
+            get => TritPacker.UnpackTrits(packedTritsTryte, N_TRITS_PER_TRYTE);
+            set => packedTritsTryte = TritPacker.PackTrits(value);
+        }
         public string TryteString { get => ConvertToStringRepresentation(); }
-        public short ShortValue { get => ConvertBalancedTritsToInteger(tryte); set => SetValue(value); }
+        public short ShortValue { get => ConvertBalancedTritsToInteger(Value); set => SetValue(value); }
 
-        public const Trit.TritVal Equal = Trit.TritVal.z;
-        public const Trit.TritVal Smaller = Trit.TritVal.n;
-        public const Trit.TritVal Larger = Trit.TritVal.p;
+        public const TritVal Equal = TritVal.z;
+        public const TritVal Smaller = TritVal.n;
+        public const TritVal Larger = TritVal.p;
 
         public static Tryte operator &(Tryte left, Tryte right) => left.AND(right);
         public static Tryte operator |(Tryte left, Tryte right) => left.OR(right);
@@ -412,19 +416,24 @@ namespace stdTernary
         public static explicit operator Tryte(string str) => new Tryte(str);
         public static implicit operator double(Tryte tryte) => tryte.ShortValue;
 
+        public Trit this[int index]
+        {
+            get => TritPacker.UnpackTrits(packedTritsTryte, N_TRITS_PER_TRYTE)[index];
+        }
+
         public Tryte(Trit[] value)
         {
-            if (value.Length == N_TRITS_PER_TRYTE)
+            if (value.Length != N_TRITS_PER_TRYTE)
             {
-                this.tryte = value;
+                throw new ArgumentException($"Expected {N_TRITS_PER_TRYTE} trits", nameof(value));
             }
             else
             {
-                throw new ArgumentException("The trit array passed to Tryte was not the expected size, should be " + N_TRITS_PER_TRYTE + " trits in length", "value");
+                this.packedTritsTryte = TritPacker.PackTrits(value);
             }
         }
 
-        public short ConvertBalancedTritsToInteger(Trit[] value)
+        public static short ConvertBalancedTritsToInteger(Trit[] value)
         {
             short sum = 0;
             short exponent = (short)(N_TRITS_PER_TRYTE - 1);
@@ -438,44 +447,48 @@ namespace stdTernary
 
         public Tryte(short value)
         {
-            if (value <= MaxValue && value >= MinValue)
-            {
-                this.tryte = ConvertIntegerToBalancedTrits(value);
-            }
-            else
+            if (value > MaxValue || value < MinValue)
             {
                 throw new ArgumentOutOfRangeException("The short value passed to SetValue in Tryte was too large to fit in a " + N_TRITS_PER_TRYTE + " trit tryte", "value");
             }
+            else
+            {
+                this.packedTritsTryte = TritPacker.PackTrits(ConvertIntegerToBalancedTrits(value));
+            }
+        }
+
+        public Tryte(uint packedTrits)
+        {
+            if (TritPacker.UnpackTrits(packedTrits, N_TRITS_PER_TRYTE).Length != N_TRITS_PER_TRYTE)
+            {
+                throw new ArgumentException($"Packed trits must contain exactly {N_TRITS_PER_TRYTE} trits");
+            }
+            this.packedTritsTryte = packedTrits;
+        }
+
+        public void SetTrit(int index, Trit t)
+        {
+            var trits = Value;
+            trits[index] = t;
+            packedTritsTryte = TritPacker.PackTrits(trits);
         }
 
         public Tryte(string value)
         {
             if (value.Length == N_TRITS_PER_TRYTE)
             {
-                tryte = new Trit[N_TRITS_PER_TRYTE];
-                // short sum = 0;
-                // short exponent = (short)(N_TRITS_PER_TRYTE - 1);
+                var trits = new Trit[N_TRITS_PER_TRYTE];
                 for (int i = 0; i < value.Length; i++)
                 {
-                    switch (value[i])
+                    trits[i] = value[i] switch
                     {
-                        case '+':
-                            //sum += (short)Math.Pow(3, exponent);
-                            tryte[i] = new Trit(1);
-                            break;
-                        case '-':
-                            //sum -= (short)Math.Pow(3, exponent);
-                            tryte[i] = new Trit(-1);
-                            break;
-                        case '0':
-                            tryte[i] = new Trit(0);
-                            break;
-                        default:
-                            throw new ArgumentException("Invalid character encountered in a balanced ternary char array. Please stick to +, -, 0's", "value");
-                    }
-                    //exponent--;
+                        '+' => new Trit(1),
+                        '-' => new Trit(-1),
+                        '0' => new Trit(0),
+                        _ => throw new ArgumentException("Invalid character encountered in a balanced ternary char array. Please stick to +, -, 0's", "value"),
+                    };
                 }
-                //shortValue = sum;
+                packedTritsTryte = TritPacker.PackTrits(trits);
             }
             else
             {
@@ -487,7 +500,7 @@ namespace stdTernary
         {
             if (value.Length == N_TRITS_PER_TRYTE)
             {
-                this.tryte = value;
+                this.packedTritsTryte = TritPacker.PackTrits(value);
                 // short sum = 0;
                 // short exponent = (short)(N_TRITS_PER_TRYTE - 1);
                 // foreach (var trit in value)
@@ -507,30 +520,18 @@ namespace stdTernary
         {
             if (value.Length == N_TRITS_PER_TRYTE)
             {
-                tryte = new Trit[N_TRITS_PER_TRYTE];
-                // short sum = 0;
-                // short exponent = (short)(N_TRITS_PER_TRYTE - 1);
+                var trits = new Trit[N_TRITS_PER_TRYTE];
                 for (int i = 0; i < value.Length; i++)
                 {
-                    switch (value[i])
+                    trits[i] = value[i] switch
                     {
-                        case '+':
-                            //sum += (short)Math.Pow(3, exponent);
-                            tryte[i] = new Trit(1);
-                            break;
-                        case '-':
-                            //sum -= (short)Math.Pow(3, exponent);
-                            tryte[i] = new Trit(-1);
-                            break;
-                        case '0':
-                            tryte[i] = new Trit(0);
-                            break;
-                        default:
-                            throw new ArgumentException("Invalid character encountered in a balanced ternary char array. Please stick to +, -, 0's", "value");
-                    }
-                    //exponent--;
+                        '+' => new Trit(1),
+                        '-' => new Trit(-1),
+                        '0' => new Trit(0),
+                        _ => throw new ArgumentException("Invalid character encountered in a balanced ternary char array. Please stick to +, -, 0's", "value"),
+                    };
                 }
-                //shortValue = sum;
+                packedTritsTryte = TritPacker.PackTrits(trits);
             }
             else
             {
@@ -543,7 +544,7 @@ namespace stdTernary
             if (value <= MaxValue && value >= MinValue)
             {
                 //shortValue = value;
-                this.tryte = ConvertIntegerToBalancedTrits(value);
+                this.Value = ConvertIntegerToBalancedTrits(value);
             }
             else
             {
@@ -596,7 +597,7 @@ namespace stdTernary
         public override bool Equals(object obj)
         {
             return obj is Tryte tryte &&
-                   EqualityComparer<Trit[]>.Default.Equals(this.tryte, tryte.tryte);
+                   EqualityComparer<Trit[]>.Default.Equals(this.Value, tryte.Value);
         }
 
         public override string ToString()
@@ -609,15 +610,15 @@ namespace stdTernary
             var temp = "";
             for (int i = 0; i < N_TRITS_PER_TRYTE; i++)
             {
-                switch (tryte[i].Value)
+                switch (Value[i].Value)
                 {
-                    case Trit.TritVal.n:
+                    case TritVal.n:
                         temp += "-";
                         break;
-                    case Trit.TritVal.p:
+                    case TritVal.p:
                         temp += "+";
                         break;
-                    case Trit.TritVal.z:
+                    case TritVal.z:
                         temp += "0";
                         break;
                     default:
@@ -636,7 +637,7 @@ namespace stdTernary
                     var temp = new Trit[N_TRITS_PER_TRYTE];
                     for (int i = 0; i < N_TRITS_PER_TRYTE; i++)
                     {
-                        temp[i] = i >= N_TRITS_PER_TRYTE - nTrits ? new Trit(0) : tryte[i + nTrits];
+                        temp[i] = i >= N_TRITS_PER_TRYTE - nTrits ? new Trit(0) : Value[i + nTrits];
                     }
                     return new Tryte(temp);
                 }
@@ -660,7 +661,7 @@ namespace stdTernary
                     var temp = new Trit[N_TRITS_PER_TRYTE];
                     for (int i = 0; i < N_TRITS_PER_TRYTE; i++)
                     {
-                        temp[i] = i < nTrits ? new Trit(0) : tryte[i - nTrits];
+                        temp[i] = i < nTrits ? new Trit(0) : Value[i - nTrits];
                     }
                     return new Tryte(temp);
                 }
@@ -686,73 +687,50 @@ namespace stdTernary
             return mod;
         }
 
-        public (Tryte, Tryte) DIVREM(Tryte divisor)
+        public (Tryte Quotient, Tryte Remainder) DIVREM(Tryte divisor)
         {
-            if (COMPARET(divisor, 0).Value == Trit.TritVal.z)
-            {
-                throw new DivideByZeroException("Attempt to divide by zero in Tryte division operation.");
-            }
-            else if (COMPARET(MathT.Abs(this), MathT.Abs(divisor)).Value == Trit.TritVal.p)
-            {
-                var divd = MathT.Abs(this);
-                var divsr = MathT.Abs(divisor);
-                var quot = new Tryte(0);
-                var rem = new Tryte(divd.Value);
+            if (COMPARET(divisor, 0).Value == TritVal.z)
+                throw new DivideByZeroException("Divide by zero in Tryte division.");
 
-                while (COMPARET(rem, divsr).Value != Trit.TritVal.n)
+            Tryte aAbs = MathT.Abs(this);
+            Tryte bAbs = MathT.Abs(divisor);
+
+            if (COMPARET(aAbs, bAbs).Value == TritVal.p)
+            {
+                Tryte rem = new Tryte(aAbs.PackedTrits);
+                Tryte quot = new Tryte(0);
+
+                while (COMPARET(rem, bAbs).Value != TritVal.n)
                 {
-                    rem -= divsr;
-                    quot++;
+                    rem = rem.SUB(bAbs);
+                    quot = quot.ADD(new Tryte(1));
                 }
-                if (COMPARET(this, 0).Value == Trit.TritVal.n ^ COMPARET(divisor, 0).Value == Trit.TritVal.n)
-                {
+
+                // Fix sign of quotient
+                bool oppositeSigns = (COMPARET(this, 0).Value == TritVal.n)
+                                ^ (COMPARET(divisor, 0).Value == TritVal.n);
+
+                if (oppositeSigns)
                     quot = ~quot;
-                }
+
                 return (quot, rem);
             }
-            else if (COMPARET(this, divisor).Value == Trit.TritVal.z)
+            else if (COMPARET(this, divisor).Value == TritVal.z)
             {
                 return (new Tryte(1), new Tryte(0));
             }
             else
             {
-                return (new Tryte(0), new Tryte(0));
+                return (new Tryte(0), new Tryte(this.PackedTrits));
             }
         }
+
 
         public Tryte DIV(Tryte divisor)
         {
-            if (COMPARET(divisor, 0).Value == Trit.TritVal.z)
-            {
-                throw new DivideByZeroException("Attempt to divide by zero in Tryte division operation.");
-            }
-            else if (COMPARET(MathT.Abs(this), MathT.Abs(divisor)).Value == Trit.TritVal.p)
-            {
-                var divd = MathT.Abs(this);
-                var divsr = MathT.Abs(divisor);
-                var quot = new Tryte(0);
-                var rem = new Tryte(divd.Value);
-
-                while (COMPARET(rem, divsr).Value != Trit.TritVal.n)
-                {
-                    rem -= divsr;
-                    quot++;
-                }
-                if (COMPARET(this, 0).Value == Trit.TritVal.n ^ COMPARET(divisor, 0).Value == Trit.TritVal.n)
-                {
-                    quot = ~quot;
-                }
-                return quot;
-            }
-            else if (COMPARET(this, divisor).Value == Trit.TritVal.z)
-            {
-                return new Tryte(1);
-            }
-            else
-            {
-                return new Tryte(0);
-            }
+            return this.DIVREM(divisor).Quotient;
         }
+
 
         public Tryte SUB(Tryte t)
         {
@@ -761,98 +739,116 @@ namespace stdTernary
 
         public Tryte MULT(Tryte t)
         {
-            Trit[] temp = new Trit[N_TRITS_PER_TRYTE];
-            this.tryte.CopyTo(temp, 0);
-            Array.Reverse(temp);
+            Trit[] a = TritPacker.UnpackTrits(this.packedTritsTryte, N_TRITS_PER_TRYTE);
+            Array.Reverse(a); // multiplier reversed (least sig to most)
+            
+            uint packedT = t.packedTritsTryte;
+            uint packedTInverted = t.INVERT().packedTritsTryte;
+
             var product = new Tryte(0);
+
             for (int i = 0; i < N_TRITS_PER_TRYTE; i++)
             {
-                var trit = temp[i];
-                var temp2 = new Tryte(0);
+                Trit trit = a[i];
+                Tryte shiftedPartial;
+
                 switch (trit.Value)
                 {
-                    case Trit.TritVal.n:
-                        temp2 = new Tryte(t.INVERT().Value);
+                    case TritVal.p:
+                        shiftedPartial = new Tryte(packedT).SHIFTLEFT(i);
+                        product = product.ADD(shiftedPartial);
                         break;
-                    case Trit.TritVal.p:
-                        temp2 = new Tryte(t.Value);
+
+                    case TritVal.n:
+                        shiftedPartial = new Tryte(packedTInverted).SHIFTLEFT(i);
+                        product = product.ADD(shiftedPartial);
                         break;
+
+                    // TritVal.z → do nothing
                 }
-                temp2 = temp2.SHIFTLEFT(i);
-                product = product.ADD(temp2);
             }
+
             return product;
         }
 
+
         public Tryte ADD(Tryte t)
         {
-            return new Tryte(ConvertIntegerToBalancedTrits(this.ShortValue + t.ShortValue));
-            // Trit[] sumTrits = new Trit[N_TRITS_PER_TRYTE];
-            // sbyte carry = 0;
-            // for (int i = N_TRITS_PER_TRYTE - 1; i >= 0; i--)
-            // {
-            //     sbyte n = (sbyte)((sbyte)this.tryte[i].Value + (sbyte)t.Value[i].Value + carry);
-            //     switch (n)
-            //     {
-            //         case 2:
-            //             carry = 1;
-            //             sumTrits[i] = -1;
-            //             break;
-            //         case -2:
-            //             carry = -1;
-            //             sumTrits[i] = 1;
-            //             break;
-            //         case 3:
-            //             carry = 1;
-            //             sumTrits[i] = 0;
-            //             break;
-            //         case -3:
-            //             carry = -1;
-            //             sumTrits[i] = 0;
-            //             break;
-            //         default:
-            //             carry = 0;
-            //             sumTrits[i] = n;
-            //             break;
-            //     }
-            // }
-            // return carry switch
-            // {
-            //     0 => new Tryte(sumTrits),
-            //     1 => throw new OverflowException("Tryte Integer Add Positive Overflow! You've gone beyond what an Tryte of size " + N_TRITS_PER_TRYTE + " trits can hold"),
-            //     -1 => throw new OverflowException("Tryte Integer Add Negative Overflow! You've gone beyond what an Tryte of size " + N_TRITS_PER_TRYTE + " trits can hold"),
-            //     _ => new Tryte(sumTrits),
-            // };
+            Trit[] a = TritPacker.UnpackTrits(this.packedTritsTryte, N_TRITS_PER_TRYTE);
+            Trit[] b = TritPacker.UnpackTrits(t.packedTritsTryte, N_TRITS_PER_TRYTE);
+            Trit[] sum = new Trit[N_TRITS_PER_TRYTE];
+
+            sbyte carry = 0;
+
+            for (int i = N_TRITS_PER_TRYTE - 1; i >= 0; i--)
+            {
+                sbyte aVal = (sbyte)a[i].Value;
+                sbyte bVal = (sbyte)b[i].Value;
+                sbyte total = (sbyte)(aVal + bVal + carry);
+
+                switch (total)
+                {
+                    case 2:
+                        carry = 1;
+                        sum[i] = new Trit(-1);
+                        break;
+                    case -2:
+                        carry = -1;
+                        sum[i] = new Trit(1);
+                        break;
+                    case 3:
+                    case -3:
+                        carry = (sbyte)Math.Sign(total); // preserve direction
+                        sum[i] = new Trit(0);
+                        break;
+                    default:
+                        carry = 0;
+                        sum[i] = new Trit(total);
+                        break;
+                }
+            }
+
+            if (carry != 0)
+                throw new OverflowException($"Tryte ADD overflow! Carry = {carry}");
+
+            return new Tryte(sum);
         }
+
 
         public Tryte AND(Tryte t)
         {
-            var newTryte = new Tryte(0);
+            var a = this.Value;
+            var b = t.Value;
+            var result = new Trit[N_TRITS_PER_TRYTE];
             for (int i = 0; i < N_TRITS_PER_TRYTE; i++)
             {
-                newTryte.tryte[i] = this.tryte[i] & t.tryte[i];
+                result[i] = a[i] & b[i];
             }
-            return newTryte;
+            return new Tryte(result);
         }
 
         public Tryte OR(Tryte t)
         {
-            var newTryte = new Tryte(0);
+            var a = this.Value;
+            var b = t.Value;
+            var result = new Trit[N_TRITS_PER_TRYTE];
             for (int i = 0; i < N_TRITS_PER_TRYTE; i++)
             {
-                newTryte.tryte[i] = this.tryte[i] | t.tryte[i];
+                result[i] = a[i] | b[i];
             }
-            return newTryte;
+            return new Tryte(result);
         }
 
         public Tryte XOR(Tryte t)
         {
-            var newTryte = new Tryte(0);
+            var a = this.Value;
+            var b = t.Value;
+            var result = new Trit[N_TRITS_PER_TRYTE];
             for (int i = 0; i < N_TRITS_PER_TRYTE; i++)
             {
-                newTryte.tryte[i] = this.tryte[i] ^ t.tryte[i];
+                result[i] = a[i] ^ b[i];
             }
-            return newTryte;
+            return new Tryte(result);
         }
 
         /// <summary>
@@ -880,13 +876,17 @@ namespace stdTernary
 
         public Tryte INVERT()
         {
-            Trit[] newTryte = new Trit[N_TRITS_PER_TRYTE];
+            Trit[] inverted = new Trit[N_TRITS_PER_TRYTE];
+            var trits = TritPacker.UnpackTrits(this.packedTritsTryte, N_TRITS_PER_TRYTE);
+
             for (int i = 0; i < N_TRITS_PER_TRYTE; i++)
             {
-                newTryte[i] = !tryte[i];
+                inverted[i] = trits[i].NEG();
             }
-            return new Tryte(newTryte);
+
+            return new Tryte(inverted);
         }
+
 
         public void InvertSelf()
         {
@@ -926,9 +926,9 @@ namespace stdTernary
         public string IntTString { get => ConvertToStringRepresentation(); }
         public long LongValue { get => ConvertBalancedTritsToInteger(intt); set => SetValue(value); }
 
-        public const Trit.TritVal Equal = Trit.TritVal.z;
-        public const Trit.TritVal Smaller = Trit.TritVal.n;
-        public const Trit.TritVal Larger = Trit.TritVal.p;
+        public const TritVal Equal = TritVal.z;
+        public const TritVal Smaller = TritVal.n;
+        public const TritVal Larger = TritVal.p;
 
         public static bool operator ==(IntT left, IntT right) => COMPARET(left, right).Value == Equal;
         public static bool operator !=(IntT left, IntT right) => COMPARET(left, right).Value != Equal;
@@ -1039,13 +1039,13 @@ namespace stdTernary
             {
                 switch (this.intt[i].Value)
                 {
-                    case Trit.TritVal.n:
+                    case TritVal.n:
                         temp += "-";
                         break;
-                    case Trit.TritVal.p:
+                    case TritVal.p:
                         temp += "+";
                         break;
-                    case Trit.TritVal.z:
+                    case TritVal.z:
                         temp += "0";
                         break;
                 }
@@ -1275,28 +1275,28 @@ namespace stdTernary
         {
             switch (COMPARET(divisor, 0).Value)
             {
-                case Trit.TritVal.z:
+                case TritVal.z:
                     throw new DivideByZeroException("Attempt to divide by zero in IntT division operation.");
                 default:
-                    if (COMPARET(MathT.Abs(this), MathT.Abs(divisor)).Value == Trit.TritVal.p)
+                    if (COMPARET(MathT.Abs(this), MathT.Abs(divisor)).Value == TritVal.p)
                     {
                         var divd = MathT.Abs(this);
                         var divsr = MathT.Abs(divisor);
                         var quot = new IntT(0);
                         var rem = new IntT(divd.Value);
 
-                        while (COMPARET(rem, divsr).Value != Trit.TritVal.n)
+                        while (COMPARET(rem, divsr).Value != TritVal.n)
                         {
                             rem -= divsr;
                             quot++;
                         }
-                        if (COMPARET(this, 0).Value == Trit.TritVal.n ^ COMPARET(divisor, 0).Value == Trit.TritVal.n)
+                        if (COMPARET(this, 0).Value == TritVal.n ^ COMPARET(divisor, 0).Value == TritVal.n)
                         {
                             quot = -quot;
                         }
                         return quot;
                     }
-                    else if (COMPARET(this, divisor).Value == Trit.TritVal.z)
+                    else if (COMPARET(this, divisor).Value == TritVal.z)
                     {
                         return new IntT(1);
                     }
@@ -1354,10 +1354,10 @@ namespace stdTernary
                 var temp2 = new IntT(0);
                 switch (trit.Value)
                 {
-                    case Trit.TritVal.n:
+                    case TritVal.n:
                         temp2 = new IntT(invertedMultIntT.Value);
                         break;
-                    case Trit.TritVal.p:
+                    case TritVal.p:
                         temp2 = new IntT(multIntT.Value);
                         break;
                 }
@@ -1480,9 +1480,9 @@ namespace stdTernary
         public Trit[] Value { get => floatt; set => SetValue(value); }
         public string FloatTString { get => ConvertToStringRepresentation(); }
 
-        public const Trit.TritVal Equal = Trit.TritVal.z;
-        public const Trit.TritVal Smaller = Trit.TritVal.n;
-        public const Trit.TritVal Larger = Trit.TritVal.p;
+        public const TritVal Equal = TritVal.z;
+        public const TritVal Smaller = TritVal.n;
+        public const TritVal Larger = TritVal.p;
 
         public static bool operator ==(FloatT left, FloatT right) => COMPARET(left, right).Value == Equal;
         public static bool operator !=(FloatT left, FloatT right) => COMPARET(left, right).Value != Equal;
@@ -1812,13 +1812,13 @@ namespace stdTernary
             {
                 switch (floatt[i].Value)
                 {
-                    case Trit.TritVal.n:
+                    case TritVal.n:
                         temp += "-";
                         break;
-                    case Trit.TritVal.p:
+                    case TritVal.p:
                         temp += "+";
                         break;
-                    case Trit.TritVal.z:
+                    case TritVal.z:
                         temp += "0";
                         break;
                     default:
@@ -1891,29 +1891,29 @@ namespace stdTernary
         {
             switch (COMPARET(divisor, 0).Value)
             {
-                case Trit.TritVal.z:
+                case TritVal.z:
                     throw new DivideByZeroException("Attempt to divide by zero in IntT division operation.");
                 default:
-                    if (COMPARET(MathT.Abs(this), MathT.Abs(divisor)).Value == Trit.TritVal.p)
+                    if (COMPARET(MathT.Abs(this), MathT.Abs(divisor)).Value == TritVal.p)
                     {
                         var divd = MathT.Abs(this);
                         var divsr = MathT.Abs(divisor);
                         var quot = new FloatT(0);
                         var rem = new FloatT(divd.Value);
 
-                        while (COMPARET(rem, divsr).Value != Trit.TritVal.n)
+                        while (COMPARET(rem, divsr).Value != TritVal.n)
                         {
                             rem -= divsr;
                             rem = RoundToNearestDigitOfPrecision(rem, new Tryte(divisor.exponent));
                             quot += 1;
                         }
-                        if (COMPARET(this, 0).Value == Trit.TritVal.n ^ COMPARET(divisor, 0).Value == Trit.TritVal.n)
+                        if (COMPARET(this, 0).Value == TritVal.n ^ COMPARET(divisor, 0).Value == TritVal.n)
                         {
                             quot = quot.INVERTSIG();
                         }
                         return (quot, rem);
                     }
-                    else if (COMPARET(this, divisor).Value == Trit.TritVal.z)
+                    else if (COMPARET(this, divisor).Value == TritVal.z)
                     {
                         return (new FloatT(1), new FloatT(0));
                     }
@@ -1927,7 +1927,7 @@ namespace stdTernary
         public FloatT DIV(FloatT divisor)
         {
             (var quotient, var remainder) = this.DIVREM(divisor);
-            if (COMPARET(remainder, 0).Value != Trit.TritVal.z)
+            if (COMPARET(remainder, 0).Value != TritVal.z)
             {
                 //remainder *= MathT.Pow(10, (FloatT)this.ExpectedNDigitsOfPrecision() + 3);
                 do
@@ -1986,13 +1986,13 @@ namespace stdTernary
                         newExp -= normalizeCarry;
                         switch (Tryte.COMPARET(newExp, MaxExponentValue + 1).Value)
                         {
-                            case Trit.TritVal.n:
+                            case TritVal.n:
                                 return new FloatT(newExp.Value, addedSigs);
                             default:
                                 return IntT.COMPARET(new IntT(addedSigs), 0).Value switch
                                 {
-                                    Trit.TritVal.p => PositiveInfinity,
-                                    Trit.TritVal.n => NegativeInfinity,
+                                    TritVal.p => PositiveInfinity,
+                                    TritVal.n => NegativeInfinity,
                                     _ => zero
                                 };
                         }
@@ -2009,13 +2009,13 @@ namespace stdTernary
                         newExp -= normalizeCarry;
                         switch (Tryte.COMPARET(newExp, MaxExponentValue + 1).Value)
                         {
-                            case Trit.TritVal.n:
+                            case TritVal.n:
                                 return new FloatT(newExp.Value, addedSigs);
                             default:
                                 return IntT.COMPARET(new IntT(addedSigs), 0).Value switch
                                 {
-                                    Trit.TritVal.p => PositiveInfinity,
-                                    Trit.TritVal.n => NegativeInfinity,
+                                    TritVal.p => PositiveInfinity,
+                                    TritVal.n => NegativeInfinity,
                                     _ => zero
                                 };
                         }
@@ -2032,13 +2032,13 @@ namespace stdTernary
                         newExp -= normalizeCarry;
                         switch (Tryte.COMPARET(newExp, MaxExponentValue + 1).Value)
                         {
-                            case Trit.TritVal.n:
+                            case TritVal.n:
                                 return new FloatT(newExp.Value, addedSigs);
                             default:
                                 return IntT.COMPARET(new IntT(addedSigs), 0).Value switch
                                 {
-                                    Trit.TritVal.p => PositiveInfinity,
-                                    Trit.TritVal.n => NegativeInfinity,
+                                    TritVal.p => PositiveInfinity,
+                                    TritVal.n => NegativeInfinity,
                                     _ => zero
                                 };
                         }
@@ -2395,7 +2395,7 @@ namespace stdTernary
             Tryte count = 0;
             for (Tryte n = 0; n < trits.Length; n++)
             {
-                if (trits[n].Value == Trit.TritVal.z)
+                if (trits[n].Value == TritVal.z)
                 {
                     temp = TritShiftLeft(temp, 1);
                     count++;
@@ -2423,13 +2423,13 @@ namespace stdTernary
                 Trit[] tempB = new Trit[N_TRITS_SIGNIFICAND * 2];
                 switch (sigA[i].Value)
                 {
-                    case Trit.TritVal.n:
+                    case TritVal.n:
                         for (Tryte j = N_TRITS_SIGNIFICAND; j < (Tryte)N_TRITS_SIGNIFICAND * 2; j++)
                         {
                             tempB[j] = ~sigB[j - N_TRITS_SIGNIFICAND];
                         }
                         break;
-                    case Trit.TritVal.p:
+                    case TritVal.p:
                         sigB.CopyTo(tempB, N_TRITS_SIGNIFICAND);
                         break;
                     default:
@@ -2526,9 +2526,9 @@ namespace stdTernary
         public string CharTString { get => ConvertToStringRepresentation(); }
         public char CharValue { get => charValue; set => SetValue(value); }
 
-        public const Trit.TritVal Equal = Trit.TritVal.z;
-        public const Trit.TritVal Smaller = Trit.TritVal.n;
-        public const Trit.TritVal Larger = Trit.TritVal.p;
+        public const TritVal Equal = TritVal.z;
+        public const TritVal Smaller = TritVal.n;
+        public const TritVal Larger = TritVal.p;
 
         public static bool operator ==(CharT left, CharT right) => COMPARET(left, right).Value == Equal;
         public static bool operator !=(CharT left, CharT right) => COMPARET(left, right).Value != Equal;
@@ -2650,13 +2650,13 @@ namespace stdTernary
             {
                 switch (this.chart[i].Value)
                 {
-                    case Trit.TritVal.n:
+                    case TritVal.n:
                         temp += "-";
                         break;
-                    case Trit.TritVal.p:
+                    case TritVal.p:
                         temp += "+";
                         break;
-                    case Trit.TritVal.z:
+                    case TritVal.z:
                         temp += "0";
                         break;
                 }
@@ -2754,9 +2754,9 @@ namespace stdTernary
             var pow = new IntT(1);
             switch (IntT.COMPARET(b, zero).Value)
             {
-                case Trit.TritVal.z:
+                case TritVal.z:
                     return pow;
-                case Trit.TritVal.p:
+                case TritVal.p:
                     {
                         for (int n = 0; n < b.LongValue; n++)
                         {
@@ -2901,9 +2901,9 @@ namespace stdTernary
             {
                 switch (f.Value[i].Value)
                 {
-                    case Trit.TritVal.n:
+                    case TritVal.n:
                         return f.INVERTSIG();
-                    case Trit.TritVal.p:
+                    case TritVal.p:
                         return f;
                 }
             }
@@ -2916,9 +2916,9 @@ namespace stdTernary
             {
                 switch (intT.Value[i].Value)
                 {
-                    case Trit.TritVal.n:
+                    case TritVal.n:
                         return intT.INVERT();
-                    case Trit.TritVal.p:
+                    case TritVal.p:
                         return intT;
                 }
             }
@@ -2931,9 +2931,9 @@ namespace stdTernary
             {
                 switch (tryte.Value[i].Value)
                 {
-                    case Trit.TritVal.n:
+                    case TritVal.n:
                         return tryte.INVERT();
-                    case Trit.TritVal.p:
+                    case TritVal.p:
                         return tryte;
                 }
             }
