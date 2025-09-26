@@ -1472,6 +1472,14 @@ namespace stdTernary
         /// </summary>
         private Trit[] floatt;
         /// <summary>
+        /// Packed exponent trits (two bits per trit).
+        /// </summary>
+        private uint packedExponent;
+        /// <summary>
+        /// Packed significand trits (two bits per trit).
+        /// </summary>
+        private ulong packedSignificand;
+        /// <summary>
         /// The FloatT value represented as a binary double
         /// </summary>
         //private double doubleValue;
@@ -1513,6 +1521,31 @@ namespace stdTernary
         public static implicit operator FloatT(double doubleVal) => new FloatT(doubleVal);
         public static explicit operator string(FloatT floatt) => floatt.FloatTString;
         public static explicit operator FloatT(string str) => new FloatT(str);
+
+        private void SyncPackedFromArrays()
+        {
+            exponent ??= new Trit[N_TRITS_EXPONENT];
+            significand ??= new Trit[N_TRITS_SIGNIFICAND];
+
+            if (floatt == null)
+            {
+                floatt = new Trit[N_TRITS_TOTAL_FLOAT];
+                Array.Copy(exponent, 0, floatt, 0, N_TRITS_EXPONENT);
+                Array.Copy(significand, 0, floatt, N_TRITS_EXPONENT, N_TRITS_SIGNIFICAND);
+            }
+
+            packedExponent = TritPacker.PackTrits(exponent);
+            packedSignificand = TritPacker.PackTrits64(significand);
+        }
+
+        private void SyncArraysFromPacked()
+        {
+            exponent = TritPacker.UnpackTrits(packedExponent, N_TRITS_EXPONENT);
+            significand = TritPacker.UnpackTrits64(packedSignificand, N_TRITS_SIGNIFICAND);
+            floatt = new Trit[N_TRITS_TOTAL_FLOAT];
+            Array.Copy(exponent, 0, floatt, 0, N_TRITS_EXPONENT);
+            Array.Copy(significand, 0, floatt, N_TRITS_EXPONENT, N_TRITS_SIGNIFICAND);
+        }
 
         public override bool Equals(object obj) //just making sure I'm following all the rules and implementing an Equals function
         {
@@ -1597,6 +1630,8 @@ namespace stdTernary
                 //value = RoundToNearestDigitOfPrecision(value, new Tryte(exponent));
 
             }
+
+            SyncPackedFromArrays();
         }
 
         public FloatT(Trit[] exp, Trit[] sig)
@@ -1614,6 +1649,8 @@ namespace stdTernary
                 {
                     floatt[i] = significand[i - N_TRITS_EXPONENT];
                 }
+
+                SyncPackedFromArrays();
             }
             else
             {
@@ -1657,6 +1694,49 @@ namespace stdTernary
             return doubleValue;
         }
 
+        private bool IsZero()
+        {
+            for (int i = 0; i < N_TRITS_EXPONENT; i++)
+            {
+                if ((sbyte)exponent[i].Value != -1)
+                {
+                    return false;
+                }
+            }
+
+            for (int i = 0; i < N_TRITS_SIGNIFICAND; i++)
+            {
+                if (significand[i].Value != TritVal.z)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static Trit[] ShiftSignificandRight(Trit[] source, int shift)
+        {
+            if (shift <= 0)
+            {
+                var clone = new Trit[source.Length];
+                Array.Copy(source, clone, source.Length);
+                return clone;
+            }
+
+            if (shift >= source.Length)
+            {
+                return new Trit[source.Length];
+            }
+
+            var result = new Trit[source.Length];
+            for (int i = 0; i < source.Length; i++)
+            {
+                result[i] = i < shift ? new Trit(0) : source[i - shift];
+            }
+            return result;
+        }
+
         /// <summary>
         /// Constructor for the FloatT taking an array of Trits to be converted to binary
         /// </summary>
@@ -1676,6 +1756,8 @@ namespace stdTernary
                 {
                     significand[i - N_TRITS_EXPONENT] = value[i];
                 }
+
+                SyncPackedFromArrays();
 
                 // if (exponent.All(t => (sbyte)t.Value == 1))    //infinities and NaNs here
                 // {
@@ -1947,14 +2029,28 @@ namespace stdTernary
 
         public FloatT MULT(FloatT f)
         {
-            var floatAExp = new Tryte(this.exponent);
-            var floatBExp = new Tryte(f.exponent);
-            var sumOfExp = floatAExp + floatBExp;
+            int expA = ConvertBalancedTritsToInteger(exponent);
+            int expB = ConvertBalancedTritsToInteger(f.exponent);
+            int newExp = expA + expB;
+
             var multipliedSigs = MultiplySignificands(this.significand, f.significand);
             Tryte normalizeCarry;
             (multipliedSigs, normalizeCarry) = NormalizeSignificand(multipliedSigs);
-            var newExp = sumOfExp - normalizeCarry;
-            return new FloatT(newExp.Value, multipliedSigs);
+            newExp -= (int)normalizeCarry;
+
+            if (newExp <= MaxExponentValue)
+            {
+                var exponentTrits = ConvertIntegerToBalancedTrits(newExp, N_TRITS_EXPONENT);
+                return new FloatT(exponentTrits, multipliedSigs);
+            }
+
+            var sign = IntT.COMPARET(new IntT(multipliedSigs), 0).Value;
+            return sign switch
+            {
+                TritVal.p => PositiveInfinity,
+                TritVal.n => NegativeInfinity,
+                _ => new FloatT(0),
+            };
         }
 
         public FloatT SUB(FloatT f)
@@ -1964,89 +2060,57 @@ namespace stdTernary
 
         public FloatT ADD(FloatT f)
         {
-            var zero = new FloatT(0);
-            if (this == zero)
+            if (IsZero())
             {
                 return new FloatT(f);
             }
-            else if (f == zero)
+
+            if (f.IsZero())
             {
                 return new FloatT(this);
             }
-            var floatAExp = new Tryte(this.exponent);
-            var floatBExp = new Tryte(f.exponent);
-            switch (Tryte.COMPARET(floatAExp, floatBExp).Value)
+
+            int expA = ConvertBalancedTritsToInteger(exponent);
+            int expB = ConvertBalancedTritsToInteger(f.exponent);
+
+            FloatT primary = this;
+            FloatT secondary = f;
+            int targetExp = expA;
+            int diff = expA - expB;
+
+            if (expB > expA)
             {
-                case Tryte.Equal:
-                    {
-                        (var addedSigs, var carry) = AddSignificands(significand, f.significand);
-                        Tryte newExp = floatAExp + carry;
-                        Tryte normalizeCarry;
-                        (addedSigs, normalizeCarry) = NormalizeSignificand(addedSigs);
-                        newExp -= normalizeCarry;
-                        switch (Tryte.COMPARET(newExp, MaxExponentValue + 1).Value)
-                        {
-                            case TritVal.n:
-                                return new FloatT(newExp.Value, addedSigs);
-                            default:
-                                return IntT.COMPARET(new IntT(addedSigs), 0).Value switch
-                                {
-                                    TritVal.p => PositiveInfinity,
-                                    TritVal.n => NegativeInfinity,
-                                    _ => zero
-                                };
-                        }
-                    }
-
-                case Tryte.Larger:
-                    {
-                        var diff = floatAExp - floatBExp;
-                        var shifted = TritShiftRight(f.significand, diff);
-                        (var addedSigs, var carry) = AddSignificands(shifted, significand);
-                        Tryte newExp = floatAExp + carry;
-                        Tryte normalizeCarry;
-                        (addedSigs, normalizeCarry) = NormalizeSignificand(addedSigs);
-                        newExp -= normalizeCarry;
-                        switch (Tryte.COMPARET(newExp, MaxExponentValue + 1).Value)
-                        {
-                            case TritVal.n:
-                                return new FloatT(newExp.Value, addedSigs);
-                            default:
-                                return IntT.COMPARET(new IntT(addedSigs), 0).Value switch
-                                {
-                                    TritVal.p => PositiveInfinity,
-                                    TritVal.n => NegativeInfinity,
-                                    _ => zero
-                                };
-                        }
-                    }
-
-                case Tryte.Smaller:
-                    {
-                        var diff = floatBExp - floatAExp;
-                        var shifted = TritShiftRight(significand, diff);
-                        (var addedSigs, var carry) = AddSignificands(shifted, f.significand);
-                        Tryte newExp = floatBExp + carry;
-                        Tryte normalizeCarry;
-                        (addedSigs, normalizeCarry) = NormalizeSignificand(addedSigs);
-                        newExp -= normalizeCarry;
-                        switch (Tryte.COMPARET(newExp, MaxExponentValue + 1).Value)
-                        {
-                            case TritVal.n:
-                                return new FloatT(newExp.Value, addedSigs);
-                            default:
-                                return IntT.COMPARET(new IntT(addedSigs), 0).Value switch
-                                {
-                                    TritVal.p => PositiveInfinity,
-                                    TritVal.n => NegativeInfinity,
-                                    _ => zero
-                                };
-                        }
-                    }
-
-                default:
-                    return zero;
+                primary = f;
+                secondary = this;
+                targetExp = expB;
+                diff = expB - expA;
             }
+
+            Trit[] shiftedSecondary = diff == 0
+                ? secondary.significand
+                : ShiftSignificandRight(secondary.significand, diff);
+
+            (var addedSigs, var carry) = AddSignificands(primary.significand, shiftedSecondary);
+            int newExp = targetExp + (int)carry.Value;
+
+            Tryte normalizeCarry;
+            (addedSigs, normalizeCarry) = NormalizeSignificand(addedSigs);
+            newExp -= (int)normalizeCarry;
+
+            if (newExp <= MaxExponentValue)
+            {
+                var exponentTrits = ConvertIntegerToBalancedTrits(newExp, N_TRITS_EXPONENT);
+                return new FloatT(exponentTrits, addedSigs);
+            }
+
+            // Overflow path – mirror previous behaviour using sign of significand
+            var sign = IntT.COMPARET(new IntT(addedSigs), 0).Value;
+            return sign switch
+            {
+                TritVal.p => PositiveInfinity,
+                TritVal.n => NegativeInfinity,
+                _ => new FloatT(0),
+            };
         }
 
         public override string ToString()
@@ -2054,40 +2118,40 @@ namespace stdTernary
             return FloatTString + " = " + DoubleValue;
         }
 
-        private readonly void SetAllExponentTrits(sbyte t)
+        private void SetAllExponentTrits(sbyte t)
         {
+            exponent ??= new Trit[N_TRITS_EXPONENT];
+            floatt ??= new Trit[N_TRITS_TOTAL_FLOAT];
+
             for (byte i = 0; i < N_TRITS_EXPONENT; i++)
             {
                 floatt[i] = new Trit(t);
                 exponent[i] = new Trit(t);
             }
+            SyncPackedFromArrays();
         }
 
-        private readonly void SetAllSignificandTrits(sbyte t)
+        private void SetAllSignificandTrits(sbyte t)
         {
+            significand ??= new Trit[N_TRITS_SIGNIFICAND];
+            floatt ??= new Trit[N_TRITS_TOTAL_FLOAT];
+
             for (int i = N_TRITS_EXPONENT; i < N_TRITS_TOTAL_FLOAT; i++)
             {
                 this.floatt[i] = new Trit(t);
                 this.significand[i - N_TRITS_EXPONENT] = new Trit(t);
             }
+            SyncPackedFromArrays();
         }
 
         public void SetAllExponentTritsTo(Trit trit) //set all the exponent trits to a particular trit value
         {
-            for (byte i = 0; i < N_TRITS_EXPONENT; i++)
-            {
-                floatt[i] = new Trit(trit.Value);
-                exponent[i] = new Trit(trit.Value);
-            }
+            SetAllExponentTrits((sbyte)trit.Value);
         }
 
         public void SetAllSignificandTritsTo(Trit trit)      //set all the signficand trits to a particular trit value
         {
-            for (byte i = N_TRITS_EXPONENT; i < N_TRITS_TOTAL_FLOAT; i++)
-            {
-                floatt[i] = new Trit(trit.Value);
-                significand[i - N_TRITS_EXPONENT] = new Trit(trit.Value);
-            }
+            SetAllSignificandTrits((sbyte)trit.Value);
         }
 
         public void SetValue(double value)
@@ -2133,6 +2197,8 @@ namespace stdTernary
                     floatt[i] = significand[i - N_TRITS_EXPONENT];
                 }
             }
+
+            SyncPackedFromArrays();
         }
 
         public void SetValue(Trit[] value)   //separates the whole balanced float into exponent and significand...
@@ -2149,6 +2215,7 @@ namespace stdTernary
                     significand[i - N_TRITS_EXPONENT] = value[i];
                 }
                 //CreateDoubleValueIncludingSpecialCases();   //...and converts them into a double including infinities and NaNs
+                SyncPackedFromArrays();
             }
             else
             {
@@ -2201,6 +2268,7 @@ namespace stdTernary
                     }
                 }
                 //CreateDoubleValueIncludingSpecialCases();   //...and does the same conversion to double with special cases
+                SyncPackedFromArrays();
             }
             else
             {
