@@ -79,6 +79,17 @@ public class TryteTests
         Assert.AreEqual("++0++0", (string)or);
         Assert.AreEqual("-+0++0", (string)xor);
     }
+
+    [TestMethod]
+    public void TritIncrementAndDecrementClamp()
+    {
+        Tryte start = new Tryte(5);
+        Tryte incremented = MathT.TritIncrement(start);
+        Tryte decremented = MathT.TritDecrement(incremented);
+
+        Assert.AreEqual(6, incremented.ShortValue);
+        Assert.AreEqual(start, decremented);
+    }
 }
 
 [TestClass]
@@ -249,5 +260,16 @@ public class FloatTTests
 
         double approx = fraction.ToDouble();
         Assert.IsTrue(Math.Abs(approx - (1.0 / 3.0)) < 1e-6);
+    }
+
+    [TestMethod]
+    public void TritIncrementAdjustsSignificand()
+    {
+        FloatT value = FloatT.FromInt(new IntT(1));
+        FloatT next = MathT.TritIncrement(value);
+        Assert.IsTrue(next.CompareTo(value) > 0);
+
+        FloatT previous = MathT.TritDecrement(next);
+        Assert.AreEqual(value, previous);
     }
 }

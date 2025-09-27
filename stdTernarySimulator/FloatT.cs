@@ -147,6 +147,19 @@ public readonly struct FloatT : IEquatable<FloatT>, IComparable<FloatT>
         return new FloatT(Compose(Exponent, negSignificand));
     }
 
+    internal FloatT AdjustByTrit(int delta)
+    {
+        if (delta == 0)
+            return this;
+
+        int exponent = Exponent;
+        Span<int> digits = stackalloc int[WorkingTritCount];
+        LoadDigits(SignificandPacked, digits);
+        digits[0] += delta;
+        NormalizeDigits(digits);
+        return CreateFromDigits(digits, exponent);
+    }
+
     public bool Equals(FloatT other) => _packed == other._packed;
 
     public override bool Equals(object? obj) => obj is FloatT other && Equals(other);

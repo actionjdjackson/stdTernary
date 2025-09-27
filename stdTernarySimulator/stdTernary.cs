@@ -99,6 +99,14 @@ public static class MathT
         return FloatT.FromDouble(Math.Sqrt(d));
     }
 
+    public static IntT Cbrt(IntT value)
+    {
+        double root = Math.Cbrt(value.ToInt64());
+        return new IntT((long)Math.Round(root, MidpointRounding.AwayFromZero));
+    }
+
+    public static FloatT Cbrt(FloatT value) => FloatT.FromDouble(Math.Cbrt(value.ToDouble()));
+
     public static FloatT Exp(FloatT value) => FloatT.FromDouble(Math.Exp(value.ToDouble()));
     public static FloatT Log(FloatT value) => FloatT.FromDouble(Math.Log(value.ToDouble()));
     public static FloatT Log(FloatT value, FloatT newBase) => FloatT.FromDouble(Math.Log(value.ToDouble(), newBase.ToDouble()));
@@ -133,4 +141,36 @@ public static class MathT
 
     public static FloatT DegToRad(FloatT degrees) => FloatT.FromDouble(degrees.ToDouble() * Math.PI / 180.0);
     public static FloatT RadToDeg(FloatT radians) => FloatT.FromDouble(radians.ToDouble() * 180.0 / Math.PI);
+
+    public static IntT TritIncrement(IntT value)
+    {
+        if (value.CompareTo(IntT.MaxValue) >= 0)
+            throw new OverflowException("IntT increment overflow.");
+        return value + IntT.One;
+    }
+
+    public static IntT TritDecrement(IntT value)
+    {
+        if (value.CompareTo(IntT.MinValue) <= 0)
+            throw new OverflowException("IntT decrement overflow.");
+        return value + IntT.NegativeOne;
+    }
+
+    public static Tryte TritIncrement(Tryte value)
+    {
+        if (value.ShortValue >= Tryte.MaxValue)
+            throw new OverflowException("Tryte increment overflow.");
+        return value + Tryte.One;
+    }
+
+    public static Tryte TritDecrement(Tryte value)
+    {
+        if (value.ShortValue <= Tryte.MinValue)
+            throw new OverflowException("Tryte decrement overflow.");
+        return value + Tryte.NegativeOne;
+    }
+
+    public static FloatT TritIncrement(FloatT value) => value.AdjustByTrit(1);
+
+    public static FloatT TritDecrement(FloatT value) => value.AdjustByTrit(-1);
 }
