@@ -1,6 +1,6 @@
 # stdTernary #
 ## A standard library for Ternary operations in C# ##
-![build-and-test](https://github.com/actionjdjackson/stdTernary/actions/workflows/build-and-test.yml/badge.svg?event=push)
+![build-and-test](https://github.com/actionjdjackson/stdTernarySimulator/actions/workflows/build-and-test.yml/badge.svg?event=push)
 
 Since the binary computer operates in bytes, even when dealing with boolean values, I decided to use the signed byte enum as the carrier for the Balanced Ternary values 1, -1, and 0. They are named n, p, and z for -1 (negative), 1 (positive), and 0 (zero). I could have used two booleans but I think the performance would be about the same. I might give it a test run in the near future and find out if a pair of booleans is actually faster than a `sbyte`, but the consensus seems to be that there is no performance advantage to a bool over a byte.
 
