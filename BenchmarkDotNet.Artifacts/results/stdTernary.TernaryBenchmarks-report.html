@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>stdTernary.TernaryBenchmarks-20250927-163459</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.14.0, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+Apple M4 Pro, 1 CPU, 14 logical and 14 physical cores
+.NET SDK 9.0.305
+  [Host]     : .NET 8.0.20 (8.0.2025.41914), Arm64 RyuJIT AdvSIMD
+  DefaultJob : .NET 8.0.20 (8.0.2025.41914), Arm64 RyuJIT AdvSIMD
+</code></pre>
+<pre><code></code></pre>
+
+<table>
+<thead><tr><th>Method            </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>TestIntTAddition</td><td>372.4 &mu;s</td><td>1.33 &mu;s</td><td>1.24 &mu;s</td><td>-</td>
+</tr><tr><td>TestIntTSubtraction</td><td>476.7 &mu;s</td><td>2.34 &mu;s</td><td>2.07 &mu;s</td><td>-</td>
+</tr><tr><td>TestIntTMultiplication</td><td>525.7 &mu;s</td><td>2.48 &mu;s</td><td>2.32 &mu;s</td><td>1 B</td>
+</tr><tr><td>TestIntTDivision</td><td>3,440.3 &mu;s</td><td>10.36 &mu;s</td><td>8.65 &mu;s</td><td>104 B</td>
+</tr><tr><td>TestIntTModulus</td><td>3,453.1 &mu;s</td><td>20.87 &mu;s</td><td>19.52 &mu;s</td><td>84 B</td>
+</tr><tr><td>TestIntTPower</td><td>412.6 &mu;s</td><td>2.08 &mu;s</td><td>1.95 &mu;s</td><td>-</td>
+</tr><tr><td>TestFloatTAddition</td><td>823.6 &mu;s</td><td>4.98 &mu;s</td><td>4.66 &mu;s</td><td>1 B</td>
+</tr><tr><td>TestFloatTSubtraction</td><td>829.6 &mu;s</td><td>4.96 &mu;s</td><td>4.64 &mu;s</td><td>1 B</td>
+</tr><tr><td>TestFloatTMultiplication</td><td>931.8 &mu;s</td><td>4.01 &mu;s</td><td>3.75 &mu;s</td><td>1 B</td>
+</tr><tr><td>TestFloatTDivision</td><td>3,231.5 &mu;s</td><td>14.94 &mu;s</td><td>13.97 &mu;s</td><td>866 B</td>
+</tr><tr><td>TestFloatTModulus</td><td>630.2 &mu;s</td><td>3.32 &mu;s</td><td>2.94 &mu;s</td><td>1 B</td>
+</tr></tbody></table>
+</body>
+</html>

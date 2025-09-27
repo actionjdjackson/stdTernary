@@ -58,7 +58,8 @@ nunit-*.xml
 dlldata.c
 
 # Benchmark Results
-BenchmarkDotNet.Artifacts/
+BenchmarkDotNet.Artifacts/*.log
+BenchmarkDotNet.Artifacts/results/*.csv
 
 # .NET
 project.lock.json
