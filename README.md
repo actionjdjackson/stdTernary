@@ -2,25 +2,22 @@
 ## A standard library for Ternary operations in C# ##
 ![build-and-test](https://github.com/actionjdjackson/stdTernary/actions/workflows/build-and-test.yml/badge.svg?event=push)
 
-Since the binary computer operates in bytes, even when dealing with boolean values, I decided to use the signed byte enum as the carrier for the Balanced Ternary values 1, -1, and 0. They are named n, p, and z for -1 (negative), 1 (positive), and 0 (zero). I could have used two booleans but I think the performance would be about the same. I might give it a test run in the near future and find out if a pair of booleans is actually faster than a `sbyte`, but the consensus seems to be that there is no performance advantage to a bool over a byte.
+I've completely overhauled stdTernary to stdTernarySimulator - no longer using an enum for storing +, -, and 0 values. Instead, I'm trit-packing 2-bit-trits (0b10 is -1, 0b01 is 1, and 0b00 is zero, while 0b11 is reserved/unused) into binary unsigned integers (`uint`s or `ulong`s) but all the math is still done in Ternary.
 
-All bitwise and bytewise operators have been overriden for trits and trytes. I am currently using the `*` operator on trits for XNOR/MULTIPLY. The structs are `Trit` and `Tryte` - and the `Tryte` can be modified easily to be any number of trits you want, up to 10 trits with the current implementation. Each `Tryte` holds a combination of an array of `Trit`s and a `short` value for binary equivalent. All math is done in Ternary.
+All bitwise and bytewise operators have been overriden for trits and trytes. I am currently using the `*` operator on trits for XNOR/MULTIPLY. The structs are `Trit` and `Tryte` - and the `Tryte` can be modified easily to be any number of trits you want, up to 16 trits with the current implementation. Each `Tryte` holds a bitpacked array of trits in a `uint` - using 6 by default, up to 16. All math is done in Ternary.
 
-Includes a customizable `IntT` struct that can have any number of total trits in its implementation. It follows the same convention as the `Tryte`, but is able to work with non-multiples of trytes - like 21-trit or 32-trit integers. All math is done in Ternary.
+Includes a customizable `IntT` struct that can have any number of total trits (up to 32 - bitpacking into a 64-bit `ulong`) in its implementation. It follows the same convention as the `Tryte`, but is able to work with non-multiples of trytes - like 21-trit or 32-trit integers. All math is done in Ternary.
 
-Also includes a customizable `FloatT` struct that can have any number of total trits, separated into a exponent and a significand, 1/4 going to the exponent and 3/4 going to the significand (mantissa). It doesn't have to be a multiple of 3, though that is preferable (27 is a nice number, currently using 24). The `FloatT` struct holds a combination of an array of `Trit`s for the exponent and the signficand and the whole float combined, and a `double` for binary equivalent. All math is done in Ternary.
+Also includes a customizable `FloatT` struct that can have any number of total trits - up to 32, separated into a exponent and a significand. The significand can be any number of trits - typically 26 so that the exponent has 6 to work with. It doesn't have to be a multiple of 3. The `FloatT` struct holds a combination the exponent and the significand as bitpacked trits. All math is done in Ternary.
 
-Also includes a `CharT` struct with 12 trits for a `char` representation. It's just an integer value stored as an array of `Trit`s that corresponds to a UTF-16 character.
-
-Also includes most of the `Math` functions specifically for use with these `FloatT`s and some for use with `IntT`s and `Tryte`s in a static class called `MathT`. I also added a `Log3` function and an `ILogT` function and trit increment/decrement functions for `FloatT`s.
+Also includes most of the `Math` functions specifically for use with these `FloatT`s and some for use with `IntT`s in a static class called `MathT`. I also added a `Log3` function and an `ILogT` function and trit increment/decrement functions for `FloatT`s.
 
 The `string` conversion is for interoperability with my "Action Ternary Simulator" which runs on strings of `+, -, and 0` characters and does all the math in Ternary. Also for quick visualization of the ternary values as symbols and checking the outputs of functions like `SHIFTRIGHT` or `SHIFTLEFT` or trit increment/decrement.
 
 Will possibly create an unbalanced ternary version of all of this.
 
-`Tryte` and `FloatT` and `IntT` and `CharT` have modifiable static integer values which is where you can "customize" them to certain sizes - `N_TRITS_PER_TRYTE`, and `N_TOTAL_TRITS_FLOAT` (`N_TRITS_SIGNIFICAND` and `N_TRITS_EXPONENT` too), and `N_TRITS_PER_INT`, and `N_TRITS_PER_CHAR` respectively.
+`Tryte` and `FloatT` and `IntT` and have modifiable static integer values which is where you can "customize" them to certain sizes.
 
-I throw a lot of Exceptions when dealing with numbers outside the range of the Balanced Ternary stucts' acceptable values - which is annoying so I might change it to a "zero" value whenever the values are too large (either positive or negative) and type casting is involved.
 
 ### License ###
 The MIT License (MIT)
