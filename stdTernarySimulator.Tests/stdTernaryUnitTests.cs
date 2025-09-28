@@ -90,6 +90,45 @@ public class TryteTests
         Assert.AreEqual(6, incremented.ShortValue);
         Assert.AreEqual(start, decremented);
     }
+
+    [TestMethod]
+    public void SpaceshipComparisonMatchesCompareTo()
+    {
+        IntT left = new IntT(42);
+        IntT right = new IntT(-7);
+        Trit result = left.Spaceship(right);
+        Assert.AreEqual(TritVal.p, result.Value);
+
+        result = right.Spaceship(left);
+        Assert.AreEqual(TritVal.n, result.Value);
+
+        result = left.Spaceship(new IntT(42));
+        Assert.AreEqual(TritVal.z, result.Value);
+    }
+
+    [TestMethod]
+    public void TernaryDecisionSelectsCorrectBranch()
+    {
+        IntT left = new IntT(5);
+        IntT right = new IntT(2);
+
+        string path = left.Ternary(right).Switch("X", "Y", "Z");
+        Assert.AreEqual("X", path);
+
+        bool positiveInvoked = false;
+        bool zeroInvoked = false;
+        bool negativeInvoked = false;
+
+        left.Ternary(right)
+            .Positive(() => positiveInvoked = true)
+            .Zero(() => zeroInvoked = true)
+            .Negative(() => negativeInvoked = true)
+            .Else(() => negativeInvoked = true);
+
+        Assert.IsTrue(positiveInvoked);
+        Assert.IsFalse(zeroInvoked);
+        Assert.IsFalse(negativeInvoked);
+    }
 }
 
 [TestClass]
@@ -271,5 +310,18 @@ public class FloatTTests
 
         FloatT previous = MathT.TritDecrement(next);
         Assert.AreEqual(value, previous);
+    }
+
+    [TestMethod]
+    public void FloatSpaceshipAndDecision()
+    {
+        FloatT left = FloatT.FromInt(new IntT(5));
+        FloatT right = FloatT.FromInt(new IntT(8));
+
+        Trit spaceship = left.Spaceship(right);
+        Assert.AreEqual(TritVal.n, spaceship.Value);
+
+        string selected = left.Ternary(right).Switch("left", "equal", "right");
+        Assert.AreEqual("right", selected);
     }
 }

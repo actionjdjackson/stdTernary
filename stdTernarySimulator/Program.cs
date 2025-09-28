@@ -11,30 +11,40 @@ namespace stdTernary
         {
             IntT a = new IntT(120);
             IntT b = new IntT(60);
-            ReportComparison("IntT", a, b);
-            ReportComparison("IntT", b, a);
-            ReportComparison("IntT", a, new IntT(120));
+
+            DemoSpaceship("IntT", a, b);
+            DemoMethodChaining("IntT", a, b);
 
             FloatT c = 3.14159;
             FloatT d = 2.71828;
-            ReportComparison("FloatT", c, d);
-            ReportComparison("FloatT", d, c);
-            ReportComparison("FloatT", c, (FloatT)3.14159);
 
-            var summary = BenchmarkRunner.Run<TernaryBenchmarks>();
+            DemoSpaceship("FloatT", c, d);
+            DemoMethodChaining("FloatT", c, d);
+
+            // Uncomment to run the benchmarks
+            // var summary = BenchmarkRunner.Run<TernaryBenchmarks>();
         }
 
-        private static void ReportComparison<T>(string label, T left, T right) where T : IComparable<T>
+        private static void DemoSpaceship<T>(string label, T left, T right) where T : IComparable<T>
         {
-            int comparison = left.CompareTo(right);
-            string relation = comparison switch
-            {
-                > 0 => ">",
-                < 0 => "<",
-                _ => "="
-            };
+            Trit spaceship = left.Spaceship(right);
+            Console.WriteLine($"{label} spaceship => {left} <=> {right} = {spaceship.GetChar}");
+        }
 
-            Console.WriteLine($"{label}: {left} {relation} {right}");
+        private static void DemoMethodChaining<T>(string label, T left, T right) where T : IComparable<T>
+        {
+            Console.WriteLine($"{label} ternary comparison between {left} and {right}");
+
+            TernaryDecision decision = left.Ternary(right);
+
+            decision
+                .Positive(() => Console.WriteLine("  positive branch chosen"))
+                .Zero(() => Console.WriteLine("  zero branch chosen"))
+                .Negative(() => Console.WriteLine("  negative branch chosen"))
+                .Else(() => Console.WriteLine("  (fallback)"));
+
+            string selected = decision.Switch("take X", "take Y", "take Z");
+            Console.WriteLine($"  datapath selection -> {selected}");
         }
     }
 

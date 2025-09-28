@@ -172,6 +172,18 @@ public struct Trit : IEquatable<Trit>, IComparable<Trit>
         return new Trit(0);
     }
 
+    public static Trit FromComparison(int comparison)
+    {
+        if (comparison > 0)
+            return new Trit(1);
+        if (comparison < 0)
+            return new Trit(-1);
+        return new Trit(0);
+    }
+
+    public static Trit Compare<T>(T left, T right) where T : IComparable<T>
+        => FromComparison(left.CompareTo(right));
+
     public bool Equals(Trit other) => _value == other._value;
 
     public override bool Equals(object? obj) => obj is Trit other && Equals(other);
