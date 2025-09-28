@@ -136,21 +136,21 @@ public struct Trit : IEquatable<Trit>, IComparable<Trit>
         return this;
     }
 
-    public Trit Larger(Action action)
+    public Trit Positive(Action action)
     {
         if (_value > 0)
             action();
         return this;
     }
 
-    public Trit Smaller(Action action)
+    public Trit Negative(Action action)
     {
         if (_value < 0)
             action();
         return this;
     }
 
-    public Trit Equal(Action action)
+    public Trit Zero(Action action)
     {
         if (_value == 0)
             action();

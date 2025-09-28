@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Running;
@@ -20,6 +21,9 @@ namespace stdTernary
 
             DemoSpaceship("FloatT", c, d);
             DemoMethodChaining("FloatT", c, d);
+
+            DemoSorting();
+            DemoTernarySearchTree();
 
             // Uncomment to run the benchmarks
             // var summary = BenchmarkRunner.Run<TernaryBenchmarks>();
@@ -45,6 +49,38 @@ namespace stdTernary
 
             string selected = decision.Switch("take X", "take Y", "take Z");
             Console.WriteLine($"  datapath selection -> {selected}");
+        }
+
+        private static void DemoSorting()
+        {
+            var values = new[]
+            {
+                new IntT(9),
+                new IntT(-4),
+                new IntT(27),
+                new IntT(1),
+                new IntT(-13),
+                new IntT(0)
+            };
+
+            TernaryAlgorithms.TernaryQuicksort(values);
+            Console.WriteLine("Sorted IntT values using ternary quicksort: " + string.Join(", ", values.Select(v => v.ToInt64())));
+        }
+
+        private static void DemoTernarySearchTree()
+        {
+            var tree = new TernarySearchTree<int>();
+            tree.Put("shell", 1);
+            tree.Put("shore", 2);
+            tree.Put("sea", 3);
+            tree.Put("shoreline", 4);
+            tree.Put("she", 5);
+
+            Console.WriteLine("Ternary search tree keys with prefix 'sh':");
+            foreach (var (key, value) in tree.KeysWithPrefix("sh"))
+            {
+                Console.WriteLine($"  {key} -> {value}");
+            }
         }
     }
 

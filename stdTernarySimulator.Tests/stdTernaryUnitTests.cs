@@ -1,6 +1,7 @@
 namespace stdTernary.Tests;
 
 using System;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using stdTernary;
 
@@ -323,5 +324,47 @@ public class FloatTTests
 
         string selected = left.Ternary(right).Switch("left", "equal", "right");
         Assert.AreEqual("right", selected);
+    }
+}
+
+[TestClass]
+public class TernaryAlgorithmTests
+{
+    [TestMethod]
+    public void TernaryQuickSortOrdersValues()
+    {
+        var data = new[]
+        {
+            new IntT(9),
+            new IntT(-4),
+            new IntT(27),
+            new IntT(1),
+            new IntT(-13),
+            new IntT(0)
+        };
+
+        TernaryAlgorithms.TernaryQuicksort(data);
+
+        var numeric = data.Select(x => x.ToInt64()).ToArray();
+        CollectionAssert.AreEqual(new long[] { -13, -4, 0, 1, 9, 27 }, numeric);
+    }
+
+    [TestMethod]
+    public void TernarySearchTreeStoresAndFindsKeys()
+    {
+        var tree = new TernarySearchTree<int>();
+        tree.Put("shell", 1);
+        tree.Put("shore", 2);
+        tree.Put("sea", 3);
+        tree.Put("shoreline", 4);
+        tree.Put("she", 5);
+
+        Assert.IsTrue(tree.TryGetValue("sea", out int seaValue));
+        Assert.AreEqual(3, seaValue);
+
+        Assert.IsFalse(tree.TryGetValue("seahorse", out _));
+
+        var keys = tree.KeysWithPrefix("sh").Select(pair => pair.Key).ToArray();
+        CollectionAssert.AreEquivalent(new[] { "she", "shell", "shore", "shoreline" }, keys);
     }
 }
