@@ -1,0 +1,17 @@
+{
+  "name": "stdTernary",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0",
+  "postCreateCommand": "dotnet restore stdTernary.sln",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "dotnet.defaultSolution": "stdTernary.sln"
+      },
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "formulahendry.dotnet-test-explorer"
+      ]
+    }
+  }
+}
