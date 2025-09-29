@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "stdTernarySimulator", "stdTernarySimulator\stdTernarySimulator.csproj", "{3421FFF4-9D91-4E79-9364-A99FFFE62B7E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "stdTernary", "stdTernary\stdTernary.csproj", "{3421FFF4-9D91-4E79-9364-A99FFFE62B7E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "stdTernarySimulator.Tests", "stdTernarySimulator.Tests\stdTernarySimulator.Tests.csproj", "{19CE4E81-6E31-497E-9C94-C051DF26F6D7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "stdTernary.Tests", "stdTernary.Tests\stdTernary.Tests.csproj", "{19CE4E81-6E31-497E-9C94-C051DF26F6D7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,8 +1,8 @@
 # stdTernary #
 ## A standard library for Ternary operations in C# ##
-![build-and-test](https://github.com/actionjdjackson/stdTernarySimulator/actions/workflows/build-and-test.yml/badge.svg?event=push)
+![build-and-test](https://github.com/actionjdjackson/stdTernary/actions/workflows/build-and-test.yml/badge.svg?event=push)
 
-I've completely overhauled stdTernary to stdTernarySimulator - no longer using an enum for storing +, -, and 0 values. Instead, I'm trit-packing 2-bit-trits (0b10 is -1, 0b01 is 1, and 0b00 is zero, while 0b11 is reserved/unused) into binary unsigned integers (`uint`s or `ulong`s) but all the math is still done in Ternary.
+I've completely overhauled stdTernary - no longer using an enum for storing +, -, and 0 values. Instead, I'm trit-packing 2-bit-trits (0b10 is -1, 0b01 is 1, and 0b00 is zero, while 0b11 is reserved/unused) into binary unsigned integers (`uint`s or `ulong`s) but all the math is still done in Ternary.
 
 All bitwise and bytewise operators have been overriden for trits and trytes. I am currently using the `*` operator on trits for XNOR/MULTIPLY. The structs are `Trit` and `Tryte` - and the `Tryte` can be modified easily to be any number of trits you want, up to 16 trits with the current implementation. Each `Tryte` holds a bitpacked array of trits in a `uint` - using 6 by default, up to 16. All math is done in Ternary.
 
