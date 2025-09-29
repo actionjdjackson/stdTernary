@@ -26,7 +26,7 @@ namespace stdTernary
             DemoTernarySearchTree();
 
             // Uncomment to run the benchmarks
-            // var summary = BenchmarkRunner.Run<TernaryBenchmarks>();
+            var summary = BenchmarkRunner.Run<TernaryBenchmarks>();
         }
 
         private static void DemoSpaceship<T>(string label, T left, T right) where T : IComparable<T>
@@ -87,8 +87,68 @@ namespace stdTernary
     [MemoryDiagnoser]
     public class TernaryBenchmarks
     {
-        private readonly int nIterations = 500;
+        private readonly int nIterations = 100;
         private readonly Random r = new Random();
+
+        [Benchmark]
+        public void TestMethodChainingComparisons()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(-5, 5);
+                IntT b = r.Next(-5, 5);
+                a.Spaceship(b).Negative(() => a += 1)
+                              .Positive(() => a += 1)
+                              .Zero(() => a += 1);
+            }
+        }
+
+        [Benchmark]
+        public void TestIfComparisons()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(-5, 5);
+                IntT b = r.Next(-5, 5);
+                var comparison = a.Spaceship(b);
+                if (comparison.Value == TritVal.n)
+                {
+                    a += 1;
+                }
+                else if (comparison.Value == TritVal.p)
+                {
+                    a += 1;
+                }
+                else
+                {
+                    a += 1;
+                }
+            }
+        }
+
+        [Benchmark]
+        public void TestCaseComparisons()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(-5, 5);
+                IntT b = r.Next(-5, 5);
+                switch (a.Spaceship(b).Value)
+                {
+                    case TritVal.n:
+                        a += 1;
+                        break;
+                    case TritVal.p:
+                        a += 1;
+                        break;
+                    case TritVal.z:
+                        a += 1;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
 
         [Benchmark]
         public void TestIntTAddition()
