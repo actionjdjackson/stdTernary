@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "formulahendry.dotnet-test-explorer",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "dbaeumer.vscode-eslint",
+        "github.vscode-github-actions", 
+        "mechatroner.rainbow-csv"
+    ]
+}

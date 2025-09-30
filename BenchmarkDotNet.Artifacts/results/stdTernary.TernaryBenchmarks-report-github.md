@@ -1,16 +1,16 @@
 ```
 
-BenchmarkDotNet v0.14.0, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
-Apple M4 Pro, 1 CPU, 14 logical and 14 physical cores
-.NET SDK 9.0.305
-  [Host]     : .NET 8.0.20 (8.0.2025.41914), Arm64 RyuJIT AdvSIMD
-  DefaultJob : .NET 8.0.20 (8.0.2025.41914), Arm64 RyuJIT AdvSIMD
+BenchmarkDotNet v0.14.0, Debian GNU/Linux 12 (bookworm) (container)
+Intel Xeon Platinum 8370C CPU 2.80GHz, 1 CPU, 2 logical cores and 1 physical core
+.NET SDK 8.0.413
+  [Host]     : .NET 8.0.19 (8.0.1925.36514), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+  DefaultJob : .NET 8.0.19 (8.0.1925.36514), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
 
 
 ```
-| Method                | Mean       | Error    | StdDev   | Gen0      | Gen1     | Allocated   |
-|---------------------- |-----------:|---------:|---------:|----------:|---------:|------------:|
-| TestTernaryQuickSort  | 4,452.0 μs | 32.43 μs | 28.75 μs |    7.8125 |        - |    80.47 KB |
-| TestBinaryQuickSort   |   314.8 μs |  1.13 μs |  1.00 μs |    4.8828 |        - |    41.41 KB |
-| TestTernarySearchTree | 4,097.0 μs | 60.64 μs | 53.76 μs | 4421.8750 | 312.5000 | 36147.92 KB |
-| TestBinarySearchTree  | 3,307.3 μs | 25.59 μs | 23.94 μs |  250.0000 |   3.9063 |  2057.03 KB |
+| Method                | Mean       | Error     | StdDev    | Gen0      | Gen1     | Allocated   |
+|---------------------- |-----------:|----------:|----------:|----------:|---------:|------------:|
+| TestTernaryQuickSort  | 7,583.4 μs | 141.61 μs | 139.08 μs |         - |        - |    80.47 KB |
+| TestBinaryQuickSort   |   523.1 μs |  10.41 μs |  15.58 μs |    0.9766 |        - |    41.41 KB |
+| TestTernarySearchTree | 9,615.2 μs | 190.96 μs | 525.95 μs | 1468.7500 | 109.3750 | 36147.44 KB |
+| TestBinarySearchTree  | 8,248.0 μs | 162.77 μs | 370.71 μs |   78.1250 |        - |  2057.04 KB |
