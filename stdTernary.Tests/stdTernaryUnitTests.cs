@@ -368,3 +368,37 @@ public class TernaryAlgorithmTests
         CollectionAssert.AreEquivalent(new[] { "she", "shell", "shore", "shoreline" }, keys);
     }
 }
+
+[TestClass]
+public class BinarySearchTreeTests
+{
+    [TestMethod]
+    public void PutStoresAndRetrievesValues()
+    {
+        var tree = new BinarySearchTree<int>();
+        tree.Put("delta", 4);
+        tree.Put("alpha", 1);
+        tree.Put("charlie", 3);
+        tree.Put("bravo", 2);
+
+        Assert.AreEqual(4, tree.Count);
+        Assert.IsTrue(tree.TryGetValue("charlie", out int value));
+        Assert.AreEqual(3, value);
+        Assert.IsFalse(tree.TryGetValue("echo", out _));
+    }
+
+    [TestMethod]
+    public void KeysWithPrefixReturnsMatchingEntries()
+    {
+        var tree = new BinarySearchTree<int>();
+        tree.Put("apple", 1);
+        tree.Put("apricot", 2);
+        tree.Put("banana", 3);
+        tree.Put("application", 4);
+
+        var matching = tree.KeysWithPrefix("app");
+        CollectionAssert.AreEquivalent(
+            new[] { ("apple", 1), ("application", 4) },
+            matching.ToArray());
+    }
+}

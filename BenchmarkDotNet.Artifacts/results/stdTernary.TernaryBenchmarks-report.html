@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>stdTernary.TernaryBenchmarks-20250929-140935</title>
+<title>stdTernary.TernaryBenchmarks-20250929-193257</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -22,22 +22,12 @@ Apple M4 Pro, 1 CPU, 14 logical and 14 physical cores
 <pre><code></code></pre>
 
 <table>
-<thead><tr><th>Method                 </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Allocated</th>
+<thead><tr><th>Method         </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
 </tr>
-</thead><tbody><tr><td>TestMethodChainingComparisons</td><td>32.05 &mu;s</td><td>0.265 &mu;s</td><td>0.235 &mu;s</td><td>2.5635</td><td>21600 B</td>
-</tr><tr><td>TestIfComparisons</td><td>30.70 &mu;s</td><td>0.360 &mu;s</td><td>0.319 &mu;s</td><td>-</td><td>-</td>
-</tr><tr><td>TestCaseComparisons</td><td>29.83 &mu;s</td><td>0.323 &mu;s</td><td>0.270 &mu;s</td><td>-</td><td>-</td>
-</tr><tr><td>TestIntTAddition</td><td>74.60 &mu;s</td><td>0.264 &mu;s</td><td>0.247 &mu;s</td><td>-</td><td>-</td>
-</tr><tr><td>TestIntTSubtraction</td><td>95.79 &mu;s</td><td>0.315 &mu;s</td><td>0.295 &mu;s</td><td>-</td><td>-</td>
-</tr><tr><td>TestIntTMultiplication</td><td>105.41 &mu;s</td><td>0.359 &mu;s</td><td>0.318 &mu;s</td><td>-</td><td>-</td>
-</tr><tr><td>TestIntTDivision</td><td>690.37 &mu;s</td><td>3.345 &mu;s</td><td>3.129 &mu;s</td><td>-</td><td>18 B</td>
-</tr><tr><td>TestIntTModulus</td><td>688.24 &mu;s</td><td>2.093 &mu;s</td><td>1.855 &mu;s</td><td>-</td><td>19 B</td>
-</tr><tr><td>TestIntTPower</td><td>82.42 &mu;s</td><td>0.645 &mu;s</td><td>0.603 &mu;s</td><td>-</td><td>-</td>
-</tr><tr><td>TestFloatTAddition</td><td>167.34 &mu;s</td><td>0.717 &mu;s</td><td>0.671 &mu;s</td><td>-</td><td>-</td>
-</tr><tr><td>TestFloatTSubtraction</td><td>165.81 &mu;s</td><td>0.798 &mu;s</td><td>0.746 &mu;s</td><td>-</td><td>-</td>
-</tr><tr><td>TestFloatTMultiplication</td><td>186.42 &mu;s</td><td>0.852 &mu;s</td><td>0.755 &mu;s</td><td>-</td><td>-</td>
-</tr><tr><td>TestFloatTDivision</td><td>647.39 &mu;s</td><td>3.701 &mu;s</td><td>3.462 &mu;s</td><td>-</td><td>173 B</td>
-</tr><tr><td>TestFloatTModulus</td><td>125.84 &mu;s</td><td>0.756 &mu;s</td><td>0.707 &mu;s</td><td>-</td><td>-</td>
+</thead><tbody><tr><td>TestTernaryQuickSort</td><td>4,452.0 &mu;s</td><td>32.43 &mu;s</td><td>28.75 &mu;s</td><td>7.8125</td><td>-</td><td>80.47 KB</td>
+</tr><tr><td>TestBinaryQuickSort</td><td>314.8 &mu;s</td><td>1.13 &mu;s</td><td>1.00 &mu;s</td><td>4.8828</td><td>-</td><td>41.41 KB</td>
+</tr><tr><td>TestTernarySearchTree</td><td>4,097.0 &mu;s</td><td>60.64 &mu;s</td><td>53.76 &mu;s</td><td>4421.8750</td><td>312.5000</td><td>36147.92 KB</td>
+</tr><tr><td>TestBinarySearchTree</td><td>3,307.3 &mu;s</td><td>25.59 &mu;s</td><td>23.94 &mu;s</td><td>250.0000</td><td>3.9063</td><td>2057.03 KB</td>
 </tr></tbody></table>
 </body>
 </html>
