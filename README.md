@@ -2,6 +2,25 @@
 ## A standard library for Ternary operations in C# ##
 ![build-and-test](https://github.com/actionjdjackson/stdTernary/actions/workflows/build-and-test.yml/badge.svg?event=push)
 
+(2do) what this library is and what it enables: an elegant ternary first high level programming experience. The library abstract the low level implementation such that in the future the same c# source code can be recompiled on a ternary computer architecture. 
+
+The library promotes the usage of mixed radix programming, using binary for binary concepts and ternary for ternary concepts. This means that boolean is great to model concepts with only 2 logical choices (True, False) and kleenean is great to model concepts with 3 choices (True, False, Unknown). Kleene logic is clear in what happens with the unknown state when using implications.    
+
+### Installation via NuGet
+(2do) 
+
+### Installation via Github Codespaces
+- Click on the green Code button and then on the tab Codespaces. Choose "create new codespace on main".
+- To build the .dll library type "task build"
+- To build and run the unit tests type "task test" 
+- To run the benchmark suite type "task run"
+
+### Limitations
+- The library uses binary coded ternary (BCT) using 2 bits to represent 1 trit. This is obviously inefficient as 1 of the 4 states is ignored. We define 6 trits as 1 tryte such that all binary states of a single byte can fit in a single tryte which simplifies conversions and add binary compatibility. A tryte (6 trits implemented as 12 bits) is packed as binary uint. Note that balanced ternary is always signed so the usage of `uint` is just a choice of implementation. 
+
+Since the current compilation targets are all binary hardware platforms, this inefficiency is unavoidable. However, we expect that this is temporary as more and more balanced ternary instructions set architectures are being developed such as REBEL-6 and ART-9 which feature ternary assembly with ternary logic, memory and branching. With the new .net 10 featuring RISCV support, a possible compilation flow from c# to REBEL-6 (32-trit balanced ternary, binary compatible ISA) is technically possible through R2R. This is work in progress. The R2R framework allows low level binary vs ternary comparison to compute fairly the amount of memory and bitflips that are needed for both radixes to run the same code. 
+
+### Dev Notes sep 2025 (by Jackson)
 I've completely overhauled stdTernary - no longer using an enum for storing +, -, and 0 values. Instead, I'm trit-packing 2-bit-trits (0b10 is -1, 0b01 is 1, and 0b00 is zero, while 0b11 is reserved/unused) into binary unsigned integers (`uint`s or `ulong`s) but all the math is still done in Ternary.
 
 All bitwise and bytewise operators have been overriden for trits and trytes. I am currently using the `*` operator on trits for XNOR/MULTIPLY. The structs are `Trit` and `Tryte` - and the `Tryte` can be modified easily to be any number of trits you want, up to 16 trits with the current implementation. Each `Tryte` holds a bitpacked array of trits in a `uint` - using 6 by default, up to 16. All math is done in Ternary.

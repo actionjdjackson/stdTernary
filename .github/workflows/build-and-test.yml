@@ -35,3 +35,9 @@ jobs:
     
     - name: Test
       run: dotnet test --no-restore --verbosity normal
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: stdTernary.dll (${{matrix.os}})
+        path: stdTernary/bin/Release/net8.0/stdTernary.dll
