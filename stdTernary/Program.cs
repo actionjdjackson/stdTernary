@@ -22,11 +22,40 @@ namespace stdTernary
             DemoSpaceship("FloatT", c, d);
             DemoMethodChaining("FloatT", c, d);
 
-            DemoSorting();
-            DemoTernarySearchTree();
+            //DemoBinaryPrimitives();
+
+            //DemoSorting();
+            //DemoTernarySearchTree();
 
             // Uncomment to run the benchmarks
             var summary = BenchmarkRunner.Run<TernaryBenchmarks>();
+        }
+
+        private static void DemoBinaryPrimitives()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Binary primitive demonstration (IntB / FloatB / Byte)");
+
+            IntB left = new IntB(150);
+            IntB right = new IntB(45);
+            IntB sum = left + right;
+            IntB product = left * right;
+
+            Console.WriteLine($"IntB values => left: {left.ToInt64()}, right: {right.ToInt64()}");
+            Console.WriteLine($"  sum (binary)    : {sum.BinaryString} = {sum.ToInt64()}");
+            Console.WriteLine($"  product (binary): {product.BinaryString} = {product.ToInt64()}");
+
+            FloatB fLeft = FloatB.FromDouble(3.14159);
+            FloatB fRight = FloatB.FromDouble(2.71828);
+            FloatB fMul = fLeft * fRight;
+
+            Console.WriteLine($"FloatB multiply => {(double)fMul:F6} (from mantissa {fMul.Mantissa.ToInt64()} @ 2^{fMul.Exponent})");
+
+            Byte byteA = new Byte("10100101");
+            Byte byteB = new Byte("00001111");
+            Byte byteXor = byteA ^ byteB;
+
+            Console.WriteLine($"Byte XOR => {byteA.BinaryString} ^ {byteB.BinaryString} = {byteXor.BinaryString}");
         }
 
         private static void DemoSpaceship<T>(string label, T left, T right) where T : IComparable<T>
@@ -269,226 +298,295 @@ namespace stdTernary
             }
         }
 
-        // [Benchmark]
-        // public void TestMethodChainingComparisons()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         IntT a = r.Next(-5, 5);
-        //         IntT b = r.Next(-5, 5);
-        //         a.Spaceship(b).Negative(() => a += 1)
-        //                       .Positive(() => a += 1)
-        //                       .Zero(() => a += 1);
-        //     }
-        // }
+        [Benchmark]
+        public void TestMethodChainingComparisons()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(-5, 5);
+                IntT b = r.Next(-5, 5);
+                a.Spaceship(b).Negative(() => a += 1)
+                              .Positive(() => a += 1)
+                              .Zero(() => a += 1);
+            }
+        }
 
-        // [Benchmark]
-        // public void TestMethodChainingTernaryDecisionComparisons()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         IntT a = r.Next(-5, 5);
-        //         IntT b = r.Next(-5, 5);
-        //         a.Ternary(b).Negative(() => a += 1)
-        //                     .Positive(() => a += 1)
-        //                     .Zero(() => a += 1);
-        //     }
-        // }
+        [Benchmark]
+        public void TestMethodChainingTernaryDecisionComparisons()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(-5, 5);
+                IntT b = r.Next(-5, 5);
+                a.Ternary(b).Negative(() => a += 1)
+                            .Positive(() => a += 1)
+                            .Zero(() => a += 1);
+            }
+        }
 
-        // [Benchmark]
-        // public void TestIfComparisons()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         IntT a = r.Next(-5, 5);
-        //         IntT b = r.Next(-5, 5);
-        //         var comparison = a.Spaceship(b);
-        //         if (comparison.Value == TritVal.n)
-        //         {
-        //             a += 1;
-        //         }
-        //         else if (comparison.Value == TritVal.p)
-        //         {
-        //             a += 1;
-        //         }
-        //         else
-        //         {
-        //             a += 1;
-        //         }
-        //     }
-        // }
+        [Benchmark]
+        public void TestIfComparisons()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(-5, 5);
+                IntT b = r.Next(-5, 5);
+                var comparison = a.Spaceship(b);
+                if (comparison.Value == TritVal.n)
+                {
+                    a += 1;
+                }
+                else if (comparison.Value == TritVal.p)
+                {
+                    a += 1;
+                }
+                else
+                {
+                    a += 1;
+                }
+            }
+        }
 
-        // [Benchmark]
-        // public void TestCaseComparisons()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         IntT a = r.Next(-5, 5);
-        //         IntT b = r.Next(-5, 5);
-        //         switch (a.Spaceship(b).Value)
-        //         {
-        //             case TritVal.n:
-        //                 a += 1;
-        //                 break;
-        //             case TritVal.p:
-        //                 a += 1;
-        //                 break;
-        //             case TritVal.z:
-        //                 a += 1;
-        //                 break;
-        //             default:
-        //                 break;
-        //         }
-        //     }
-        // }
+        [Benchmark]
+        public void TestCaseComparisons()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(-5, 5);
+                IntT b = r.Next(-5, 5);
+                switch (a.Spaceship(b).Value)
+                {
+                    case TritVal.n:
+                        a += 1;
+                        break;
+                    case TritVal.p:
+                        a += 1;
+                        break;
+                    case TritVal.z:
+                        a += 1;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
 
-        // [Benchmark]
-        // public void TestIntTAddition()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         IntT a = r.Next(-1000000, 1000000);
-        //         IntT b = r.Next(-1000000, 1000000);
-        //         var _ = a + b;
-        //     }
-        // }
+        [Benchmark]
+        public void TestIntTAddition()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(-1000000, 1000000);
+                IntT b = r.Next(-1000000, 1000000);
+                var _ = a + b;
+            }
+        }
 
-        // [Benchmark]
-        // public void TestIntTSubtraction()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         IntT a = r.Next(-1000000, 1000000);
-        //         IntT b = r.Next(-1000000, 1000000);
-        //         var _ = a - b;
-        //     }
-        // }
+        [Benchmark]
+        public void TestIntBAddition()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntB a = r.Next(-1000000, 1000000);
+                IntB b = r.Next(-1000000, 1000000);
+                var _ = a + b;
+            }
+        }
 
-        // [Benchmark]
-        // public void TestIntTMultiplication()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         IntT a = r.Next(-100000, 100000);
-        //         IntT b = r.Next(-100000, 100000);
-        //         var _ = a * b;
-        //     }
-        // }
+        [Benchmark]
+        public void TestIntTSubtraction()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(-1000000, 1000000);
+                IntT b = r.Next(-1000000, 1000000);
+                var _ = a - b;
+            }
+        }
 
-        // [Benchmark]
-        // public void TestIntTDivision()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         IntT a = r.Next(-1000000, 1000000);
-        //         IntT b = r.Next(-1000, 1000);
-        //         try
-        //         {
-        //             var _ = a / b;
-        //         }
-        //         catch (DivideByZeroException)
-        //         {
-        //             continue;
-        //         }
-        //     }
-        // }
+        [Benchmark]
+        public void TestIntBSubtraction()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntB a = r.Next(-1000000, 1000000);
+                IntB b = r.Next(-1000000, 1000000);
+                var _ = a - b;
+            }
+        }
 
-        // [Benchmark]
-        // public void TestIntTModulus()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         IntT a = r.Next(-1000000, 1000000);
-        //         IntT b = r.Next(-1000, 1000);
-        //         try
-        //         {
-        //             var _ = a % b;
-        //         }
-        //         catch (DivideByZeroException)
-        //         {
-        //             continue;
-        //         }
-        //     }
-        // }
+        [Benchmark]
+        public void TestIntTMultiplication()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(-100000, 100000);
+                IntT b = r.Next(-100000, 100000);
+                var _ = a * b;
+            }
+        }
 
-        // [Benchmark]
-        // public void TestIntTPower()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         IntT a = r.Next(0, 10);
-        //         IntT b = r.Next(0, 10);
-        //         MathT.Pow(a, b);
-        //     }
-        // }
+        [Benchmark]
+        public void TestIntBMultiplication()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntB a = r.Next(-100000, 100000);
+                IntB b = r.Next(-100000, 100000);
+                var _ = a * b;
+            }
+        }
 
-        // [Benchmark]
-        // public void TestFloatTAddition()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         FloatT a = r.NextSingle() * r.Next(-10000, 10000);
-        //         FloatT b = r.NextSingle() * r.Next(-10000, 10000);
-        //         var _ = a + b;
-        //     }
-        // }
+        [Benchmark]
+        public void TestIntTDivision()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(-1000000, 1000000);
+                IntT b = r.Next(-1000, 1000);
+                try
+                {
+                    var _ = a / b;
+                }
+                catch (DivideByZeroException)
+                {
+                    continue;
+                }
+            }
+        }
 
-        // [Benchmark]
-        // public void TestFloatTSubtraction()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         FloatT a = r.NextSingle() * r.Next(-10000, 10000);
-        //         FloatT b = r.NextSingle() * r.Next(-10000, 10000);
-        //         var _ = a - b;
-        //     }
-        // }
+        [Benchmark]
+        public void TestIntBDivision()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntB a = r.Next(-1000000, 1000000);
+                IntB b = r.Next(-1000, 1000);
+                try
+                {
+                    var _ = a / b;
+                }
+                catch (DivideByZeroException)
+                {
+                    continue;
+                }
+            }
+        }
 
-        // [Benchmark]
-        // public void TestFloatTMultiplication()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
-        //         FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
-        //         var _ = a * b;
-        //     }
-        // }
+        [Benchmark]
+        public void TestIntTModulus()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(-1000000, 1000000);
+                IntT b = r.Next(-1000, 1000);
+                try
+                {
+                    var _ = a % b;
+                }
+                catch (DivideByZeroException)
+                {
+                    continue;
+                }
+            }
+        }
 
-        // [Benchmark]
-        // public void TestFloatTDivision()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
-        //         FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-100, 100));
-        //         try
-        //         {
-        //             var _ = a / b;
-        //         }
-        //         catch (DivideByZeroException)
-        //         {
-        //             continue;
-        //         }
-        //     }
-        // }
+        [Benchmark]
+        public void TestIntBModulus()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntB a = r.Next(-1000000, 1000000);
+                IntB b = r.Next(-1000, 1000);
+                try
+                {
+                    var _ = a % b;
+                }
+                catch (DivideByZeroException)
+                {
+                    continue;
+                }
+            }
+        }
 
-        // [Benchmark]
-        // public void TestFloatTModulus()
-        // {
-        //     for (int i = 0; i < nIterations; i++)
-        //     {
-        //         FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
-        //         FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-100, 100));
-        //         try
-        //         {
-        //             var _ = a % b;
-        //         }
-        //         catch (DivideByZeroException)
-        //         {
-        //             continue;
-        //         }
-        //     }
-        // }
+        [Benchmark]
+        public void TestIntTPower()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT a = r.Next(0, 10);
+                IntT b = r.Next(0, 10);
+                MathT.Pow(a, b);
+            }
+        }
+
+    //     [Benchmark]
+    //     public void TestFloatTAddition()
+    //     {
+    //         for (int i = 0; i < nIterations; i++)
+    //         {
+    //             FloatT a = r.NextSingle() * r.Next(-10000, 10000);
+    //             FloatT b = r.NextSingle() * r.Next(-10000, 10000);
+    //             var _ = a + b;
+    //         }
+    //     }
+
+    //     [Benchmark]
+    //     public void TestFloatTSubtraction()
+    //     {
+    //         for (int i = 0; i < nIterations; i++)
+    //         {
+    //             FloatT a = r.NextSingle() * r.Next(-10000, 10000);
+    //             FloatT b = r.NextSingle() * r.Next(-10000, 10000);
+    //             var _ = a - b;
+    //         }
+    //     }
+
+    //     [Benchmark]
+    //     public void TestFloatTMultiplication()
+    //     {
+    //         for (int i = 0; i < nIterations; i++)
+    //         {
+    //             FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
+    //             FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
+    //             var _ = a * b;
+    //         }
+    //     }
+
+    //     [Benchmark]
+    //     public void TestFloatTDivision()
+    //     {
+    //         for (int i = 0; i < nIterations; i++)
+    //         {
+    //             FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
+    //             FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-100, 100));
+    //             try
+    //             {
+    //                 var _ = a / b;
+    //             }
+    //             catch (DivideByZeroException)
+    //             {
+    //                 continue;
+    //             }
+    //         }
+    //     }
+
+    //     [Benchmark]
+    //     public void TestFloatTModulus()
+    //     {
+    //         for (int i = 0; i < nIterations; i++)
+    //         {
+    //             FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
+    //             FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-100, 100));
+    //             try
+    //             {
+    //                 var _ = a % b;
+    //             }
+    //             catch (DivideByZeroException)
+    //             {
+    //                 continue;
+    //             }
+    //         }
+    //     }
     }
 }

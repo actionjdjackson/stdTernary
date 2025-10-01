@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using stdTernary;
+using BinaryByte = stdTernary.Byte;
 
 [TestClass]
 public class TritTests
@@ -255,6 +256,50 @@ public class IntTTests
 }
 
 [TestClass]
+public class BinaryPrimitiveTests
+{
+    [TestMethod]
+    public void IntBArithmeticMatchesIntegers()
+    {
+        IntB a = new IntB(1_234);
+        IntB b = new IntB(567);
+
+        IntB sum = a + b;
+        IntB diff = a - b;
+        IntB product = a * b;
+
+        Assert.AreEqual(1_234 + 567, sum.ToInt64());
+        Assert.AreEqual(1_234 - 567, diff.ToInt64());
+        Assert.AreEqual(1_234 * 567, product.ToInt64());
+    }
+
+    [TestMethod]
+    public void ByteBitwiseOperationsWorkPerBit()
+    {
+        BinaryByte left = new BinaryByte("10100101");
+        BinaryByte right = new BinaryByte("00001111");
+
+        BinaryByte and = left & right;
+        BinaryByte or = left | right;
+        BinaryByte xor = left ^ right;
+
+        Assert.AreEqual("00000101", and.BinaryString);
+        Assert.AreEqual("10101111", or.BinaryString);
+        Assert.AreEqual("10101010", xor.BinaryString);
+    }
+
+    [TestMethod]
+    public void FloatBMultiplicationMatchesScaledProduct()
+    {
+        FloatB left = FloatB.FromDouble(3.0);
+        FloatB right = FloatB.FromDouble(5.0);
+        FloatB result = left * right;
+
+        Assert.AreEqual(15.0, (double)result, 1e-9);
+    }
+}
+
+[TestClass]
 public class FloatTTests
 {
     [TestMethod]
@@ -402,3 +447,59 @@ public class BinarySearchTreeTests
             matching.ToArray());
     }
 }
+
+[TestClass]
+    public class UtfTTests
+    {
+        [TestMethod]
+        public void TestAsciiRoundTrip()
+        {
+            string input = "Hello, World!";
+            var encoded = UtfT.EncodeString(input);
+            string decoded = UtfT.DecodeString(encoded);
+            Assert.AreEqual(input, decoded, "ASCII round-trip failed");
+        }
+
+        [TestMethod]
+        public void TestLatin1RoundTrip()
+        {
+            string input = "Café"; // é = U+00E9
+            var encoded = UtfT.EncodeString(input);
+            string decoded = UtfT.DecodeString(encoded);
+            Assert.AreEqual(input, decoded, "Latin-1 BMP round-trip failed");
+        }
+
+        [TestMethod]
+        public void TestEmojiRoundTrip()
+        {
+            string input = "😀"; // U+1F600
+            var encoded = UtfT.EncodeString(input);
+            string decoded = UtfT.DecodeString(encoded);
+            Assert.AreEqual(input, decoded, "Emoji round-trip failed");
+        }
+
+        [TestMethod]
+        public void TestMixedStringRoundTrip()
+        {
+            string input = "A😀ß漢字Z";
+            var encoded = UtfT.EncodeString(input);
+            string decoded = UtfT.DecodeString(encoded);
+            Assert.AreEqual(input, decoded, "Mixed round-trip failed");
+        }
+
+        [TestMethod]
+        public void TestSurrogatePairInput()
+        {
+            string input = char.ConvertFromUtf32(0x1F9D1); // 🧑 (U+1F9D1)
+            var encoded = UtfT.EncodeString(input);
+            string decoded = UtfT.DecodeString(encoded);
+            Assert.AreEqual(input, decoded, "Supplementary character round-trip failed");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void TestInvalidScalar()
+        {
+            UtfT.EncodeCodePoint(0x110000); // beyond Unicode max
+        }
+    }
