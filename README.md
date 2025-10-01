@@ -6,6 +6,17 @@
 
 The library promotes the usage of mixed radix programming, using binary for binary concepts and ternary for ternary concepts. This means that boolean is great to model concepts with only 2 logical choices (True, False) and kleenean is great to model concepts with 3 choices (True, False, Unknown). Kleene logic is clear in what happens with the unknown state when using implications.    
 
+### Type Conversion Library
+
+The library now includes a comprehensive **TernaryConverter** class that provides seamless conversion between balanced ternary types and common .NET binary types:
+
+- **IntT** ↔ int, uint, short, ushort, byte, sbyte, long, ulong, decimal
+- **FloatT** ↔ float, double, decimal  
+- **Tryte** ↔ byte, sbyte, short, ushort, uint, ulong, decimal
+- **Trit** ↔ bool
+
+All conversions include proper overflow checking and error handling. See [CONVERTER_README.md](CONVERTER_README.md) for detailed documentation and examples.
+
 ### Installation via NuGet
 (2do) 
 
