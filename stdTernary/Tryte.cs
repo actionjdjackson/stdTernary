@@ -194,6 +194,8 @@ public struct Tryte : IEquatable<Tryte>, IComparable<Tryte>
 
     public Tryte XOR(Tryte other) => new Tryte(XorPacked(_packed, other._packed));
 
+    public Tryte IMP(Tryte other) => new Tryte(ImpPacked(_packed, other._packed));
+
     public static Trit COMPARET(Tryte a, Tryte b)
     {
         int comparison = BalancedTernaryEncoding.Compare(a._packed, b._packed, _tritCount);
@@ -395,6 +397,22 @@ public struct Tryte : IEquatable<Tryte>, IComparable<Tryte>
             {
                 a[i] = 1;
             }
+        }
+
+        return BalancedTernaryEncoding.Encode(a, count);
+    }
+
+    private static ulong ImpPacked(ulong left, ulong right)
+    {
+        int count = _tritCount;
+        Span<sbyte> a = stackalloc sbyte[count];
+        Span<sbyte> b = stackalloc sbyte[count];
+        BalancedTernaryEncoding.Decode(left, a, count);
+        BalancedTernaryEncoding.Decode(right, b, count);
+
+        for (int i = 0; i < count; i++)
+        {
+            a[i] = (sbyte)Math.Max(-a[i], b[i]);
         }
 
         return BalancedTernaryEncoding.Encode(a, count);

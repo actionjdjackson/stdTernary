@@ -105,10 +105,12 @@ public class TryteTests
         Tryte and = a & b;
         Tryte or = a | b;
         Tryte xor = a ^ b;
+        Tryte imp = a.IMP(b);
 
         Assert.AreEqual("+-0---", (string)and);
         Assert.AreEqual("++0++0", (string)or);
         Assert.AreEqual("-+0++0", (string)xor);
+        Assert.AreEqual("++0-+0", (string)imp);
     }
 
     [TestMethod]
@@ -123,6 +125,7 @@ public class TryteTests
     }
 
     [TestMethod]
+
     public void SpaceshipComparisonMatchesCompareTo()
     {
         IntT left = new IntT(42);
