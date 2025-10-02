@@ -33,6 +33,35 @@ public class TritTests
         b = new Trit(0);
         Assert.AreEqual(TritVal.z, (a ^ b).Value);
     }
+
+    [TestMethod]
+    public void ImpMatchesBalancedTruthTable()
+    {
+        Trit a = new Trit(-1);
+        Trit b = new Trit(-1);
+        Assert.AreEqual(TritVal.p, a.IMP(b).Value);
+        b = new Trit(0);
+        Assert.AreEqual(TritVal.p, a.IMP(b).Value);
+        b = new Trit(1);
+        Assert.AreEqual(TritVal.p, a.IMP(b).Value);
+
+        a = new Trit(1);
+        b = new Trit(-1);
+        Assert.AreEqual(TritVal.n, a.IMP(b).Value);
+        b = new Trit(0);
+        Assert.AreEqual(TritVal.z, a.IMP(b).Value);
+        b = new Trit(1);
+        Assert.AreEqual(TritVal.p, a.IMP(b).Value);
+
+        a = new Trit(0);
+        b = new Trit(-1);
+        Assert.AreEqual(TritVal.z, a.IMP(b).Value);
+        b = new Trit(0);
+        Assert.AreEqual(TritVal.z, a.IMP(b).Value);
+        b = new Trit(1);
+        Assert.AreEqual(TritVal.p, a.IMP(b).Value);
+
+    }
 }
 
 [TestClass]

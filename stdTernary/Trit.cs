@@ -70,6 +70,23 @@ public struct Trit : IEquatable<Trit>, IComparable<Trit>
         };
     }
 
+    public Trit IMP(Trit other)
+    {
+        return this.NEG().MAX(other);
+        // if (_value == -1 || other._value == 1)
+        // {
+        //     return new Trit(1);
+        // }
+        // else if (_value == 0 || other._value == 0)
+        // {
+        //     return new Trit(0);
+        // }
+        // else
+        // {
+        //     return new Trit(-1);
+        // }
+    }
+
     public Trit NEG() => new Trit((sbyte)(-_value));
 
     public Trit XOR(Trit other)
