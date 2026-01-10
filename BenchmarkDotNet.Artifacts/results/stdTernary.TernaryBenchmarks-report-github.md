@@ -1,31 +1,31 @@
 ```
 
-BenchmarkDotNet v0.14.0, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+BenchmarkDotNet v0.15.8, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
 Apple M4 Pro, 1 CPU, 14 logical and 14 physical cores
-.NET SDK 9.0.305
-  [Host]     : .NET 8.0.20 (8.0.2025.41914), Arm64 RyuJIT AdvSIMD
-  DefaultJob : .NET 8.0.20 (8.0.2025.41914), Arm64 RyuJIT AdvSIMD
+.NET SDK 10.0.101
+  [Host]     : .NET 10.0.1 (10.0.1, 10.0.125.57005), Arm64 RyuJIT armv8.0-a
+  DefaultJob : .NET 10.0.1 (10.0.1, 10.0.125.57005), Arm64 RyuJIT armv8.0-a
 
 
 ```
 | Method                                       | Mean        | Error     | StdDev    | Gen0      | Gen1     | Allocated  |
 |--------------------------------------------- |------------:|----------:|----------:|----------:|---------:|-----------:|
-| TestTernaryQuickSort                         | 4,383.00 μs | 40.536 μs | 35.934 μs |    7.8125 |        - |    82406 B |
-| TestBinaryQuickSort                          |   312.79 μs |  2.088 μs |  1.631 μs |    4.8828 |        - |    42400 B |
-| TestTernarySearchTree                        | 4,022.24 μs | 28.377 μs | 26.544 μs | 4421.8750 | 312.5000 | 37013712 B |
-| TestBinarySearchTree                         | 3,333.47 μs | 25.494 μs | 23.847 μs |  250.0000 |   3.9063 |  2106403 B |
-| TestMethodChainingComparisons                |    31.74 μs |  0.196 μs |  0.163 μs |    2.5635 |        - |    21600 B |
-| TestMethodChainingTernaryDecisionComparisons |    32.31 μs |  0.402 μs |  0.376 μs |    2.8687 |        - |    24000 B |
-| TestIfComparisons                            |    30.98 μs |  0.245 μs |  0.204 μs |         - |        - |          - |
-| TestCaseComparisons                          |    29.59 μs |  0.326 μs |  0.305 μs |         - |        - |          - |
-| TestIntTAddition                             |    74.28 μs |  0.395 μs |  0.350 μs |         - |        - |          - |
-| TestIntBAddition                             |    66.30 μs |  0.506 μs |  0.473 μs |         - |        - |          - |
-| TestIntTSubtraction                          |    95.11 μs |  0.450 μs |  0.421 μs |         - |        - |          - |
-| TestIntBSubtraction                          |    69.67 μs |  0.609 μs |  0.570 μs |         - |        - |          - |
-| TestIntTMultiplication                       |   104.54 μs |  0.314 μs |  0.279 μs |         - |        - |          - |
-| TestIntBMultiplication                       |   198.69 μs |  0.606 μs |  0.506 μs |         - |        - |          - |
-| TestIntTDivision                             |   688.75 μs |  5.865 μs |  5.199 μs |         - |        - |       21 B |
-| TestIntBDivision                             |   432.14 μs |  1.604 μs |  1.501 μs |         - |        - |       12 B |
-| TestIntTModulus                              |   690.35 μs |  5.097 μs |  4.768 μs |         - |        - |       15 B |
-| TestIntBModulus                              |   439.00 μs |  2.078 μs |  1.842 μs |         - |        - |       12 B |
-| TestIntTPower                                |    83.27 μs |  0.403 μs |  0.377 μs |         - |        - |          - |
+| TestTernaryQuickSort                         | 4,258.90 μs | 32.396 μs | 30.303 μs |    7.8125 |        - |    82400 B |
+| TestBinaryQuickSort                          |   307.48 μs |  2.827 μs |  2.644 μs |    4.8828 |        - |    42400 B |
+| TestTernarySearchTree                        | 2,474.72 μs | 19.226 μs | 17.984 μs | 1542.9688 | 113.2813 | 12929080 B |
+| TestBinarySearchTree                         | 3,076.61 μs | 23.904 μs | 22.360 μs |  250.0000 |   3.9063 |  2106400 B |
+| TestMethodChainingComparisons                |    24.46 μs |  0.357 μs |  0.334 μs |    2.5635 |        - |    21600 B |
+| TestMethodChainingTernaryDecisionComparisons |    24.67 μs |  0.233 μs |  0.218 μs |    2.8687 |        - |    24000 B |
+| TestIfComparisons                            |    23.24 μs |  0.298 μs |  0.279 μs |         - |        - |          - |
+| TestCaseComparisons                          |    21.86 μs |  0.196 μs |  0.183 μs |         - |        - |          - |
+| TestIntTAddition                             |    69.89 μs |  0.350 μs |  0.310 μs |         - |        - |          - |
+| TestIntBAddition                             |    66.91 μs |  0.431 μs |  0.403 μs |         - |        - |          - |
+| TestIntTSubtraction                          |    87.68 μs |  0.748 μs |  0.699 μs |         - |        - |          - |
+| TestIntBSubtraction                          |    70.94 μs |  0.612 μs |  0.573 μs |         - |        - |          - |
+| TestIntTMultiplication                       |   100.28 μs |  0.693 μs |  0.648 μs |         - |        - |          - |
+| TestIntBMultiplication                       |   175.34 μs |  1.523 μs |  1.425 μs |         - |        - |          - |
+| TestIntTDivision                             |   568.80 μs |  6.223 μs |  5.821 μs |         - |        - |       15 B |
+| TestIntBDivision                             |   441.63 μs |  4.109 μs |  3.844 μs |         - |        - |       10 B |
+| TestIntTModulus                              |   569.80 μs |  4.126 μs |  3.657 μs |         - |        - |       16 B |
+| TestIntBModulus                              |   445.37 μs |  2.812 μs |  2.631 μs |         - |        - |       11 B |
+| TestIntTPower                                |    68.60 μs |  0.611 μs |  0.572 μs |         - |        - |          - |

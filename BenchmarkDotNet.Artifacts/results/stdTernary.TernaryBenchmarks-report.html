@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>stdTernary.TernaryBenchmarks-20250930-230008</title>
+<title>stdTernary.TernaryBenchmarks-20260109-185515</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -13,36 +13,36 @@
 </head>
 <body>
 <pre><code>
-BenchmarkDotNet v0.14.0, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+BenchmarkDotNet v0.15.8, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
 Apple M4 Pro, 1 CPU, 14 logical and 14 physical cores
-.NET SDK 9.0.305
-  [Host]     : .NET 8.0.20 (8.0.2025.41914), Arm64 RyuJIT AdvSIMD
-  DefaultJob : .NET 8.0.20 (8.0.2025.41914), Arm64 RyuJIT AdvSIMD
+.NET SDK 10.0.101
+  [Host]     : .NET 10.0.1 (10.0.1, 10.0.125.57005), Arm64 RyuJIT armv8.0-a
+  DefaultJob : .NET 10.0.1 (10.0.1, 10.0.125.57005), Arm64 RyuJIT armv8.0-a
 </code></pre>
 <pre><code></code></pre>
 
 <table>
 <thead><tr><th>Method                                </th><th>Mean </th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
 </tr>
-</thead><tbody><tr><td>TestTernaryQuickSort</td><td>4,383.00 &mu;s</td><td>40.536 &mu;s</td><td>35.934 &mu;s</td><td>7.8125</td><td>-</td><td>82406 B</td>
-</tr><tr><td>TestBinaryQuickSort</td><td>312.79 &mu;s</td><td>2.088 &mu;s</td><td>1.631 &mu;s</td><td>4.8828</td><td>-</td><td>42400 B</td>
-</tr><tr><td>TestTernarySearchTree</td><td>4,022.24 &mu;s</td><td>28.377 &mu;s</td><td>26.544 &mu;s</td><td>4421.8750</td><td>312.5000</td><td>37013712 B</td>
-</tr><tr><td>TestBinarySearchTree</td><td>3,333.47 &mu;s</td><td>25.494 &mu;s</td><td>23.847 &mu;s</td><td>250.0000</td><td>3.9063</td><td>2106403 B</td>
-</tr><tr><td>TestMethodChainingComparisons</td><td>31.74 &mu;s</td><td>0.196 &mu;s</td><td>0.163 &mu;s</td><td>2.5635</td><td>-</td><td>21600 B</td>
-</tr><tr><td>TestMethodChainingTernaryDecisionComparisons</td><td>32.31 &mu;s</td><td>0.402 &mu;s</td><td>0.376 &mu;s</td><td>2.8687</td><td>-</td><td>24000 B</td>
-</tr><tr><td>TestIfComparisons</td><td>30.98 &mu;s</td><td>0.245 &mu;s</td><td>0.204 &mu;s</td><td>-</td><td>-</td><td>-</td>
-</tr><tr><td>TestCaseComparisons</td><td>29.59 &mu;s</td><td>0.326 &mu;s</td><td>0.305 &mu;s</td><td>-</td><td>-</td><td>-</td>
-</tr><tr><td>TestIntTAddition</td><td>74.28 &mu;s</td><td>0.395 &mu;s</td><td>0.350 &mu;s</td><td>-</td><td>-</td><td>-</td>
-</tr><tr><td>TestIntBAddition</td><td>66.30 &mu;s</td><td>0.506 &mu;s</td><td>0.473 &mu;s</td><td>-</td><td>-</td><td>-</td>
-</tr><tr><td>TestIntTSubtraction</td><td>95.11 &mu;s</td><td>0.450 &mu;s</td><td>0.421 &mu;s</td><td>-</td><td>-</td><td>-</td>
-</tr><tr><td>TestIntBSubtraction</td><td>69.67 &mu;s</td><td>0.609 &mu;s</td><td>0.570 &mu;s</td><td>-</td><td>-</td><td>-</td>
-</tr><tr><td>TestIntTMultiplication</td><td>104.54 &mu;s</td><td>0.314 &mu;s</td><td>0.279 &mu;s</td><td>-</td><td>-</td><td>-</td>
-</tr><tr><td>TestIntBMultiplication</td><td>198.69 &mu;s</td><td>0.606 &mu;s</td><td>0.506 &mu;s</td><td>-</td><td>-</td><td>-</td>
-</tr><tr><td>TestIntTDivision</td><td>688.75 &mu;s</td><td>5.865 &mu;s</td><td>5.199 &mu;s</td><td>-</td><td>-</td><td>21 B</td>
-</tr><tr><td>TestIntBDivision</td><td>432.14 &mu;s</td><td>1.604 &mu;s</td><td>1.501 &mu;s</td><td>-</td><td>-</td><td>12 B</td>
-</tr><tr><td>TestIntTModulus</td><td>690.35 &mu;s</td><td>5.097 &mu;s</td><td>4.768 &mu;s</td><td>-</td><td>-</td><td>15 B</td>
-</tr><tr><td>TestIntBModulus</td><td>439.00 &mu;s</td><td>2.078 &mu;s</td><td>1.842 &mu;s</td><td>-</td><td>-</td><td>12 B</td>
-</tr><tr><td>TestIntTPower</td><td>83.27 &mu;s</td><td>0.403 &mu;s</td><td>0.377 &mu;s</td><td>-</td><td>-</td><td>-</td>
+</thead><tbody><tr><td>TestTernaryQuickSort</td><td>4,258.90 &mu;s</td><td>32.396 &mu;s</td><td>30.303 &mu;s</td><td>7.8125</td><td>-</td><td>82400 B</td>
+</tr><tr><td>TestBinaryQuickSort</td><td>307.48 &mu;s</td><td>2.827 &mu;s</td><td>2.644 &mu;s</td><td>4.8828</td><td>-</td><td>42400 B</td>
+</tr><tr><td>TestTernarySearchTree</td><td>2,474.72 &mu;s</td><td>19.226 &mu;s</td><td>17.984 &mu;s</td><td>1542.9688</td><td>113.2813</td><td>12929080 B</td>
+</tr><tr><td>TestBinarySearchTree</td><td>3,076.61 &mu;s</td><td>23.904 &mu;s</td><td>22.360 &mu;s</td><td>250.0000</td><td>3.9063</td><td>2106400 B</td>
+</tr><tr><td>TestMethodChainingComparisons</td><td>24.46 &mu;s</td><td>0.357 &mu;s</td><td>0.334 &mu;s</td><td>2.5635</td><td>-</td><td>21600 B</td>
+</tr><tr><td>TestMethodChainingTernaryDecisionComparisons</td><td>24.67 &mu;s</td><td>0.233 &mu;s</td><td>0.218 &mu;s</td><td>2.8687</td><td>-</td><td>24000 B</td>
+</tr><tr><td>TestIfComparisons</td><td>23.24 &mu;s</td><td>0.298 &mu;s</td><td>0.279 &mu;s</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TestCaseComparisons</td><td>21.86 &mu;s</td><td>0.196 &mu;s</td><td>0.183 &mu;s</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TestIntTAddition</td><td>69.89 &mu;s</td><td>0.350 &mu;s</td><td>0.310 &mu;s</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TestIntBAddition</td><td>66.91 &mu;s</td><td>0.431 &mu;s</td><td>0.403 &mu;s</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TestIntTSubtraction</td><td>87.68 &mu;s</td><td>0.748 &mu;s</td><td>0.699 &mu;s</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TestIntBSubtraction</td><td>70.94 &mu;s</td><td>0.612 &mu;s</td><td>0.573 &mu;s</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TestIntTMultiplication</td><td>100.28 &mu;s</td><td>0.693 &mu;s</td><td>0.648 &mu;s</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TestIntBMultiplication</td><td>175.34 &mu;s</td><td>1.523 &mu;s</td><td>1.425 &mu;s</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TestIntTDivision</td><td>568.80 &mu;s</td><td>6.223 &mu;s</td><td>5.821 &mu;s</td><td>-</td><td>-</td><td>15 B</td>
+</tr><tr><td>TestIntBDivision</td><td>441.63 &mu;s</td><td>4.109 &mu;s</td><td>3.844 &mu;s</td><td>-</td><td>-</td><td>10 B</td>
+</tr><tr><td>TestIntTModulus</td><td>569.80 &mu;s</td><td>4.126 &mu;s</td><td>3.657 &mu;s</td><td>-</td><td>-</td><td>16 B</td>
+</tr><tr><td>TestIntBModulus</td><td>445.37 &mu;s</td><td>2.812 &mu;s</td><td>2.631 &mu;s</td><td>-</td><td>-</td><td>11 B</td>
+</tr><tr><td>TestIntTPower</td><td>68.60 &mu;s</td><td>0.611 &mu;s</td><td>0.572 &mu;s</td><td>-</td><td>-</td><td>-</td>
 </tr></tbody></table>
 </body>
 </html>
