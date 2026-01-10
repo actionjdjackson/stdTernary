@@ -531,6 +531,14 @@ public class BinarySearchTreeTests
         [TestMethod]
         public void TestInvalidScalar()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => UtfT.EncodeCodePoint(0x110000));
+            try
+            {
+                UtfT.EncodeCodePoint(0x110000);
+                Assert.Fail("Expected ArgumentOutOfRangeException");
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // Expected
+            }
         }
     }

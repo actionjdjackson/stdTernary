@@ -20,7 +20,15 @@ public class TernaryConverterTests
     public void IntT_ToInt32_ThrowsOnOverflow()
     {
         IntT value = new IntT((long)int.MaxValue + 1);
-        Assert.Throws<OverflowException>(() => TernaryConverter.IntTToInt32(value));
+        try
+        {
+            TernaryConverter.IntTToInt32(value);
+            Assert.Fail("Expected OverflowException");
+        }
+        catch (OverflowException)
+        {
+            // Expected
+        }
     }
 
     [TestMethod]
@@ -35,7 +43,15 @@ public class TernaryConverterTests
     public void IntT_ToUInt32_ThrowsOnNegative()
     {
         IntT value = new IntT(-1);
-        Assert.Throws<OverflowException>(() => TernaryConverter.IntTToUInt32(value));
+        try
+        {
+            TernaryConverter.IntTToUInt32(value);
+            Assert.Fail("Expected OverflowException");
+        }
+        catch (OverflowException)
+        {
+            // Expected
+        }
     }
 
     [TestMethod]
@@ -50,7 +66,15 @@ public class TernaryConverterTests
     public void IntT_ToInt16_ThrowsOnOverflow()
     {
         IntT value = new IntT(40000);
-        Assert.Throws<OverflowException>(() => TernaryConverter.IntTToInt16(value));
+        try
+        {
+            TernaryConverter.IntTToInt16(value);
+            Assert.Fail("Expected OverflowException");
+        }
+        catch (OverflowException)
+        {
+            // Expected
+        }
     }
 
     [TestMethod]
@@ -73,7 +97,15 @@ public class TernaryConverterTests
     public void IntT_ToUInt8_ThrowsOnOverflow()
     {
         IntT value = new IntT(300);
-        Assert.Throws<OverflowException>(() => TernaryConverter.IntTToUInt8(value));
+        try
+        {
+            TernaryConverter.IntTToUInt8(value);
+            Assert.Fail("Expected OverflowException");
+        }
+        catch (OverflowException)
+        {
+            // Expected
+        }
     }
 
     [TestMethod]
@@ -104,7 +136,15 @@ public class TernaryConverterTests
     public void IntT_ToUInt64_ThrowsOnNegative()
     {
         IntT value = new IntT(-1);
-        Assert.Throws<OverflowException>(() => TernaryConverter.IntTToUInt64(value));
+        try
+        {
+            TernaryConverter.IntTToUInt64(value);
+            Assert.Fail("Expected OverflowException");
+        }
+        catch (OverflowException)
+        {
+            // Expected
+        }
     }
 
     [TestMethod]
@@ -166,8 +206,15 @@ public class TernaryConverterTests
     [TestMethod]
     public void IntT_FromUInt64_ThrowsOnOverflow()
     {
-        Assert.Throws<OverflowException>(() => 
-            TernaryConverter.IntTFromUInt64((ulong)long.MaxValue + 1));
+        try
+        {
+            TernaryConverter.IntTFromUInt64((ulong)long.MaxValue + 1);
+            Assert.Fail("Expected OverflowException");
+        }
+        catch (OverflowException)
+        {
+            // Expected
+        }
     }
 
     #endregion
@@ -222,7 +269,15 @@ public class TernaryConverterTests
     public void Tryte_ToUInt8_ThrowsOnNegative()
     {
         Tryte value = new Tryte(-1);
-        Assert.Throws<OverflowException>(() => TernaryConverter.TryteToUInt8(value));
+        try
+        {
+            TernaryConverter.TryteToUInt8(value);
+            Assert.Fail("Expected OverflowException");
+        }
+        catch (OverflowException)
+        {
+            // Expected
+        }
     }
 
     [TestMethod]
@@ -245,7 +300,15 @@ public class TernaryConverterTests
     public void Tryte_ToUInt16_ThrowsOnNegative()
     {
         Tryte value = new Tryte(-1);
-        Assert.Throws<OverflowException>(() => TernaryConverter.TryteToUInt16(value));
+        try
+        {
+            TernaryConverter.TryteToUInt16(value);
+            Assert.Fail("Expected OverflowException");
+        }
+        catch (OverflowException)
+        {
+            // Expected
+        }
     }
 
     [TestMethod]
