@@ -20,7 +20,7 @@ public class TernaryConverterTests
     public void IntT_ToInt32_ThrowsOnOverflow()
     {
         IntT value = new IntT((long)int.MaxValue + 1);
-        Assert.ThrowsException<OverflowException>(() => TernaryConverter.IntTToInt32(value));
+        Assert.Throws<OverflowException>(() => TernaryConverter.IntTToInt32(value));
     }
 
     [TestMethod]
@@ -35,7 +35,7 @@ public class TernaryConverterTests
     public void IntT_ToUInt32_ThrowsOnNegative()
     {
         IntT value = new IntT(-1);
-        Assert.ThrowsException<OverflowException>(() => TernaryConverter.IntTToUInt32(value));
+        Assert.Throws<OverflowException>(() => TernaryConverter.IntTToUInt32(value));
     }
 
     [TestMethod]
@@ -50,7 +50,7 @@ public class TernaryConverterTests
     public void IntT_ToInt16_ThrowsOnOverflow()
     {
         IntT value = new IntT(40000);
-        Assert.ThrowsException<OverflowException>(() => TernaryConverter.IntTToInt16(value));
+        Assert.Throws<OverflowException>(() => TernaryConverter.IntTToInt16(value));
     }
 
     [TestMethod]
@@ -73,7 +73,7 @@ public class TernaryConverterTests
     public void IntT_ToUInt8_ThrowsOnOverflow()
     {
         IntT value = new IntT(300);
-        Assert.ThrowsException<OverflowException>(() => TernaryConverter.IntTToUInt8(value));
+        Assert.Throws<OverflowException>(() => TernaryConverter.IntTToUInt8(value));
     }
 
     [TestMethod]
@@ -104,7 +104,7 @@ public class TernaryConverterTests
     public void IntT_ToUInt64_ThrowsOnNegative()
     {
         IntT value = new IntT(-1);
-        Assert.ThrowsException<OverflowException>(() => TernaryConverter.IntTToUInt64(value));
+        Assert.Throws<OverflowException>(() => TernaryConverter.IntTToUInt64(value));
     }
 
     [TestMethod]
@@ -166,7 +166,7 @@ public class TernaryConverterTests
     [TestMethod]
     public void IntT_FromUInt64_ThrowsOnOverflow()
     {
-        Assert.ThrowsException<OverflowException>(() => 
+        Assert.Throws<OverflowException>(() => 
             TernaryConverter.IntTFromUInt64((ulong)long.MaxValue + 1));
     }
 
@@ -222,7 +222,7 @@ public class TernaryConverterTests
     public void Tryte_ToUInt8_ThrowsOnNegative()
     {
         Tryte value = new Tryte(-1);
-        Assert.ThrowsException<OverflowException>(() => TernaryConverter.TryteToUInt8(value));
+        Assert.Throws<OverflowException>(() => TernaryConverter.TryteToUInt8(value));
     }
 
     [TestMethod]
@@ -245,7 +245,7 @@ public class TernaryConverterTests
     public void Tryte_ToUInt16_ThrowsOnNegative()
     {
         Tryte value = new Tryte(-1);
-        Assert.ThrowsException<OverflowException>(() => TernaryConverter.TryteToUInt16(value));
+        Assert.Throws<OverflowException>(() => TernaryConverter.TryteToUInt16(value));
     }
 
     [TestMethod]

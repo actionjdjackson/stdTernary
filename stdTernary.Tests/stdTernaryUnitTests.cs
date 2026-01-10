@@ -529,9 +529,8 @@ public class BinarySearchTreeTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void TestInvalidScalar()
         {
-            UtfT.EncodeCodePoint(0x110000); // beyond Unicode max
+            Assert.Throws<ArgumentOutOfRangeException>(() => UtfT.EncodeCodePoint(0x110000));
         }
     }
