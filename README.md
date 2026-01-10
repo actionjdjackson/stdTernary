@@ -48,6 +48,66 @@ Will possibly create an unbalanced ternary version of all of this.
 
 `Tryte` and `FloatT` and `IntT` and have modifiable static integer values which is where you can "customize" them to certain sizes.
 
+## Detailed API Reference
+
+### Core Types
+
+| Type | Description | Key Properties/Methods |
+|------|-------------|-------------------------|
+| `Trit` | Fundamental ternary unit representing -1, 0, or 1. | `Value` (TritVal), `GetChar` ('-', '0', '+'), `NEG()`, `XOR()`, `SUM()`, `IMP()`, `AND()`, `OR()`, `MIN()`, `MAX()`, `EQUAL()`, `NOTEQUAL()`, `Positive(Action)`, `Negative(Action)`, `Zero(Action)`, `Else(Action)`, `Spaceship<T>()` extension |
+| `Tryte` | 6-trit (configurable) balanced ternary byte equivalent. | `N_TRITS_PER_TRYTE` (static), `PackedTrits`, `Value` (Trit[]), `TryteString`, `ShortValue`, `ADD()`, `SUB()`, `MULT()`, `DIV()`, `MOD()`, `SHIFTLEFT()`, `SHIFTRIGHT()`, `INVERT()`, operators: `+`, `-`, `*`, `/`, `%`, `<<`, `>>`, `&`, `\|`, `^`, `~` |
+| `IntT` | 32-trit arbitrary-precision integer. | `TritCount` (32), `ToInt64()`, `Sign`, `TernaryString`, `Parse()`, `TryParse()`, operators: `+`, `-`, `*`, `/`, `%`, `&`, `\|`, `^`, `~`, `<<`, `>>` |
+| `FloatT` | 32-trit floating-point number with 26-trit significand and 6-trit exponent. | `TotalTritCount` (32), `SignificandTritCount` (26), `ExponentTritCount` (6), `Exponent`, `SignificandPacked`, `SignificandString`, `ToDouble()`, `FromDouble()`, `Normalize()`, `Negate()`, `ToIntT()`, `FromInt()` |
+| `CharT` | 6-trit (configurable) character representation. | `N_TRITS_PER_CHART`, `PackedTrits`, `Value` (Trit[]), `CharTString`, similar operators to Tryte |
+
+### Enums
+
+| Enum | Description | Values |
+|------|-------------|--------|
+| `TritVal` | Enumeration for trit values. | `n = -1`, `z = 0`, `p = 1` |
+
+### Classes
+
+| Class | Description | Key Methods |
+|-------|-------------|--------------|
+| `TernarySearchTree<TValue>` | Ternary search tree for string keys with ternary comparisons. | `Put(string, TValue)`, `TryGetValue(string, out TValue)`, `Items()`, `KeysWithPrefix(string)` |
+| `TernaryDecision` | Fluent API for ternary conditional execution. | `Positive(Action)`, `Zero(Action)`, `Negative(Action)`, `NonPositive(Action)`, `NonNegative(Action)`, `Else(Action)`, `Choose<T>()`, `Switch<T>()`, `From(Trit)`, `Compare<T>()` |
+
+### Static Classes
+
+| Class | Description | Key Methods |
+|-------|-------------|--------------|
+| `TernaryAlgorithms` | Sorting algorithms using ternary comparisons. | `TernaryQuicksort<T>()`, `BinaryQuicksort<T>()` |
+| `TernaryConverter` | Conversion between ternary types and .NET primitives. | `IntTToInt32()`, `IntTFromInt32()`, `FloatTToFloat()`, `FloatTFromFloat()`, `TryteToUInt8()`, `TryteFromUInt8()`, etc. (full bidirectional conversions) |
+| `TernaryExtensions` | Extension methods for ternary operations. | `Spaceship<T>()` (IComparable<T>), `Ternary<T>()` (IComparable<T>) |
+| `UtfT` | UTF-T encoding/decoding for ternary strings. | `EncodeCodePoint(int)`, `DecodeCodePoint()`, `EncodeString(string)`, `DecodeString()` |
+| `TritPacker` | Utilities for packing/unpacking trits into binary integers. | `PackTrits(Trit[])`, `UnpackTrits(uint, int)` |
+
+### Extension Methods
+
+| Method | Description |
+|--------|-------------|
+| `T.Spaceship<T>(T other)` | Returns Trit comparison result (-1, 0, 1) for IComparable<T> |
+| `T.Ternary<T>(T other)` | Returns TernaryDecision for fluent ternary conditionals |
+
+### Operators
+
+Most ternary types support standard operators:
+- Arithmetic: `+`, `-`, `*`, `/`, `%`
+- Bitwise: `&`, `|`, `^`, `~`
+- Shift: `<<`, `>>`
+- Comparison: `==`, `!=`, `<`, `<=`, `>`, `>=`
+- Conversion: implicit/explicit to/from primitives
+
+### Key Concepts
+
+- **Balanced Ternary**: Base-3 system using -1, 0, 1 instead of 0, 1, 2
+- **Trit**: Single ternary digit
+- **Tryte**: Group of trits (default 6)
+- **Bit-packing**: Trites stored as 2 bits in binary for efficiency
+- **Spaceship Operator**: Returns Trit for three-way comparison
+- **Ternary Decision**: Fluent API for conditional logic based on ternary results
+
 
 ### License ###
 The MIT License (MIT)
