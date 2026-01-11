@@ -9,7 +9,7 @@ on:
     - '**.csproj'
 
 env:
-  DOTNET_VERSION: '8.0' # The .NET SDK version to use
+  DOTNET_VERSION: '10.0' # The .NET SDK version to use
 
 jobs:
   build-and-test:
@@ -40,4 +40,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: stdTernary.dll (${{matrix.os}})
-        path: stdTernary/bin/Release/net8.0/stdTernary.dll
+        path: stdTernary/bin/Release/net10.0/stdTernary.dll
