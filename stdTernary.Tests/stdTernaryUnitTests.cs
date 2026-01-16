@@ -255,9 +255,9 @@ public class IntTTests
         IntT or = a | b;
         IntT xor = a ^ b;
 
-        Assert.IsTrue(and.TernaryString.EndsWith("+-0--+"));
-        Assert.IsTrue(or.TernaryString.EndsWith("++0+0+"));
-        Assert.IsTrue(xor.TernaryString.EndsWith("-+0+0-"));
+        Assert.EndsWith("+-0--+", and.TernaryString);
+        Assert.EndsWith("++0+0+", or.TernaryString);
+        Assert.EndsWith("-+0+0-", xor.TernaryString);
     }
 
     [TestMethod]
@@ -279,7 +279,7 @@ public class IntTTests
     {
         string ternary = "+-0+-0+-0+--00++--";
         IntT parsed = IntT.Parse(ternary);
-        Assert.IsTrue(parsed.TernaryString.EndsWith(ternary));
+        Assert.EndsWith(ternary, parsed.TernaryString);
 
         long backToLong = parsed.ToInt64();
         IntT reconstructed = new IntT(backToLong);
@@ -376,7 +376,7 @@ public class FloatTTests
         FloatT fraction = one / three;
 
         double approx = fraction.ToDouble();
-        Assert.IsTrue(Math.Abs(approx - (1.0 / 3.0)) < 1e-6);
+        Assert.IsLessThan(1e-6, Math.Abs(approx - (1.0 / 3.0)));
     }
 
     [TestMethod]
@@ -384,7 +384,7 @@ public class FloatTTests
     {
         FloatT value = FloatT.FromInt(new IntT(1));
         FloatT next = MathT.TritIncrement(value);
-        Assert.IsTrue(next.CompareTo(value) > 0);
+        Assert.IsGreaterThan(0, next.CompareTo(value));
 
         FloatT previous = MathT.TritDecrement(next);
         Assert.AreEqual(value, previous);

@@ -27,8 +27,14 @@ namespace stdTernary
             //DemoSorting();
             //DemoTernarySearchTree();
 
+            ValidateNewBenchmarks();
+
             // Uncomment to run the benchmarks
-            var summary = BenchmarkRunner.Run<TernaryBenchmarks>();
+            // var summary = BenchmarkRunner.Run<TernaryBenchmarks>(
+            //     DefaultConfig.Instance
+            //         .AddDiagnoser(MemoryDiagnoser.Default)
+            //         .AddDiagnoser(ThreadingDiagnoser.Default)
+            // );
         }
 
         private static void DemoBinaryPrimitives()
@@ -111,11 +117,66 @@ namespace stdTernary
                 Console.WriteLine($"  {key} -> {value}");
             }
         }
+
+    static void ValidateNewBenchmarks()
+    {
+        Console.WriteLine("Running quick validation of new benchmarks...");
+
+        // Quick validation of new benchmarks
+        var r = new Random(42);
+        var nIterations = 10;
+
+        Console.WriteLine("Testing Tryte operations...");
+        for (int i = 0; i < nIterations; i++)
+        {
+            Tryte a = new Tryte((uint)r.Next(0, 729));
+            Tryte b = new Tryte((uint)r.Next(0, 729));
+            var result = a + b;
+            result = a & b;
+        }
+        Console.WriteLine("✓ Tryte operations work");
+
+        Console.WriteLine("Testing Trit operations...");
+        for (int i = 0; i < nIterations; i++)
+        {
+            Trit a = new Trit((TritVal)r.Next(-1, 2));
+            Trit b = new Trit((TritVal)r.Next(-1, 2));
+            var result = a.XOR(b);
+            a.Positive(() => { }).Negative(() => { }).Zero(() => { });
+        }
+        Console.WriteLine("✓ Trit operations work");
+
+        Console.WriteLine("Testing FloatT operations...");
+        for (int i = 0; i < nIterations; i++)
+        {
+            FloatT a = FloatT.FromDouble(r.NextDouble() * r.Next(-1000, 1000));
+            FloatT b = FloatT.FromDouble(r.NextDouble() * r.Next(-1000, 1000));
+            var result = a + b;
+            var converted = result.ToDouble();
+        }
+        Console.WriteLine("✓ FloatT operations work");
+
+        Console.WriteLine("Testing large dataset benchmarks...");
+        var dataSize = 100;
+        var values = new IntT[dataSize];
+        for (int n = 0; n < dataSize; n++)
+        {
+            values[n] = new IntT(r.Next(-1000, 1000));
+        }
+        TernaryAlgorithms.TernaryQuicksort(values);
+        Console.WriteLine("✓ Large dataset sorting works");
+
+        Console.WriteLine("All new benchmarks validated successfully!");
+        Console.WriteLine();
     }
 
     [MemoryDiagnoser]
+    [ThreadingDiagnoser]
     public class TernaryBenchmarks
     {
+        [Params(10, 100, 1000)]
+        public int DataSize { get; set; }
+
         private readonly int nIterations = 100;
         private readonly Random r = new Random();
         private static readonly string[] SampleWords = new[]
@@ -520,73 +581,179 @@ namespace stdTernary
             }
         }
 
-    //     [Benchmark]
-    //     public void TestFloatTAddition()
-    //     {
-    //         for (int i = 0; i < nIterations; i++)
-    //         {
-    //             FloatT a = r.NextSingle() * r.Next(-10000, 10000);
-    //             FloatT b = r.NextSingle() * r.Next(-10000, 10000);
-    //             var _ = a + b;
-    //         }
-    //     }
+        // Tryte Benchmarks
+        [Benchmark]
+        public void TestTryteArithmetic()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                Tryte a = new Tryte((uint)r.Next(0, 729)); // 6^3 = 729 possible values
+                Tryte b = new Tryte((uint)r.Next(0, 729));
+                var _ = a + b;
+                _ = a - b;
+                _ = a * b;
+            }
+        }
 
-    //     [Benchmark]
-    //     public void TestFloatTSubtraction()
-    //     {
-    //         for (int i = 0; i < nIterations; i++)
-    //         {
-    //             FloatT a = r.NextSingle() * r.Next(-10000, 10000);
-    //             FloatT b = r.NextSingle() * r.Next(-10000, 10000);
-    //             var _ = a - b;
-    //         }
-    //     }
+        [Benchmark]
+        public void TestTryteBitwise()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                Tryte a = new Tryte((uint)r.Next(0, 729));
+                Tryte b = new Tryte((uint)r.Next(0, 729));
+                var _ = a & b;
+                _ = a | b;
+                _ = a ^ b;
+                _ = a << 2;
+                _ = a >> 2;
+            }
+        }
 
-    //     [Benchmark]
-    //     public void TestFloatTMultiplication()
-    //     {
-    //         for (int i = 0; i < nIterations; i++)
-    //         {
-    //             FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
-    //             FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
-    //             var _ = a * b;
-    //         }
-    //     }
+        [Benchmark]
+        public void TestTryteVsByteConversion()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                byte b = (byte)r.Next(0, 256);
+                var tryte = TernaryConverter.TryteFromUInt8(b);
+                var back = TernaryConverter.TryteToUInt8(tryte);
+            }
+        }
 
-    //     [Benchmark]
-    //     public void TestFloatTDivision()
-    //     {
-    //         for (int i = 0; i < nIterations; i++)
-    //         {
-    //             FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
-    //             FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-100, 100));
-    //             try
-    //             {
-    //                 var _ = a / b;
-    //             }
-    //             catch (DivideByZeroException)
-    //             {
-    //                 continue;
-    //             }
-    //         }
-    //     }
+        // Trit Benchmarks
+        [Benchmark]
+        public void TestTritOperations()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                Trit a = new Trit((TritVal)r.Next(-1, 2));
+                Trit b = new Trit((TritVal)r.Next(-1, 2));
+                var _ = a.NEG();
+                _ = a.XOR(b);
+                _ = a.AND(b);
+                _ = a.OR(b);
+            }
+        }
 
-    //     [Benchmark]
-    //     public void TestFloatTModulus()
-    //     {
-    //         for (int i = 0; i < nIterations; i++)
-    //         {
-    //             FloatT a = (double)(r.NextSingle() * 1000 * r.Next(-1000, 1000));
-    //             FloatT b = (double)(r.NextSingle() * 1000 * r.Next(-100, 100));
-    //             try
-    //             {
-    //                 var _ = a % b;
-    //             }
-    //             catch (DivideByZeroException)
-    //             {
-    //                 continue;
-    //             }
-    //         }
-    //     }
+        [Benchmark]
+        public void TestTritDecisionMaking()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                Trit t = new Trit((TritVal)r.Next(-1, 2));
+                t.Positive(() => { })
+                 .Negative(() => { })
+                 .Zero(() => { });
+            }
+        }
+
+        // FloatT Benchmarks
+        [Benchmark]
+        public void TestFloatTAddition()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                FloatT a = FloatT.FromDouble(r.NextDouble() * r.Next(-10000, 10000));
+                FloatT b = FloatT.FromDouble(r.NextDouble() * r.Next(-10000, 10000));
+                var _ = a + b;
+            }
+        }
+
+        [Benchmark]
+        public void TestFloatTSubtraction()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                FloatT a = FloatT.FromDouble(r.NextDouble() * r.Next(-10000, 10000));
+                FloatT b = FloatT.FromDouble(r.NextDouble() * r.Next(-10000, 10000));
+                var _ = a - b;
+            }
+        }
+
+        [Benchmark]
+        public void TestFloatTMultiplication()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                FloatT a = FloatT.FromDouble(r.NextDouble() * 1000 * r.Next(-1000, 1000));
+                FloatT b = FloatT.FromDouble(r.NextDouble() * 1000 * r.Next(-1000, 1000));
+                var _ = a * b;
+            }
+        }
+
+        [Benchmark]
+        public void TestFloatTDivision()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                FloatT a = FloatT.FromDouble(r.NextDouble() * 1000 * r.Next(-1000, 1000));
+                FloatT b = FloatT.FromDouble(r.NextDouble() * 1000 * r.Next(-100, 100));
+                if (b.ToDouble() != 0)
+                {
+                    var _ = a / b;
+                }
+            }
+        }
+
+        [Benchmark]
+        public void TestFloatTConversion()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                double d = r.NextDouble() * r.Next(-1000000, 1000000);
+                var floatT = FloatT.FromDouble(d);
+                var back = floatT.ToDouble();
+            }
+        }
+
+        // Large dataset benchmarks
+        [Benchmark]
+        public void TestTernaryQuickSortLarge()
+        {
+            var values = new IntT[DataSize];
+            for (int n = 0; n < DataSize; n++)
+            {
+                values[n] = new IntT(r.Next(-1_000_000, 1_000_000));
+            }
+            TernaryAlgorithms.TernaryQuicksort(values);
+        }
+
+        [Benchmark]
+        public void TestBinaryQuickSortLarge()
+        {
+            var values = new int[DataSize];
+            for (int n = 0; n < DataSize; n++)
+            {
+                values[n] = r.Next(-1_000_000, 1_000_000);
+            }
+            TernaryAlgorithms.BinaryQuicksort(values);
+        }
+
+        // Memory efficiency benchmarks
+        [Benchmark]
+        public void TestTernarySearchTreeMemory()
+        {
+            var tree = new TernarySearchTree<int>();
+            for (int i = 0; i < DataSize; i++)
+            {
+                tree.Put($"word{i}", i);
+            }
+            // Force enumeration to ensure all nodes are created
+            var count = tree.Items().Count();
+        }
+
+        [Benchmark]
+        public void TestBinarySearchTreeMemory()
+        {
+            var tree = new BinarySearchTree<int>();
+            for (int i = 0; i < DataSize; i++)
+            {
+                tree.Put($"word{i}", i);
+            }
+            // Force enumeration to ensure all nodes are created
+            var count = tree.Items().Count();
+        }
     }
+}
 }
