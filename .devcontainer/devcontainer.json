@@ -1,6 +1,6 @@
 {
   "name": "stdTernary",
-  "image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0",
+  "image": "mcr.microsoft.com/dotnet/sdk:10.0",
   "postCreateCommand": "dotnet restore stdTernary.sln",
   "customizations": {
     "vscode": {
