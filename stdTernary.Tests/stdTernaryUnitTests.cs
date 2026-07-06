@@ -288,6 +288,122 @@ public class IntTTests
 }
 
 [TestClass]
+public class UnbalancedTernaryTests
+{
+    [TestMethod]
+    public void UTritOperationsUseUnbalancedTruthTables()
+    {
+        UTrit one = new UTrit(1);
+        UTrit two = new UTrit(2);
+
+        Assert.AreEqual(UTritVal.z, (one + two).Value);
+        Assert.AreEqual(UTritVal.t, (one - two).Value);
+        Assert.AreEqual(UTritVal.t, (one * two).Value);
+        Assert.AreEqual(UTritVal.t, (one / two).Value);
+        Assert.AreEqual(UTritVal.o, (~one).Value);
+        Assert.AreEqual(UTritVal.o, (two ^ two).Value);
+    }
+
+    [TestMethod]
+    public void UTryteArithmeticMatchesUnsignedValues()
+    {
+        UTryte a = new UTryte(40UL);
+        UTryte b = new UTryte(9UL);
+        var (quotient, remainder) = a.DIVREM(b);
+
+        Assert.AreEqual(49UL, (a + b).ULongValue);
+        Assert.AreEqual(31UL, (a - b).ULongValue);
+        Assert.AreEqual(360UL, (a * b).ULongValue);
+        Assert.AreEqual(40UL / 9UL, quotient.ULongValue);
+        Assert.AreEqual(40UL % 9UL, remainder.ULongValue);
+    }
+
+    [TestMethod]
+    public void UIntTArithmeticAndTritwiseOperationsWork()
+    {
+        UIntT a = new UIntT(3_456UL);
+        UIntT b = new UIntT(789UL);
+
+        Assert.AreEqual(4_245UL, (ulong)(a + b));
+        Assert.AreEqual(2_667UL, (ulong)(a - b));
+        Assert.AreEqual(3_456UL * 789UL, (ulong)(a * b));
+        Assert.AreEqual(3_456UL / 789UL, (ulong)(a / b));
+        Assert.AreEqual(3_456UL % 789UL, (ulong)(a % b));
+
+        UIntT xor = UIntT.Parse("12") ^ UIntT.Parse("21");
+        Assert.EndsWith("00", xor.TernaryString);
+    }
+
+    [TestMethod]
+    public void UIntTRejectsNegativeSubtraction()
+    {
+        try
+        {
+            _ = new UIntT(1UL) - new UIntT(2UL);
+            Assert.Fail("Expected OverflowException");
+        }
+        catch (OverflowException)
+        {
+        }
+    }
+
+    [TestMethod]
+    public void ConversionsBetweenBalancedAndUnbalancedWorkForNonNegativeValues()
+    {
+        IntT balanced = new IntT(245);
+        UIntT unbalanced = (UIntT)balanced;
+        IntT back = (IntT)unbalanced;
+
+        Assert.AreEqual(245UL, (ulong)unbalanced);
+        Assert.AreEqual(balanced, back);
+        try
+        {
+            _ = (UIntT)new IntT(-1);
+            Assert.Fail("Expected OverflowException");
+        }
+        catch (OverflowException)
+        {
+        }
+    }
+
+    [TestMethod]
+    public void MixedSpaceshipComparisonsWork()
+    {
+        UIntT unsigned = new UIntT(42UL);
+        IntT balanced = new IntT(-7);
+
+        Assert.AreEqual(TritVal.p, unsigned.Spaceship(balanced).Value);
+        Assert.AreEqual(TritVal.n, balanced.Spaceship(unsigned).Value);
+        Assert.AreEqual(TritVal.z, new UIntT(42UL).Spaceship(new IntT(42)).Value);
+    }
+
+    [TestMethod]
+    public void UTritPackerRoundTrips()
+    {
+        UTrit[] trits = { new UTrit(0), new UTrit(1), new UTrit(2), new UTrit(1) };
+        uint packed = UTritPacker.PackTrits(trits);
+        UTrit[] unpacked = UTritPacker.UnpackTrits(packed, trits.Length);
+
+        CollectionAssert.AreEqual(trits.Select(t => (int)t).ToArray(), unpacked.Select(t => (int)t).ToArray());
+    }
+
+    [TestMethod]
+    public void UFloatTArithmeticHandlesPositiveValues()
+    {
+        UFloatT a = UFloatT.FromUInt(new UIntT(729UL));
+        UFloatT b = UFloatT.FromUInt(new UIntT(27UL));
+
+        Assert.AreEqual(756UL, (ulong)(a + b).ToUIntT());
+        Assert.AreEqual(702UL, (ulong)(a - b).ToUIntT());
+        Assert.AreEqual(729UL * 27UL, (ulong)(a * b).ToUIntT());
+        Assert.AreEqual(27UL, (ulong)(a / b).ToUIntT());
+
+        UFloatT third = UFloatT.FromUInt(UIntT.One) / UFloatT.FromUInt(new UIntT(3UL));
+        Assert.IsLessThan(1e-6, Math.Abs((double)third - (1.0 / 3.0)));
+    }
+}
+
+[TestClass]
 public class BinaryPrimitiveTests
 {
     [TestMethod]
