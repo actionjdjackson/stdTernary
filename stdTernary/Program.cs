@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Running;
 
@@ -10,17 +11,17 @@ namespace stdTernary
     {
         private static void Main(string[] args)
         {
-            IntT a = new IntT(120);
-            IntT b = new IntT(60);
+            //IntT a = new IntT(120);
+            //IntT b = new IntT(60);
 
-            DemoSpaceship("IntT", a, b);
-            DemoMethodChaining("IntT", a, b);
+            //DemoSpaceship("IntT", a, b);
+            //DemoMethodChaining("IntT", a, b);
 
-            FloatT c = 3.14159;
-            FloatT d = 2.71828;
+            //FloatT c = 3.14159;
+            //FloatT d = 2.71828;
 
-            DemoSpaceship("FloatT", c, d);
-            DemoMethodChaining("FloatT", c, d);
+            //DemoSpaceship("FloatT", c, d);
+            //DemoMethodChaining("FloatT", c, d);
 
             //DemoBinaryPrimitives();
 
@@ -29,12 +30,12 @@ namespace stdTernary
 
             ValidateNewBenchmarks();
 
-            // Uncomment to run the benchmarks
-            // var summary = BenchmarkRunner.Run<TernaryBenchmarks>(
-            //     DefaultConfig.Instance
-            //         .AddDiagnoser(MemoryDiagnoser.Default)
-            //         .AddDiagnoser(ThreadingDiagnoser.Default)
-            // );
+            //Uncomment to run the benchmarks
+            var summary = BenchmarkRunner.Run<TernaryBenchmarks>(
+                DefaultConfig.Instance
+                    .AddDiagnoser(MemoryDiagnoser.Default)
+                    .AddDiagnoser(ThreadingDiagnoser.Default)
+            );
         }
 
         private static void DemoBinaryPrimitives()
@@ -129,8 +130,8 @@ namespace stdTernary
         Console.WriteLine("Testing Tryte operations...");
         for (int i = 0; i < nIterations; i++)
         {
-            Tryte a = new Tryte((uint)r.Next(0, 729));
-            Tryte b = new Tryte((uint)r.Next(0, 729));
+            Tryte a = new Tryte(r.Next(-100, 101));
+            Tryte b = new Tryte(r.Next(-100, 101));
             var result = a + b;
             result = a & b;
         }
@@ -155,6 +156,51 @@ namespace stdTernary
             var converted = result.ToDouble();
         }
         Console.WriteLine("✓ FloatT operations work");
+
+        Console.WriteLine("Testing UIntT operations...");
+        for (int i = 0; i < nIterations; i++)
+        {
+            UIntT a = new UIntT((ulong)r.Next(0, 1_000_000));
+            UIntT b = new UIntT((ulong)r.Next(0, 1_000_000));
+            var result = a + b;
+            result = a >= b ? a - b : b - a;
+            result = a & b;
+        }
+        Console.WriteLine("✓ UIntT operations work");
+
+        Console.WriteLine("Testing UTryte operations...");
+        for (int i = 0; i < nIterations; i++)
+        {
+            UTryte a = new UTryte((ulong)r.Next(0, 80));
+            UTryte b = new UTryte((ulong)r.Next(1, 9));
+            var result = a + b;
+            result = a >= b ? a - b : b - a;
+            result = a * b;
+            result = a & b;
+        }
+        Console.WriteLine("✓ UTryte operations work");
+
+        Console.WriteLine("Testing UTrit operations...");
+        for (int i = 0; i < nIterations; i++)
+        {
+            UTrit a = new UTrit(r.Next(0, 3));
+            UTrit b = new UTrit(r.Next(1, 3));
+            var result = a.XOR(b);
+            result = a.DIV(b);
+            result = a.AND(b);
+        }
+        Console.WriteLine("✓ UTrit operations work");
+
+        Console.WriteLine("Testing UFloatT operations...");
+        for (int i = 0; i < nIterations; i++)
+        {
+            UFloatT a = UFloatT.FromDouble(r.NextDouble() * r.Next(1, 1000));
+            UFloatT b = UFloatT.FromDouble(r.NextDouble() * r.Next(1, 1000));
+            var result = a + b;
+            result = a >= b ? a - b : b - a;
+            var converted = result.ToDouble();
+        }
+        Console.WriteLine("✓ UFloatT operations work");
 
         Console.WriteLine("Testing large dataset benchmarks...");
         var dataSize = 100;
@@ -455,6 +501,17 @@ namespace stdTernary
         }
 
         [Benchmark]
+        public void TestUIntTAddition()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UIntT a = new UIntT((ulong)r.Next(0, 1_000_000));
+                UIntT b = new UIntT((ulong)r.Next(0, 1_000_000));
+                var _ = a + b;
+            }
+        }
+
+        [Benchmark]
         public void TestIntTSubtraction()
         {
             for (int i = 0; i < nIterations; i++)
@@ -477,6 +534,17 @@ namespace stdTernary
         }
 
         [Benchmark]
+        public void TestUIntTSubtraction()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UIntT a = new UIntT((ulong)r.Next(0, 1_000_000));
+                UIntT b = new UIntT((ulong)r.Next(0, 1_000_000));
+                var _ = a >= b ? a - b : b - a;
+            }
+        }
+
+        [Benchmark]
         public void TestIntTMultiplication()
         {
             for (int i = 0; i < nIterations; i++)
@@ -494,6 +562,17 @@ namespace stdTernary
             {
                 IntB a = r.Next(-100000, 100000);
                 IntB b = r.Next(-100000, 100000);
+                var _ = a * b;
+            }
+        }
+
+        [Benchmark]
+        public void TestUIntTMultiplication()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UIntT a = new UIntT((ulong)r.Next(0, 100000));
+                UIntT b = new UIntT((ulong)r.Next(0, 100000));
                 var _ = a * b;
             }
         }
@@ -535,6 +614,17 @@ namespace stdTernary
         }
 
         [Benchmark]
+        public void TestUIntTDivision()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UIntT a = new UIntT((ulong)r.Next(0, 1_000_000));
+                UIntT b = new UIntT((ulong)r.Next(1, 1000));
+                var _ = a / b;
+            }
+        }
+
+        [Benchmark]
         public void TestIntTModulus()
         {
             for (int i = 0; i < nIterations; i++)
@@ -571,6 +661,17 @@ namespace stdTernary
         }
 
         [Benchmark]
+        public void TestUIntTModulus()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UIntT a = new UIntT((ulong)r.Next(0, 1_000_000));
+                UIntT b = new UIntT((ulong)r.Next(1, 1000));
+                var _ = a % b;
+            }
+        }
+
+        [Benchmark]
         public void TestIntTPower()
         {
             for (int i = 0; i < nIterations; i++)
@@ -581,17 +682,47 @@ namespace stdTernary
             }
         }
 
+        [Benchmark]
+        public void TestUIntTBitwise()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UIntT a = new UIntT((ulong)r.Next(0, 1_000_000));
+                UIntT b = new UIntT((ulong)r.Next(0, 1_000_000));
+                var _ = a & b;
+                _ = a | b;
+                _ = a ^ b;
+                _ = a << 2;
+                _ = a >> 2;
+            }
+        }
+
         // Tryte Benchmarks
         [Benchmark]
         public void TestTryteArithmetic()
         {
             for (int i = 0; i < nIterations; i++)
             {
-                Tryte a = new Tryte((uint)r.Next(0, 729)); // 6^3 = 729 possible values
-                Tryte b = new Tryte((uint)r.Next(0, 729));
+                Tryte a = new Tryte(r.Next(-20, 21));
+                Tryte b = new Tryte(r.Next(-20, 21));
                 var _ = a + b;
                 _ = a - b;
                 _ = a * b;
+            }
+        }
+
+        [Benchmark]
+        public void TestUTryteArithmetic()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UTryte a = new UTryte((ulong)r.Next(0, 80));
+                UTryte b = new UTryte((ulong)r.Next(1, 9));
+                var _ = a + b;
+                _ = a >= b ? a - b : b - a;
+                _ = a * b;
+                _ = a / b;
+                _ = a % b;
             }
         }
 
@@ -600,8 +731,23 @@ namespace stdTernary
         {
             for (int i = 0; i < nIterations; i++)
             {
-                Tryte a = new Tryte((uint)r.Next(0, 729));
-                Tryte b = new Tryte((uint)r.Next(0, 729));
+                Tryte a = new Tryte(r.Next(Tryte.MinValue, Tryte.MaxValue + 1));
+                Tryte b = new Tryte(r.Next(Tryte.MinValue, Tryte.MaxValue + 1));
+                var _ = a & b;
+                _ = a | b;
+                _ = a ^ b;
+                _ = a << 2;
+                _ = a >> 2;
+            }
+        }
+
+        [Benchmark]
+        public void TestUTryteBitwise()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UTryte a = new UTryte((ulong)r.Next(0, 729));
+                UTryte b = new UTryte((ulong)r.Next(0, 729));
                 var _ = a & b;
                 _ = a | b;
                 _ = a ^ b;
@@ -621,6 +767,17 @@ namespace stdTernary
             }
         }
 
+        [Benchmark]
+        public void TestUTryteVsByteConversion()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                byte b = (byte)r.Next(0, 256);
+                var tryte = new UTryte((ulong)b);
+                var back = (byte)tryte.ULongValue;
+            }
+        }
+
         // Trit Benchmarks
         [Benchmark]
         public void TestTritOperations()
@@ -637,6 +794,24 @@ namespace stdTernary
         }
 
         [Benchmark]
+        public void TestUTritOperations()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UTrit a = new UTrit(r.Next(0, 3));
+                UTrit b = new UTrit(r.Next(1, 3));
+                var _ = a.NEG();
+                _ = a.XOR(b);
+                _ = a.AND(b);
+                _ = a.OR(b);
+                _ = a + b;
+                _ = a - b;
+                _ = a * b;
+                _ = a / b;
+            }
+        }
+
+        [Benchmark]
         public void TestTritDecisionMaking()
         {
             for (int i = 0; i < nIterations; i++)
@@ -645,6 +820,18 @@ namespace stdTernary
                 t.Positive(() => { })
                  .Negative(() => { })
                  .Zero(() => { });
+            }
+        }
+
+        [Benchmark]
+        public void TestMixedBalancedUnbalancedSpaceshipComparisons()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                IntT balanced = new IntT(r.Next(-1000, 1000));
+                UIntT unbalanced = new UIntT((ulong)r.Next(0, 1000));
+                var _ = balanced.Spaceship(unbalanced);
+                _ = unbalanced.Spaceship(balanced);
             }
         }
 
@@ -661,6 +848,17 @@ namespace stdTernary
         }
 
         [Benchmark]
+        public void TestUFloatTAddition()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UFloatT a = UFloatT.FromDouble(r.NextDouble() * r.Next(1, 10000));
+                UFloatT b = UFloatT.FromDouble(r.NextDouble() * r.Next(1, 10000));
+                var _ = a + b;
+            }
+        }
+
+        [Benchmark]
         public void TestFloatTSubtraction()
         {
             for (int i = 0; i < nIterations; i++)
@@ -672,12 +870,34 @@ namespace stdTernary
         }
 
         [Benchmark]
+        public void TestUFloatTSubtraction()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UFloatT a = UFloatT.FromDouble(r.NextDouble() * r.Next(1, 10000));
+                UFloatT b = UFloatT.FromDouble(r.NextDouble() * r.Next(1, 10000));
+                var _ = a >= b ? a - b : b - a;
+            }
+        }
+
+        [Benchmark]
         public void TestFloatTMultiplication()
         {
             for (int i = 0; i < nIterations; i++)
             {
                 FloatT a = FloatT.FromDouble(r.NextDouble() * 1000 * r.Next(-1000, 1000));
                 FloatT b = FloatT.FromDouble(r.NextDouble() * 1000 * r.Next(-1000, 1000));
+                var _ = a * b;
+            }
+        }
+
+        [Benchmark]
+        public void TestUFloatTMultiplication()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UFloatT a = UFloatT.FromDouble(r.NextDouble() * r.Next(1, 1000));
+                UFloatT b = UFloatT.FromDouble(r.NextDouble() * r.Next(1, 1000));
                 var _ = a * b;
             }
         }
@@ -697,12 +917,37 @@ namespace stdTernary
         }
 
         [Benchmark]
+        public void TestUFloatTDivision()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                UFloatT a = UFloatT.FromDouble(r.NextDouble() * r.Next(1, 1000));
+                UFloatT b = UFloatT.FromDouble(r.NextDouble() * r.Next(1, 100));
+                if (b.ToDouble() != 0)
+                {
+                    var _ = a / b;
+                }
+            }
+        }
+
+        [Benchmark]
         public void TestFloatTConversion()
         {
             for (int i = 0; i < nIterations; i++)
             {
                 double d = r.NextDouble() * r.Next(-1000000, 1000000);
                 var floatT = FloatT.FromDouble(d);
+                var back = floatT.ToDouble();
+            }
+        }
+
+        [Benchmark]
+        public void TestUFloatTConversion()
+        {
+            for (int i = 0; i < nIterations; i++)
+            {
+                double d = r.NextDouble() * r.Next(1, 1000000);
+                var floatT = UFloatT.FromDouble(d);
                 var back = floatT.ToDouble();
             }
         }

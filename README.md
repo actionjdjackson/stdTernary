@@ -6,6 +6,15 @@
 
 The library promotes the usage of mixed radix programming, using binary for binary concepts and ternary for ternary concepts. This means that boolean is great to model concepts with only 2 logical choices (True, False) and kleenean is great to model concepts with 3 choices (True, False, Unknown). Kleene logic is clear in what happens with the unknown state when using implications.    
 
+### Balanced and Unbalanced Ternary
+
+stdTernary supports both balanced ternary and unbalanced ternary:
+
+- **Balanced ternary** uses `-1`, `0`, and `1`, represented as `-`, `0`, and `+` in strings. The balanced types are `Trit`, `Tryte`, `IntT`, `FloatT`, and `TritPacker`.
+- **Unbalanced ternary** uses `0`, `1`, and `2`, represented as `0`, `1`, and `2` in strings. The unbalanced types are prefixed with `U`: `UTrit`, `UTryte`, `UIntT`, `UFloatT`, and `UTritPacker`.
+
+The unbalanced types implement ternary-native arithmetic, packing, tritwise operations, parsing, formatting, and conversions to/from the matching balanced types where the value is representable. Since unbalanced ternary is unsigned, operations that would produce a negative unbalanced value throw `OverflowException`.
+
 ### Type Conversion Library
 
 The library now includes a comprehensive **TernaryConverter** class that provides seamless conversion between balanced ternary types and common .NET binary types:
@@ -27,7 +36,7 @@ All conversions include proper overflow checking and error handling. See [CONVER
 - To run the benchmark suite type "task run"
 
 ### Limitations
-- The library uses binary coded ternary (BCT) using 2 bits to represent 1 trit. This is obviously inefficient as 1 of the 4 states is ignored. We define 6 trits as 1 tryte such that all binary states of a single byte can fit in a single tryte which simplifies conversions and add binary compatibility. A tryte (6 trits implemented as 12 bits) is packed as binary uint. Note that balanced ternary is always signed so the usage of `uint` is just a choice of implementation. 
+- The library uses binary coded ternary (BCT) using 2 bits to represent 1 trit. This is obviously inefficient as 1 of the 4 states is ignored. Balanced ternary reserves one 2-bit state because it only needs `-1`, `0`, and `1`; unbalanced ternary reserves one 2-bit state because it only needs `0`, `1`, and `2`. We define 6 trits as 1 tryte such that all binary states of a single byte can fit in a single tryte which simplifies conversions and adds binary compatibility. A tryte (6 trits implemented as 12 bits) is packed as a binary integer. Note that balanced ternary is always signed so the usage of unsigned binary storage is just a choice of implementation.
 
 Since the current compilation targets are all binary hardware platforms, this inefficiency is unavoidable. However, we expect that this is temporary as more and more balanced ternary instructions set architectures are being developed such as REBEL-6 and ART-9 which feature ternary assembly with ternary logic, memory and branching. With the new .net 10 featuring RISCV support, a possible compilation flow from c# to REBEL-6 (32-trit balanced ternary, binary compatible ISA) is technically possible through R2R. This is work in progress. The R2R framework allows low level binary vs ternary comparison to compute fairly the amount of memory and bitflips that are needed for both radixes to run the same code. 
 
@@ -44,7 +53,7 @@ Also includes most of the `Math` functions specifically for use with these `Floa
 
 The `string` conversion is for interoperability with my "Action Ternary Simulator" which runs on strings of `+, -, and 0` characters and does all the math in Ternary. Also for quick visualization of the ternary values as symbols and checking the outputs of functions like `SHIFTRIGHT` or `SHIFTLEFT` or trit increment/decrement.
 
-Will possibly create an unbalanced ternary version of all of this.
+The library now includes unbalanced ternary equivalents for the core balanced types. These use the same 2-bit-per-trit packing strategy, but the digit set is `0`, `1`, and `2`. `UTryte` is configurable like `Tryte`, `UIntT` is a 32-trit unsigned integer, and `UFloatT` is a non-negative floating-point ternary type with an unbalanced significand and biased unbalanced exponent storage.
 
 `Tryte` and `FloatT` and `IntT` and have modifiable static integer values which is where you can "customize" them to certain sizes.
 
@@ -58,6 +67,10 @@ Will possibly create an unbalanced ternary version of all of this.
 | `Tryte` | 6-trit (configurable) balanced ternary byte equivalent. | `N_TRITS_PER_TRYTE` (static), `PackedTrits`, `Value` (Trit[]), `TryteString`, `ShortValue`, `ADD()`, `SUB()`, `MULT()`, `DIV()`, `MOD()`, `SHIFTLEFT()`, `SHIFTRIGHT()`, `INVERT()`, operators: `+`, `-`, `*`, `/`, `%`, `<<`, `>>`, `&`, `\|`, `^`, `~` |
 | `IntT` | 32-trit arbitrary-precision integer. | `TritCount` (32), `ToInt64()`, `Sign`, `TernaryString`, `Parse()`, `TryParse()`, operators: `+`, `-`, `*`, `/`, `%`, `&`, `\|`, `^`, `~`, `<<`, `>>` |
 | `FloatT` | 32-trit floating-point number with 26-trit significand and 6-trit exponent. | `TotalTritCount` (32), `SignificandTritCount` (26), `ExponentTritCount` (6), `Exponent`, `SignificandPacked`, `SignificandString`, `ToDouble()`, `FromDouble()`, `Normalize()`, `Negate()`, `ToIntT()`, `FromInt()` |
+| `UTrit` | Fundamental unbalanced ternary unit representing 0, 1, or 2. | `Value` (UTritVal), `GetChar` ('0', '1', '2'), `NEG()`, `SUM()`, `SUB()`, `MULT()`, `DIV()`, `XOR()`, `XNOR()`, `IMP()`, `AND()`, `OR()`, `MIN()`, `MAX()`, `EQUAL()`, `NOTEQUAL()` |
+| `UTryte` | 6-trit (configurable) unbalanced ternary byte equivalent. | `N_TRITS_PER_TRYTE` (static), `PackedTrits`, `Value` (UTrit[]), `TryteString`, `ULongValue`, `ADD()`, `SUB()`, `MULT()`, `DIV()`, `MOD()`, `SHIFTLEFT()`, `SHIFTRIGHT()`, `INVERT()`, operators: `+`, `-`, `*`, `/`, `%`, `<<`, `>>`, `&`, `\|`, `^`, `~` |
+| `UIntT` | 32-trit unsigned unbalanced ternary integer. | `TritCount` (32), `ToUInt64()`, `Sign`, `TernaryString`, `Parse()`, `TryParse()`, `ToIntT()`, operators: `+`, `-`, `*`, `/`, `%`, `&`, `\|`, `^`, `~`, `<<`, `>>` |
+| `UFloatT` | 32-trit non-negative unbalanced ternary floating-point number. | `TotalTritCount` (32), `SignificandTritCount` (26), `ExponentTritCount` (6), `Exponent`, `SignificandPacked`, `SignificandString`, `ToDouble()`, `FromDouble()`, `Normalize()`, `ToUIntT()`, `FromUInt()` |
 | `CharT` | 6-trit (configurable) character representation. | `N_TRITS_PER_CHART`, `PackedTrits`, `Value` (Trit[]), `CharTString`, similar operators to Tryte |
 
 ### Enums
@@ -65,6 +78,7 @@ Will possibly create an unbalanced ternary version of all of this.
 | Enum | Description | Values |
 |------|-------------|--------|
 | `TritVal` | Enumeration for trit values. | `n = -1`, `z = 0`, `p = 1` |
+| `UTritVal` | Enumeration for unbalanced trit values. | `z = 0`, `o = 1`, `t = 2` |
 
 ### Classes
 
@@ -79,15 +93,20 @@ Will possibly create an unbalanced ternary version of all of this.
 |-------|-------------|--------------|
 | `TernaryAlgorithms` | Sorting algorithms using ternary comparisons. | `TernaryQuicksort<T>()`, `BinaryQuicksort<T>()` |
 | `TernaryConverter` | Conversion between ternary types and .NET primitives. | `IntTToInt32()`, `IntTFromInt32()`, `FloatTToFloat()`, `FloatTFromFloat()`, `TryteToUInt8()`, `TryteFromUInt8()`, etc. (full bidirectional conversions) |
-| `TernaryExtensions` | Extension methods for ternary operations. | `Spaceship<T>()` (IComparable<T>), `Ternary<T>()` (IComparable<T>) |
+| `TernaryExtensions` | Extension methods for ternary operations. | `Spaceship<T>()` (IComparable<T>), mixed balanced/unbalanced `Spaceship()` overloads, `Ternary<T>()` (IComparable<T>) |
 | `UtfT` | UTF-T encoding/decoding for ternary strings. | `EncodeCodePoint(int)`, `DecodeCodePoint()`, `EncodeString(string)`, `DecodeString()` |
 | `TritPacker` | Utilities for packing/unpacking trits into binary integers. | `PackTrits(Trit[])`, `UnpackTrits(uint, int)` |
+| `UTritPacker` | Utilities for packing/unpacking unbalanced trits into binary integers. | `PackTrits(UTrit[])`, `UnpackTrits(uint, int)`, `PackTrits64(UTrit[])`, `UnpackTrits64(ulong, int)` |
 
 ### Extension Methods
 
 | Method | Description |
 |--------|-------------|
 | `T.Spaceship<T>(T other)` | Returns Trit comparison result (-1, 0, 1) for IComparable<T> |
+| `UIntT.Spaceship(IntT other)` and `IntT.Spaceship(UIntT other)` | Compares balanced and unbalanced integer values and returns a balanced `Trit` result |
+| `UTryte.Spaceship(Tryte other)` and `Tryte.Spaceship(UTryte other)` | Compares balanced and unbalanced tryte values and returns a balanced `Trit` result |
+| `UFloatT.Spaceship(FloatT other)` and `FloatT.Spaceship(UFloatT other)` | Compares balanced and unbalanced floating-point values and returns a balanced `Trit` result |
+| `UTrit.Spaceship(Trit other)` and `Trit.Spaceship(UTrit other)` | Compares balanced and unbalanced trit values and returns a balanced `Trit` result |
 | `T.Ternary<T>(T other)` | Returns TernaryDecision for fluent ternary conditionals |
 
 ### Operators
@@ -102,9 +121,11 @@ Most ternary types support standard operators:
 ### Key Concepts
 
 - **Balanced Ternary**: Base-3 system using -1, 0, 1 instead of 0, 1, 2
+- **Unbalanced Ternary**: Base-3 system using 0, 1, 2
 - **Trit**: Single ternary digit
 - **Tryte**: Group of trits (default 6)
-- **Bit-packing**: Trites stored as 2 bits in binary for efficiency
+- **Bit-packing**: Trits stored as 2 bits in binary for efficiency
+- **Unsigned Unbalanced Semantics**: `UIntT`, `UTryte`, and `UFloatT` reject negative results with `OverflowException`
 - **Spaceship Operator**: Returns Trit for three-way comparison
 - **Ternary Decision**: Fluent API for conditional logic based on ternary results
 
