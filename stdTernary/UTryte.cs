@@ -302,11 +302,7 @@ public struct UTryte : IEquatable<UTryte>, IComparable<UTryte>
         if (count < 0)
             return ShiftPacked(packed, -count, !left);
         if (count >= _tritCount)
-        {
-            if (left && !UnbalancedTernaryEncoding.IsZero(packed, _tritCount))
-                throw new OverflowException("UTryte shift left overflow.");
             return 0UL;
-        }
 
         Span<sbyte> digits = stackalloc sbyte[_tritCount];
         UnbalancedTernaryEncoding.Decode(packed, digits, _tritCount);
@@ -314,11 +310,8 @@ public struct UTryte : IEquatable<UTryte>, IComparable<UTryte>
 
         if (left)
         {
-            for (int i = _tritCount - count; i < _tritCount; i++)
-            {
-                if (digits[i] != 0)
-                    throw new OverflowException("UTryte shift left overflow.");
-            }
+            // Truncating shift: trits carried past the top position are dropped, like a
+            // hardware left shift (no overflow exception).
             for (int i = count; i < _tritCount; i++)
             {
                 shifted[i] = digits[i - count];

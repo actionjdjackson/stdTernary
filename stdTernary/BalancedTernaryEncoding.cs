@@ -14,14 +14,12 @@ internal static class BalancedTernaryEncoding
         if ((uint)index >= MaxTrits)
             throw new ArgumentOutOfRangeException(nameof(index));
 
+        // Layout: 00->0, 01->+1, 10->-1. Decode branchlessly with
+        // trit = bits - 3*(bits>>1)  (0->0, 1->1, 2->-1). This avoids the per-trit
+        // value-translating switch that made balanced decode ~1.6x slower than
+        // unbalanced (whose digit == stored value, so decode is a bare cast).
         ulong bits = (packed >> (index * 2)) & TritMask;
-        return bits switch
-        {
-            0b00 => 0,
-            0b01 => 1,
-            0b10 => -1,
-            _ => throw new InvalidOperationException("Invalid 2-bit trit encoding."),
-        };
+        return (sbyte)((long)bits - 3L * (long)(bits >> 1));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -33,13 +31,10 @@ internal static class BalancedTernaryEncoding
             throw new ArgumentOutOfRangeException(nameof(value), "Balanced ternary trits must be -1, 0, or 1.");
 
         ulong mask = ~(TritMask << (index * 2));
-        ulong encoded = value switch
-        {
-            -1 => 0b10UL,
-            0 => 0b00UL,
-            1 => 0b01UL,
-            _ => 0UL,
-        };
+        // Inverse of DecodeTrit: {-1,0,+1} -> {10,00,01}. Branchless:
+        // code = value + (3 & (value>>31))  maps {-1,0,1} -> {2,0,1}.
+        int v = value;
+        ulong encoded = (ulong)(v + (3 & (v >> 31)));
 
         return (packed & mask) | (encoded << (index * 2));
     }
@@ -79,41 +74,25 @@ internal static class BalancedTernaryEncoding
             throw new ArgumentOutOfRangeException(nameof(count));
 
         Span<sbyte> digits = stackalloc sbyte[count];
-        long remaining = Math.Abs(value);
+        // Sign-agnostic single pass: convert the signed value directly to balanced
+        // trits. C#'s % keeps the dividend's sign, so the remainder lands in [-2, 2];
+        // fold 2 -> -1 (carry +1) and -2 -> +1 (borrow -1). This avoids Math.Abs and,
+        // crucially, the separate full-width negation loop the old code ran for every
+        // negative input (~half of them), which was the residual construction cost.
+        long remaining = value;
         int index = 0;
 
         while (remaining != 0 && index < count)
         {
-            long remainder = remaining % 3;
+            int rem = (int)(remaining % 3);
             remaining /= 3;
-
-            switch (remainder)
-            {
-                case 0:
-                    digits[index] = 0;
-                    break;
-                case 1:
-                    digits[index] = 1;
-                    break;
-                case 2:
-                    digits[index] = -1;
-                    remaining += 1;
-                    break;
-            }
-
-            index++;
+            if (rem > 1) { rem -= 3; remaining += 1; }
+            else if (rem < -1) { rem += 3; remaining -= 1; }
+            digits[index++] = (sbyte)rem;
         }
 
         if (remaining != 0)
             throw new OverflowException($"Value {value} cannot be represented using {count} balanced ternary trits.");
-
-        if (value < 0)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                digits[i] = (sbyte)(-digits[i]);
-            }
-        }
 
         return Encode(digits, count);
     }

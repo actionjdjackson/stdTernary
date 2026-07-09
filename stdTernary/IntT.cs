@@ -180,21 +180,13 @@ public readonly struct IntT : IEquatable<IntT>, IComparable<IntT>
         if (count < 0)
             return ShiftRightPacked(packed, -count);
         if (count >= TritCount)
-        {
-            if (!BalancedTernaryEncoding.IsZero(packed, TritCount))
-                throw new OverflowException("Shift left overflow.");
             return 0UL;
-        }
 
         Span<sbyte> digits = stackalloc sbyte[TritCount];
         BalancedTernaryEncoding.Decode(packed, digits, TritCount);
 
-        for (int i = TritCount - count; i < TritCount; i++)
-        {
-            if (digits[i] != 0)
-                throw new OverflowException("Shift left overflow.");
-        }
-
+        // Truncating shift: trits carried past the most-significant position are dropped,
+        // like a hardware left shift (no overflow exception).
         for (int i = TritCount - 1; i >= count; i--)
         {
             digits[i] = digits[i - count];

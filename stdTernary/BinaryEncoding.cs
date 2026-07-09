@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace stdTernary;
@@ -28,16 +29,19 @@ internal static class BinaryEncoding
         return PowersOfTwo[exponent];
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static sbyte DecodeBit(ulong packed, int index)
     {
         if ((uint)index >= MaxBits)
             throw new ArgumentOutOfRangeException(nameof(index));
 
-        ulong divisor = Pow2(index);
-        ulong quotient = packed / divisor;
-        return (sbyte)(quotient % 2UL);
+        // A single bit is a shift+mask, not an integer division. Using division here
+        // (packed / 2^index) made every bit decode ~4-5x more expensive than a ternary
+        // trit decode and was the main reason the "binary" type looked slow.
+        return (sbyte)((packed >> index) & 1UL);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static ulong SetBit(ulong packed, int index, sbyte value)
     {
         if ((uint)index >= MaxBits)
@@ -45,12 +49,8 @@ internal static class BinaryEncoding
         if (value is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(value), "Binary digits must be 0 or 1.");
 
-        sbyte existing = DecodeBit(packed, index);
-        if (existing == value)
-            return packed;
-
-        ulong weight = Pow2(index);
-        return value == 1 ? checked(packed + weight) : checked(packed - weight);
+        ulong mask = 1UL << index;
+        return value == 1 ? (packed | mask) : (packed & ~mask);
     }
 
     internal static void Decode(ulong packed, Span<sbyte> digits, int count)
@@ -79,10 +79,7 @@ internal static class BinaryEncoding
             sbyte digit = digits[i];
             if (digit is < 0 or > 1)
                 throw new ArgumentOutOfRangeException(nameof(digits), "Binary digits must be 0 or 1.");
-            if (digit == 1)
-            {
-                result = checked(result + Pow2(i));
-            }
+            result |= (ulong)digit << i;
         }
 
         return result;

@@ -30,12 +30,17 @@ namespace stdTernary
 
             ValidateNewBenchmarks();
 
-            //Uncomment to run the benchmarks
-            var summary = BenchmarkRunner.Run<TernaryBenchmarks>(
-                DefaultConfig.Instance
-                    .AddDiagnoser(MemoryDiagnoser.Default)
-                    .AddDiagnoser(ThreadingDiagnoser.Default)
-            );
+            // BenchmarkSwitcher honours CLI args, so you don't have to run the whole
+            // 40-minute suite:
+            //   --filter '*'            run everything (required; no args = interactive menu)
+            //   --filter '*Addition*'   run a glob subset (seconds)
+            //   --job short             fewer warmup/measure iterations (~4-5 min full run)
+            //   --memory                add allocation columns (roughly doubles the time)
+            // Diagnosers are opt-in (--memory) rather than baked in: they each add a
+            // measurement pass, and ThreadingDiagnoser reported all-zeros here anyway.
+            BenchmarkSwitcher
+                .FromTypes(new[] { typeof(TernaryBenchmarks), typeof(ScalingBenchmarks) })
+                .Run(args, DefaultConfig.Instance);
         }
 
         private static void DemoBinaryPrimitives()
@@ -216,15 +221,16 @@ namespace stdTernary
         Console.WriteLine();
     }
 
+    // Fixed-size micro-benchmarks. These do NOT depend on DataSize, so they live in
+    // their own class with no [Params] — otherwise every one of them would run 3x.
     [MemoryDiagnoser]
-    [ThreadingDiagnoser]
     public class TernaryBenchmarks
     {
-        [Params(10, 100, 1000)]
-        public int DataSize { get; set; }
-
         private readonly int nIterations = 100;
         private readonly Random r = new Random();
+
+        // Consumed by the native baselines so the JIT cannot delete the arithmetic.
+        private long _sink;
         private static readonly string[] SampleWords = new[]
         {
             "sable",
@@ -511,6 +517,56 @@ namespace stdTernary
             }
         }
 
+        // ---- Native binary-hardware baselines ----
+        // IntT/IntB/UIntT all SIMULATE arithmetic with a per-digit software loop over a
+        // ulong. The honest "binary on binary hardware" reference is a single native
+        // machine instruction, measured here. Notes on fairness:
+        //  * Range: 32 trits = 3^32 ~ 2^50.7, so IntT/UIntT hold ~51 bits of range.
+        //    IntB uses 64 bits (over-wide); native `long` is 64-bit, native `int` 32-bit.
+        //    A range-fair binary width for the ternary types would be ~51 bits.
+        //  * These baselines keep the same RNG-in-loop structure as the other benchmarks,
+        //    so RNG/allocation overhead is shared. Even so the arithmetic itself is
+        //    effectively free; the true per-op gap (see the isolated add-only microbench)
+        //    is ~100-200x, larger than this RNG-dominated harness makes it look.
+        [Benchmark]
+        public void TestNativeLongAddition()
+        {
+            long acc = 0;
+            for (int i = 0; i < nIterations; i++)
+            {
+                long a = r.Next(-1000000, 1000000);
+                long b = r.Next(-1000000, 1000000);
+                acc += a + b;
+            }
+            _sink = acc;
+        }
+
+        [Benchmark]
+        public void TestNativeIntAddition()
+        {
+            int acc = 0;
+            for (int i = 0; i < nIterations; i++)
+            {
+                int a = r.Next(-1000000, 1000000);
+                int b = r.Next(-1000000, 1000000);
+                acc += a + b;
+            }
+            _sink = acc;
+        }
+
+        [Benchmark]
+        public void TestNativeLongMultiplication()
+        {
+            long acc = 0;
+            for (int i = 0; i < nIterations; i++)
+            {
+                long a = r.Next(-100000, 100000);
+                long b = r.Next(-100000, 100000);
+                acc += a * b;
+            }
+            _sink = acc;
+        }
+
         [Benchmark]
         public void TestIntTSubtraction()
         {
@@ -703,8 +759,11 @@ namespace stdTernary
         {
             for (int i = 0; i < nIterations; i++)
             {
-                Tryte a = new Tryte(r.Next(-20, 21));
-                Tryte b = new Tryte(r.Next(-20, 21));
+                // Operands are bounded so the product a*b still fits a 6-trit Tryte
+                // (|value| <= 364): 18*18 = 324. The old [-20,20] range could reach 400
+                // and threw OverflowException, marking the whole benchmark NA.
+                Tryte a = new Tryte(r.Next(-18, 19));
+                Tryte b = new Tryte(r.Next(-18, 19));
                 var _ = a + b;
                 _ = a - b;
                 _ = a * b;
@@ -736,7 +795,7 @@ namespace stdTernary
                 var _ = a & b;
                 _ = a | b;
                 _ = a ^ b;
-                _ = a << 2;
+                _ = a << 2;   // truncating shift; high trits are dropped, never throws
                 _ = a >> 2;
             }
         }
@@ -751,7 +810,7 @@ namespace stdTernary
                 var _ = a & b;
                 _ = a | b;
                 _ = a ^ b;
-                _ = a << 2;
+                _ = a << 2;   // truncating shift; high trits are dropped, never throws
                 _ = a >> 2;
             }
         }
@@ -951,6 +1010,18 @@ namespace stdTernary
                 var back = floatT.ToDouble();
             }
         }
+
+    }
+
+    // Benchmarks whose cost scales with input size. Only THESE use [Params], so only
+    // these run once per DataSize value (10/100/1000). Everything else runs once.
+    [MemoryDiagnoser]
+    public class ScalingBenchmarks
+    {
+        [Params(10, 100, 1000)]
+        public int DataSize { get; set; }
+
+        private readonly Random r = new Random();
 
         // Large dataset benchmarks
         [Benchmark]

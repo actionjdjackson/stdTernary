@@ -254,21 +254,13 @@ public readonly struct UIntT : IEquatable<UIntT>, IComparable<UIntT>
         if (count < 0)
             return ShiftRightPacked(packed, -count);
         if (count >= TritCount)
-        {
-            if (!UnbalancedTernaryEncoding.IsZero(packed, TritCount))
-                throw new OverflowException("UIntT shift left overflow.");
             return 0UL;
-        }
 
         Span<sbyte> digits = stackalloc sbyte[TritCount];
         UnbalancedTernaryEncoding.Decode(packed, digits, TritCount);
 
-        for (int i = TritCount - count; i < TritCount; i++)
-        {
-            if (digits[i] != 0)
-                throw new OverflowException("UIntT shift left overflow.");
-        }
-
+        // Truncating shift: trits carried past the most-significant position are dropped,
+        // like a hardware left shift (no overflow exception).
         for (int i = TritCount - 1; i >= count; i--)
         {
             digits[i] = digits[i - count];

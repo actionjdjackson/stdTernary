@@ -439,21 +439,13 @@ public struct Tryte : IEquatable<Tryte>, IComparable<Tryte>
 
         int length = _tritCount;
         if (count >= length)
-        {
-            if (!BalancedTernaryEncoding.IsZero(packed, length))
-                throw new OverflowException("Tryte shift left overflow.");
             return 0UL;
-        }
 
         Span<sbyte> digits = stackalloc sbyte[length];
         BalancedTernaryEncoding.Decode(packed, digits, length);
 
-        for (int i = length - count; i < length; i++)
-        {
-            if (digits[i] != 0)
-                throw new OverflowException("Tryte shift left overflow.");
-        }
-
+        // Truncating shift: trits carried past the most-significant position are dropped,
+        // like a hardware left shift (no overflow exception).
         for (int i = length - 1; i >= count; i--)
         {
             digits[i] = digits[i - count];
