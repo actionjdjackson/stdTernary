@@ -139,3 +139,57 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## Frieder-style evaluation: how would your code run on native ternary hardware?
+
+Frieder & Luk (1973) argued that a non-binary architecture emulated on a binary
+host should not be judged by wall-clock speed against the host — "there is no
+point whatsoever to do any speed comparisons" — but by **monitoring operation
+counts per category, memory utilization, and relating them to a binary machine
+doing the same work**. `TernaryFom` implements exactly that: every `IntT`
+operation is metered, and one counter unit corresponds to one instruction on a
+hypothetical balanced-ternary register machine (a full `<,=,>` comparison is a
+*single* instruction there).
+
+Wrap any C# region to get a native-hardware summary:
+
+```csharp
+var snapshot = TernaryFom.Measure("my kernel", () =>
+{
+    // any code that uses IntT: sorts, filters, arithmetic, DSP kernels, ...
+    OptimizedQuicksort.TernaryQuicksort3Way(keys);
+});
+
+// Optional: run a binary reference doing the same work with BinaryFom enabled,
+// then relate the two, as in Frieder's methodology:
+Console.WriteLine(TernaryFom.Report(snapshot, binarySnapshot, keys.Length));
+```
+
+The report prints the ternary instruction mix (comparisons, add/sub, mul, div,
+negate, shift, tritwise), switching activity (trit flips), memory traffic in
+trits, and the ternary:binary relations for comparisons, control operations and
+digit flips.
+
+## Optimized 3-way quicksort
+
+`OptimizedQuicksort.TernaryQuicksort3Way` is a production-style quicksort built
+around the balanced-ternary comparison: a Dutch-national-flag 3-way partition
+driven by **one spaceship comparison per element** (the single trit routes each
+element to the less/equal/greater region), randomized median-of-three pivots,
+an insertion-sort cutoff, and recursion on the smaller side only. Duplicate
+keys collapse into the pivot block, giving O(n · log(distinct)) behaviour.
+Binary controls (`BinaryQuicksort3Way`, `BinaryQuicksort2Way`) with the same
+structure are provided so FoM relations are apples-to-apples.
+
+## SWAR packed representation (performance)
+
+The packed encoding stores each trit as a 2-bit two's-complement digit
+(`00`=0, `01`=+1, `11`=−1). Flipping each field's sign bit makes the packed
+word order-isomorphic to the numeric value, so a 3-way compare is one XOR and
+one unsigned compare. The low bits form the "occupied" rail and the high bits
+the "negative" rail, giving the dual-rail form used by Frieder & Luk for
+word-parallel addition: all 32 trits are added at once with Boolean operations
+and carries ripple by whole words. Negation is a rail swap; ternary shifts are
+single machine shifts; multiply/divide use fast 6-trit-limb table conversions
+and the host multiplier. Run `stdTernary.Eval` for correctness fuzzing and the
+full benchmark/FoM suite.
