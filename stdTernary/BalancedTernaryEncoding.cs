@@ -335,10 +335,15 @@ internal static class BalancedTernaryEncoding
     }
 
     /// <summary>
-    /// Three-way comparison in O(1): flipping the per-field sign bit makes the
-    /// packed word order-isomorphic to the value, so one xor + one unsigned
-    /// compare decides &lt;, =, &gt; - the software analogue of a single
-    /// balanced-ternary compare instruction.
+    /// Three-way comparison in O(1). The raw packed bits are not ordered like the
+    /// numeric value (-1 is stored as 11, above +1's 01), so XOR each field's sign
+    /// bit (the <see cref="Hi"/> mask): that maps -1 -&gt; 01, 0 -&gt; 10, +1 -&gt; 11, i.e.
+    /// each field's unsigned value now rises with the trit's value, making the whole
+    /// word order-isomorphic to the number. A single unsigned compare of the two
+    /// transformed words then decides &lt;, =, &gt; (most-significant trit first).
+    /// On this binary host that is two masked XORs plus one integer compare; on
+    /// native balanced-ternary hardware the same comparison is one instruction,
+    /// which is how <see cref="TernaryFom"/> counts it.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int Compare(ulong left, ulong right, int count)
