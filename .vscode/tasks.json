@@ -54,7 +54,8 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "run",
+            "label": "benchmark",
+            "detail": "Run the BenchmarkDotNet suite interactively (pick benchmarks from the menu).",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -63,6 +64,56 @@
                 "Release",
                 "--project",
                 "${workspaceFolder}/stdTernary/stdTernary.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "benchmark: short",
+            "detail": "Run all benchmarks with fewer warmup/measure iterations (quick pass).",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "-c",
+                "Release",
+                "--project",
+                "${workspaceFolder}/stdTernary/stdTernary.csproj",
+                "--",
+                "--filter",
+                "*",
+                "--job",
+                "short"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "benchmark: full",
+            "detail": "Run the entire BenchmarkDotNet suite (long).",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "-c",
+                "Release",
+                "--project",
+                "${workspaceFolder}/stdTernary/stdTernary.csproj",
+                "--",
+                "--filter",
+                "*"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "eval",
+            "detail": "SWAR correctness fuzzing, micro-benchmarks, and Frieder figure-of-merit study.",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "-c",
+                "Release",
+                "--project",
+                "${workspaceFolder}/stdTernary.Eval/stdTernary.Eval.csproj"
             ],
             "problemMatcher": "$msCompile"
         },
