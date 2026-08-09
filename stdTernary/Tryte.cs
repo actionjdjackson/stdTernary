@@ -168,9 +168,20 @@ public struct Tryte : IEquatable<Tryte>, IComparable<Tryte>
 
     public void InvertSelf() => _packed = NegatePacked(_packed);
 
-    public Tryte SHIFTLEFT(int trits) => new Tryte(ShiftLeftPacked(_packed, trits));
+    /// <summary>
+    /// Signed shift (the REBEL-6 SH&lt;f&gt;.T / SHI&lt;f&gt;.T family, applied at
+    /// tryte width): a positive <paramref name="amount"/> shifts toward the most
+    /// significant trit, a negative one toward the least significant trit, and 0
+    /// is the identity. Vacated trits take <paramref name="fill"/> (N/Z/P =
+    /// -/0/+); |amount| &gt;= the tryte width yields an all-fill tryte.
+    /// </summary>
+    public Tryte Shift(int amount, Trit fill) => new Tryte(ShiftPacked(_packed, amount, (sbyte)fill.Value));
 
-    public Tryte SHIFTRIGHT(int trits) => new Tryte(ShiftRightPacked(_packed, trits));
+    /// <summary>Left shift, zero fill - compatibility wrapper for <c>Shift(+trits, 0)</c>.</summary>
+    public Tryte SHIFTLEFT(int trits) => new Tryte(ShiftPacked(_packed, trits, 0));
+
+    /// <summary>Right shift, zero fill - compatibility wrapper for <c>Shift(-trits, 0)</c>.</summary>
+    public Tryte SHIFTRIGHT(int trits) => new Tryte(ShiftPacked(_packed, unchecked(-trits), 0));
 
     public Tryte ADD(Tryte other) => new Tryte(AddPacked(_packed, other._packed));
 
@@ -325,17 +336,17 @@ public struct Tryte : IEquatable<Tryte>, IComparable<Tryte>
             int divisorMsb = BalancedTernaryEncoding.HighestNonZeroTrit(divisorAbs, _tritCount);
             int shift = remainderMsb - divisorMsb;
 
-            ulong shiftedDivisor = ShiftLeftPacked(divisorAbs, shift);
+            ulong shiftedDivisor = ShiftPacked(divisorAbs, shift, 0);
             if (BalancedTernaryEncoding.Compare(shiftedDivisor, remainder, _tritCount) > 0)
             {
                 shift--;
                 if (shift < 0)
                     break;
-                shiftedDivisor = ShiftLeftPacked(divisorAbs, shift);
+                shiftedDivisor = ShiftPacked(divisorAbs, shift, 0);
             }
 
             remainder = SubtractPacked(remainder, shiftedDivisor);
-            quotient = AddPacked(quotient, ShiftLeftPacked(unit, shift));
+            quotient = AddPacked(quotient, ShiftPacked(unit, shift, 0));
         }
 
         if (dividendSign < 0)
@@ -438,57 +449,51 @@ public struct Tryte : IEquatable<Tryte>, IComparable<Tryte>
         return BalancedTernaryEncoding.Encode(digits, count);
     }
 
-    private static ulong ShiftLeftPacked(ulong packed, int count)
+    /// <summary>
+    /// Signed shift over the packed tryte: amount &gt; 0 moves toward the MST,
+    /// amount &lt; 0 toward the LST, vacated positions take the fill trit.
+    /// Truncating in both directions, like a hardware shift (no overflow exception).
+    /// </summary>
+    private static ulong ShiftPacked(ulong packed, int amount, sbyte fill)
     {
-        if (count == 0)
+        if (amount == 0)
             return packed;
-        if (count < 0)
-            return ShiftRightPacked(packed, -count);
 
         int length = _tritCount;
-        if (count >= length)
-            return 0UL;
-
         Span<sbyte> digits = stackalloc sbyte[length];
+
+        if (amount >= length || amount <= -length)
+        {
+            digits.Fill(fill);
+            return BalancedTernaryEncoding.Encode(digits, length);
+        }
+
         BalancedTernaryEncoding.Decode(packed, digits, length);
 
-        // Truncating shift: trits carried past the most-significant position are dropped,
-        // like a hardware left shift (no overflow exception).
-        for (int i = length - 1; i >= count; i--)
+        if (amount > 0)
         {
-            digits[i] = digits[i - count];
+            for (int i = length - 1; i >= amount; i--)
+            {
+                digits[i] = digits[i - amount];
+            }
+
+            for (int i = 0; i < amount; i++)
+            {
+                digits[i] = fill;
+            }
         }
-
-        for (int i = 0; i < count; i++)
+        else
         {
-            digits[i] = 0;
-        }
+            int count = -amount;
+            for (int i = 0; i < length - count; i++)
+            {
+                digits[i] = digits[i + count];
+            }
 
-        return BalancedTernaryEncoding.Encode(digits, length);
-    }
-
-    private static ulong ShiftRightPacked(ulong packed, int count)
-    {
-        if (count == 0)
-            return packed;
-        if (count < 0)
-            return ShiftLeftPacked(packed, -count);
-
-        int length = _tritCount;
-        if (count >= length)
-            return 0UL;
-
-        Span<sbyte> digits = stackalloc sbyte[length];
-        BalancedTernaryEncoding.Decode(packed, digits, length);
-
-        for (int i = 0; i < length - count; i++)
-        {
-            digits[i] = digits[i + count];
-        }
-
-        for (int i = length - count; i < length; i++)
-        {
-            digits[i] = 0;
+            for (int i = length - count; i < length; i++)
+            {
+                digits[i] = fill;
+            }
         }
 
         return BalancedTernaryEncoding.Encode(digits, length);

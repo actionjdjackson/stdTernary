@@ -280,27 +280,65 @@ public readonly struct IntT : IEquatable<IntT>, IComparable<IntT>
 
     public static IntT operator ~(IntT value) => -value;
 
-    /// <summary>Left shift by an immediate, zero fill (SLIZ.T). High trits are dropped (balanced wrap).</summary>
-    [Rebel6Intrinsic("SLIZ.T")]
+    /// <summary>
+    /// Signed shift - the REBEL-6 SH&lt;f&gt;.T / SHI&lt;f&gt;.T family, where the
+    /// balanced amount carries the direction in its own sign: a positive
+    /// <paramref name="amount"/> shifts toward the most significant trit
+    /// (the old left shift), a negative one toward the least significant trit,
+    /// and 0 is the identity. Vacated trits take <paramref name="fill"/>
+    /// (N/Z/P = -/0/+); |amount| &gt;= 24 yields an all-fill word.
+    /// </summary>
+    public IntT Shift(int amount, Trit fill)
+    {
+        if (TernaryFom.Enabled) TernaryFom.Shifts++;
+        return new IntT(ShiftPacked(_packed, amount, (sbyte)fill.Value));
+    }
+
+    /// <summary>Signed shift, negative fill (SHN.T; the immediate form is SHIN.T).</summary>
+    [Rebel6Intrinsic("SHN.T")]
+    public IntT ShiftN(int amount) => Shift(amount, new Trit(-1));
+
+    /// <summary>Signed shift, zero fill (SHZ.T; the immediate form is SHIZ.T).</summary>
+    [Rebel6Intrinsic("SHZ.T")]
+    public IntT ShiftZ(int amount) => Shift(amount, new Trit(0));
+
+    /// <summary>Signed shift, positive fill (SHP.T; the immediate form is SHIP.T).</summary>
+    [Rebel6Intrinsic("SHP.T")]
+    public IntT ShiftP(int amount) => Shift(amount, new Trit(1));
+
+    /// <summary>
+    /// Left shift, zero fill - compatibility wrapper for
+    /// <c>Shift(+count, 0)</c>, i.e. SHIZ.T with a positive amount.
+    /// High trits are dropped (balanced wrap).
+    /// </summary>
+    [Rebel6Intrinsic("SHIZ.T")]
     public static IntT operator <<(IntT value, int count)
     {
         if (TernaryFom.Enabled) TernaryFom.Shifts++;
-        return new IntT(ShiftLeftPacked(value._packed, count));
-    }
-
-    /// <summary>Right shift by an immediate, zero fill (SRIZ.T).</summary>
-    [Rebel6Intrinsic("SRIZ.T")]
-    public static IntT operator >>(IntT value, int count)
-    {
-        if (TernaryFom.Enabled) TernaryFom.Shifts++;
-        return new IntT(ShiftRightPacked(value._packed, count));
+        return new IntT(ShiftPacked(value._packed, count, 0));
     }
 
     /// <summary>
-    /// Cyclic rotate by <paramref name="count"/> mod 24 (ROT.T) - no fill; positive
-    /// counts rotate toward the most significant trit.
+    /// Right shift, zero fill - compatibility wrapper for
+    /// <c>Shift(-count, 0)</c>, i.e. SHIZ.T with a negated amount.
+    /// </summary>
+    [Rebel6Intrinsic("SHIZ.T")]
+    public static IntT operator >>(IntT value, int count)
+    {
+        if (TernaryFom.Enabled) TernaryFom.Shifts++;
+        // Unchecked negation: -int.MinValue wraps, but any |amount| >= 24
+        // saturates to all-fill (zero here) in either direction anyway.
+        return new IntT(ShiftPacked(value._packed, unchecked(-count), 0));
+    }
+
+    /// <summary>
+    /// Cyclic rotate by <paramref name="count"/> mod 24 (ROT.T for an
+    /// immediate amount, ROTR.T for a register amount) - no fill; positive
+    /// counts rotate toward the most significant trit, negative counts the
+    /// other way (the amount is signed, like the shifts).
     /// </summary>
     [Rebel6Intrinsic("ROT.T")]
+    [Rebel6Intrinsic("ROTR.T")]
     public IntT Rotate(int count)
     {
         if (TernaryFom.Enabled) TernaryFom.Shifts++;
@@ -332,30 +370,33 @@ public readonly struct IntT : IEquatable<IntT>, IComparable<IntT>
     // Packed-word implementations
     // ------------------------------------------------------------------
 
-    private static ulong ShiftLeftPacked(ulong packed, int count)
+    /// <summary>
+    /// Signed shift over the packed word: amount &gt; 0 moves toward the MST,
+    /// amount &lt; 0 toward the LST, vacated fields take the fill trit.
+    /// </summary>
+    private static ulong ShiftPacked(ulong packed, int amount, sbyte fill)
     {
-        if (count == 0)
+        if (amount == 0)
             return packed;
-        if (count < 0)
-            return ShiftRightPacked(packed, -count);
-        if (count >= TritCount)
-            return 0UL;
 
-        // Zero trits are encoded as 00, so a machine shift by 2*count IS a
-        // truncating ternary shift: dropped high trits fall off, zeros shift in.
-        return (packed << (count * 2)) & WordMask;
-    }
+        // Replicate the fill trit's 2-bit encoding across every field:
+        // 0 -> 00..., +1 -> 01... (Lo), -1 -> 11... (Lo * 3).
+        ulong fillWord = (BalancedTernaryEncoding.Lo * (ulong)(fill & 3)) & WordMask;
 
-    private static ulong ShiftRightPacked(ulong packed, int count)
-    {
-        if (count == 0)
-            return packed;
-        if (count < 0)
-            return ShiftLeftPacked(packed, -count);
-        if (count >= TritCount)
-            return 0UL;
+        if (amount >= TritCount || amount <= -TritCount)
+            return fillWord;
 
-        return packed >> (count * 2);
+        if (amount > 0)
+        {
+            // Trit fields are 2 bits and zero trits are encoded as 00, so a
+            // machine shift by 2*amount IS a truncating ternary shift; the
+            // vacated low fields then take the (field-aligned) fill pattern.
+            int bits = amount * 2;
+            return ((packed << bits) & WordMask) | (fillWord >> (TritCount * 2 - bits));
+        }
+
+        int rbits = -amount * 2;
+        return (packed >> rbits) | ((fillWord << (TritCount * 2 - rbits)) & WordMask);
     }
 
     /// <summary>The unique value in +/-(3^24-1)/2 congruent to <paramref name="value"/> mod 3^24.</summary>

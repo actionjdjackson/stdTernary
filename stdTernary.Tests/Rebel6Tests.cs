@@ -192,13 +192,101 @@ public class Rebel6IntTTests
     public void ShiftsAreZeroFillAndTruncating()
     {
         IntT x = new IntT(5);                    // +--
-        Assert.AreEqual(15L, (x << 1).ToInt64());    // SLIZ.T
-        Assert.AreEqual(2L, (x >> 1).ToInt64());     // SRIZ.T: +-- becomes +-, the low trit is dropped
+        Assert.AreEqual(15L, (x << 1).ToInt64());    // SHIZ.T, amount +1
+        Assert.AreEqual(2L, (x >> 1).ToInt64());     // SHIZ.T, amount -1: +-- becomes +-, the low trit is dropped
         Assert.AreEqual(IntT.Zero, x << 24);
         Assert.AreEqual(IntT.Zero, x >> 24);
 
         // A left shift drops trits past position 23 - wrap, not overflow.
         Assert.AreEqual(IntT.Parse("+" + new string('0', 23)), IntT.MaxValue << 23);
+    }
+
+    [TestMethod]
+    public void SignedShiftDirectionFollowsTheAmountSign()
+    {
+        // SH<f>.T/SHI<f>.T: k > 0 shifts toward the MST (the old left shift),
+        // k < 0 toward the LST (the old right shift), k = 0 is the identity.
+        Trit zero = new Trit(0);
+        var random = new Random(2465);
+        for (int i = 0; i < 50; i++)
+        {
+            IntT v = new IntT(random.NextInt64(-Max, Max + 1));
+            Assert.AreEqual(v, v.Shift(0, zero));
+            for (int k = 1; k < IntT.TritCount; k++)
+            {
+                Assert.AreEqual(v << k, v.Shift(k, zero), $"Shift(+{k}) vs << {k}");
+                Assert.AreEqual(v >> k, v.Shift(-k, zero), $"Shift(-{k}) vs >> {k}");
+            }
+        }
+    }
+
+    [TestMethod]
+    public void SignedShiftFillLandsInTheVacatedTrits()
+    {
+        IntT v = IntT.Parse("+-0++--0+0-+00++---0+0-+");
+        string s = v.TernaryString;   // MST first
+
+        // Toward the MST: the top k trits drop, the fill enters at the LST end.
+        Assert.AreEqual(s.Substring(2) + "++", v.Shift(2, new Trit(1)).TernaryString);
+        Assert.AreEqual(s.Substring(3) + "---", v.Shift(3, new Trit(-1)).TernaryString);
+        Assert.AreEqual(s.Substring(5) + "00000", v.Shift(5, new Trit(0)).TernaryString);
+
+        // Toward the LST: the low k trits drop, the fill enters at the MST end.
+        Assert.AreEqual("++" + s.Substring(0, 22), v.Shift(-2, new Trit(1)).TernaryString);
+        Assert.AreEqual("---" + s.Substring(0, 21), v.Shift(-3, new Trit(-1)).TernaryString);
+        Assert.AreEqual("00000" + s.Substring(0, 19), v.Shift(-5, new Trit(0)).TernaryString);
+    }
+
+    [TestMethod]
+    public void SignedShiftSaturatesToAllFillAt24()
+    {
+        IntT v = new IntT(123_456_789L);
+        foreach (int k in new[] { 24, -24, 25, -25, 40, -40 })
+        {
+            Assert.AreEqual(IntT.MinValue, v.Shift(k, new Trit(-1)), $"all-N at k={k}");
+            Assert.AreEqual(IntT.Zero, v.Shift(k, new Trit(0)), $"all-Z at k={k}");
+            Assert.AreEqual(IntT.MaxValue, v.Shift(k, new Trit(1)), $"all-P at k={k}");
+        }
+    }
+
+    [TestMethod]
+    public void ShiftFillWrappersMatchTheCore()
+    {
+        var random = new Random(2466);
+        for (int i = 0; i < 50; i++)
+        {
+            IntT v = new IntT(random.NextInt64(-Max, Max + 1));
+            int k = random.Next(-30, 31);
+            Assert.AreEqual(v.Shift(k, new Trit(-1)), v.ShiftN(k));
+            Assert.AreEqual(v.Shift(k, new Trit(0)), v.ShiftZ(k));
+            Assert.AreEqual(v.Shift(k, new Trit(1)), v.ShiftP(k));
+        }
+
+        // A zero-fill signed shift by 3^k is exact multiplication/division by 3^k.
+        IntT x = new IntT(42);
+        Assert.AreEqual(42L * 27, x.ShiftZ(3).ToInt64());
+        Assert.AreEqual(new IntT(42L * 27), new IntT(42L * 27).ShiftZ(-3).ShiftZ(3));
+    }
+
+    [TestMethod]
+    public void TryteSignedShiftMatchesWordSemanticsAtWidth6()
+    {
+        Tryte t = new Tryte("+-0+-0");
+
+        // Direction from the sign; zero fill matches the legacy wrappers.
+        Assert.AreEqual((string)t.SHIFTLEFT(2), (string)t.Shift(2, new Trit(0)));
+        Assert.AreEqual((string)t.SHIFTRIGHT(2), (string)t.Shift(-2, new Trit(0)));
+        Assert.AreEqual((string)t, (string)t.Shift(0, new Trit(1)));
+
+        // Fill lands in the vacated trits at both ends.
+        Assert.AreEqual("-0+-0+", (string)t.Shift(1, new Trit(1)));
+        Assert.AreEqual("-+-0+-", (string)t.Shift(-1, new Trit(-1)));
+
+        // |k| >= 6 saturates to all-fill.
+        Assert.AreEqual("------", (string)t.Shift(6, new Trit(-1)));
+        Assert.AreEqual("++++++", (string)t.Shift(-6, new Trit(1)));
+        Assert.AreEqual("000000", (string)t.Shift(40, new Trit(0)));
+        Assert.AreEqual("++++++", (string)t.Shift(-9, new Trit(1)));
     }
 
     [TestMethod]
@@ -339,8 +427,9 @@ public class Rebel6IntrinsicMapTests
         {
             foreach (MethodInfo method in type.GetMethods(All))
             {
-                var attribute = method.GetCustomAttribute<Rebel6IntrinsicAttribute>();
-                if (attribute is not null)
+                // AllowMultiple: one method may cover several encodings of the
+                // same semantics (e.g. Rotate -> ROT.T and ROTR.T).
+                foreach (var attribute in method.GetCustomAttributes<Rebel6IntrinsicAttribute>())
                     yield return (attribute.Mnemonic, $"{type.Name}.{method.Name}");
             }
         }
@@ -363,8 +452,11 @@ public class Rebel6IntrinsicMapTests
                             .Select(m => m.Groups[1].Value)
                             .ToList();
 
-        // The REBEL-6 assembler defines exactly 127 instruction patterns.
-        Assert.HasCount(127, patterns, "Unexpected pattern count in InstructionSet6.cs.");
+        // The REBEL-6 assembler defines exactly 122 architectural instruction
+        // patterns (127 before the signed-shift redesign collapsed the 12
+        // SL*/SR*/SLI*/SRI* forms into SHN/SHZ/SHP.T + SHIN/SHIZ/SHIP.T and
+        // added ROTR.T in the freed R-ALU func slot).
+        Assert.HasCount(122, patterns, "Unexpected pattern count in InstructionSet6.cs.");
 
         var table = patterns.ToHashSet(StringComparer.Ordinal);
         var annotated = CollectAnnotatedMnemonics().ToList();
@@ -383,7 +475,7 @@ public class Rebel6IntrinsicMapTests
         string[] expected =
         {
             "ADD.T", "SUB.T", "STI.T", "CMP.T", "MIN.T", "MAX.T", "MAJV.T", "MINV.T",
-            "ROT.T", "SLIZ.T", "SRIZ.T", "CLZT.T", "TCNT.T",
+            "ROT.T", "ROTR.T", "SHN.T", "SHZ.T", "SHP.T", "SHIZ.T", "CLZT.T", "TCNT.T",
             "MUL.T", "DIV.T", "REM.T", "MOD.T", "MAC.T", "MV2.T",
         };
 
