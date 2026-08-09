@@ -217,6 +217,22 @@ public readonly struct IntT : IEquatable<IntT>, IComparable<IntT>
         return new IntT(r);
     }
 
+    /// <summary>
+    /// High word of the exact 48-trit product (MULH.T) under the balanced split:
+    /// low = balanced wrap mod 3^24 of the exact product (MUL.T), high =
+    /// (exact - low) / 3^24. The pair MULH.T:MUL.T composes the exact product
+    /// of two 24-trit values as a 48-trit result. No unsigned variant exists -
+    /// balanced ternary has no unsigned reading.
+    /// </summary>
+    [Rebel6Intrinsic("MULH.T")]
+    public static IntT Mulh(IntT a, IntT b)
+    {
+        if (TernaryFom.Enabled) TernaryFom.Multiplications++;
+        Int128 exact = (Int128)a.ToInt64() * b.ToInt64();
+        long low = Wrap(exact);
+        return new IntT((long)((exact - low) / Modulus));
+    }
+
     /// <summary>Fused multiply-accumulate (MAC.T): a * b + c, balanced wrap.</summary>
     [Rebel6Intrinsic("MAC.T")]
     public static IntT Mac(IntT a, IntT b, IntT c)
@@ -233,6 +249,19 @@ public readonly struct IntT : IEquatable<IntT>, IComparable<IntT>
     /// <summary>Wordwise maximum (MAX.T) - arithmetic select of the larger whole word.</summary>
     [Rebel6Intrinsic("MAX.T")]
     public static IntT Max(IntT a, IntT b) => a.CompareTo(b) >= 0 ? a : b;
+
+    /// <summary>
+    /// Set-if-less-than (SLT.T; the immediate form is SLTI.T): +1 when
+    /// a &lt; b, else 0 - a binary predicate, distinct from the three-way
+    /// CMP.T which also reports the greater-than case as -1/+1.
+    /// </summary>
+    [Rebel6Intrinsic("SLT.T")]
+    [Rebel6Intrinsic("SLTI.T")]
+    public static IntT Slt(IntT a, IntT b)
+    {
+        if (TernaryFom.Enabled) TernaryFom.Comparisons++;
+        return BalancedTernaryEncoding.Compare(a._packed, b._packed, TritCount) < 0 ? One : Zero;
+    }
 
     /// <summary>Per-trit 3-input majority (MAJV.T) = the median of the three trits at each position.</summary>
     [Rebel6Intrinsic("MAJV.T")]
@@ -260,18 +289,212 @@ public readonly struct IntT : IEquatable<IntT>, IComparable<IntT>
     /// <summary>Exchange two words - the REBEL-6 SWAP.T pseudo-instruction over MV2.T.</summary>
     public static void Swap(ref IntT a, ref IntT b) => (a, b) = Mv2(b, a);
 
+    // ------------------------------------------------------------------
+    // P - packed ternary SIMD (reductions and quantization; the tritwise
+    // base ops already are the 24-lane arithmetic)
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Packed ternary multiply-accumulate (TMAC.T): acc + sum over the 24 trit
+    /// lanes of a[i] * b[i]. The lane-product sum lies in +/-24; the accumulate
+    /// wraps balanced mod 3^24 like ADD.T.
+    /// </summary>
+    [Rebel6Intrinsic("TMAC.T")]
+    public static IntT Tmac(IntT a, IntT b, IntT acc)
+    {
+        if (TernaryFom.Enabled) { TernaryFom.Multiplications++; TernaryFom.Additions++; }
+        int sum = 0;
+        for (int i = 0; i < TritCount; i++)
+            sum += BalancedTernaryEncoding.DecodeTrit(a._packed, i) * BalancedTernaryEncoding.DecodeTrit(b._packed, i);
+        return acc + new IntT(sum);
+    }
+
+    /// <summary>Packed ternary dot product - the TDOT.T pseudo-instruction (TMAC.T with a zero accumulator).</summary>
+    [Rebel6Intrinsic("TDOT.T")]
+    public static IntT Tdot(IntT a, IntT b) => Tmac(a, b, Zero);
+
+    /// <summary>Horizontal trit sum (TSUM.T): sum of the 24 trit lanes, in +/-24.</summary>
+    [Rebel6Intrinsic("TSUM.T")]
+    public int TritSum()
+    {
+        int sum = 0;
+        for (int i = 0; i < TritCount; i++)
+            sum += BalancedTernaryEncoding.DecodeTrit(_packed, i);
+        return sum;
+    }
+
+    /// <summary>
+    /// Ternarize against a threshold (QNT.T): +1 if value &gt; threshold, -1 if
+    /// value &lt; -threshold, else 0. The threshold is expected to be &gt;= 0 (the
+    /// BitNet absmean threshold); the conditions are evaluated in this order,
+    /// exactly as the spec states them.
+    /// </summary>
+    [Rebel6Intrinsic("QNT.T")]
+    public static IntT Qnt(IntT value, IntT threshold)
+    {
+        if (TernaryFom.Enabled) TernaryFom.Comparisons++;
+        if (value.CompareTo(threshold) > 0)
+            return One;
+        if (value.CompareTo(-threshold) < 0)
+            return NegativeOne;
+        return Zero;
+    }
+
+    /// <summary>
+    /// Horizontal tryte-lane maximum (HMAX.T): the largest of the four 6-trit
+    /// tryte lanes of this word, each lane read as a balanced value (+/-364).
+    /// </summary>
+    [Rebel6Intrinsic("HMAX.T")]
+    public IntT Hmax()
+    {
+        // The architectural tryte lane is 6 trits, independent of the library's
+        // configurable Tryte width.
+        const int LaneTrits = 6;
+        if (TernaryFom.Enabled) TernaryFom.Comparisons++;
+        long best = long.MinValue;
+        for (int lane = 0; lane < TritCount / LaneTrits; lane++)
+        {
+            long v = BalancedTernaryEncoding.ToInt64(_packed >> (lane * LaneTrits * 2), LaneTrits);
+            if (v > best)
+                best = v;
+        }
+        return new IntT(best);
+    }
+
+    // ------------------------------------------------------------------
+    // Ztl - ternary logic (programmable tritwise gates)
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Programmable 2-input tritwise gate (TLUT.T): per lane,
+    /// result[i] = table[a[i], b[i]], where the 9-trit truth table lives in the
+    /// low trits of <paramref name="table"/> - the entry for the input pair
+    /// (ta, tb) at trit position (ta * 3 + tb) + 4 (positions 0..8, LST-first).
+    /// The table word's upper 15 trits are ignored (reserved).
+    /// </summary>
+    [Rebel6Intrinsic("TLUT.T")]
+    public static IntT Tlut(IntT a, IntT b, IntT table)
+    {
+        if (TernaryFom.Enabled) TernaryFom.TritwiseOps++;
+        ulong result = 0UL;
+        for (int i = 0; i < TritCount; i++)
+        {
+            int ta = BalancedTernaryEncoding.DecodeTrit(a._packed, i);
+            int tb = BalancedTernaryEncoding.DecodeTrit(b._packed, i);
+            sbyte r = BalancedTernaryEncoding.DecodeTrit(table._packed, (ta * 3 + tb) + 4);
+            result = BalancedTernaryEncoding.SetTrit(result, i, r);
+        }
+        return new IntT(result);
+    }
+
+    /// <summary>
+    /// Programmable 1-input tritwise gate (TLUTI.T): per lane,
+    /// result[i] = table[a[i]], where the 3-trit truth table lives in the low
+    /// trits of <paramref name="table"/> - the entry for input trit ta at trit
+    /// position ta + 1. In the instruction the table is a 12-trit immediate
+    /// whose trits 3..11 must be zero; here the upper trits are ignored.
+    /// </summary>
+    [Rebel6Intrinsic("TLUTI.T")]
+    public static IntT Tluti(IntT a, IntT table)
+    {
+        if (TernaryFom.Enabled) TernaryFom.TritwiseOps++;
+        ulong result = 0UL;
+        for (int i = 0; i < TritCount; i++)
+        {
+            int ta = BalancedTernaryEncoding.DecodeTrit(a._packed, i);
+            sbyte r = BalancedTernaryEncoding.DecodeTrit(table._packed, ta + 1);
+            result = BalancedTernaryEncoding.SetTrit(result, i, r);
+        }
+        return new IntT(result);
+    }
+
+    /// <summary>Builds a TLUTI.T table word from (f(-), f(0), f(+)).</summary>
+    public static IntT UnaryGateTable(sbyte fNeg, sbyte fZero, sbyte fPos)
+    {
+        ulong packed = BalancedTernaryEncoding.SetTrit(0UL, 0, fNeg);
+        packed = BalancedTernaryEncoding.SetTrit(packed, 1, fZero);
+        packed = BalancedTernaryEncoding.SetTrit(packed, 2, fPos);
+        return new IntT(packed);
+    }
+
+    /// <summary>
+    /// Builds a TLUT.T table word from the nine entries in canonical pair order
+    /// (-,-) (-,0) (-,+) (0,-) (0,0) (0,+) (+,-) (+,0) (+,+).
+    /// </summary>
+    public static IntT BinaryGateTable(params sbyte[] entries)
+    {
+        if (entries is not { Length: 9 })
+            throw new ArgumentException("A 2-input truth table has exactly 9 entries.", nameof(entries));
+        ulong packed = 0UL;
+        for (int i = 0; i < 9; i++)
+            packed = BalancedTernaryEncoding.SetTrit(packed, i, entries[i]);
+        return new IntT(packed);
+    }
+
+    // Canonical gate tables - normative in rebel6-extensions.md (Ztl). The
+    // unary gates are full pseudo-instructions in the assembler; the binary
+    // gates are canonical table constants written as LI.T + TLUT.T idioms
+    // (no single mnemonic exists in the pattern table yet), so their wrappers
+    // below carry no [Rebel6Intrinsic] annotation.
+    private static readonly IntT NtiTable = UnaryGateTable(+1, -1, -1);
+    private static readonly IntT PtiTable = UnaryGateTable(+1, +1, -1);
+    private static readonly IntT MtiTable = UnaryGateTable(+1, 0, +1);
+    private static readonly IntT CyuTable = UnaryGateTable(0, +1, -1);
+    private static readonly IntT CydTable = UnaryGateTable(+1, -1, 0);
+    private static readonly IntT KimpTable = BinaryGateTable(+1, +1, +1, 0, 0, +1, -1, 0, +1);
+    private static readonly IntT CmptTable = BinaryGateTable(0, -1, -1, +1, 0, -1, +1, +1, 0);
+    private static readonly IntT ConsTable = BinaryGateTable(-1, 0, 0, 0, 0, 0, 0, 0, +1);
+
+    /// <summary>Negative ternary inverter (NTI.T): per trit (+, -, -) - 0 reads as high.</summary>
+    [Rebel6Intrinsic("NTI.T")]
+    public IntT Nti() => Tluti(this, NtiTable);
+
+    /// <summary>Positive ternary inverter (PTI.T): per trit (+, +, -) - 0 reads as low.</summary>
+    [Rebel6Intrinsic("PTI.T")]
+    public IntT Pti() => Tluti(this, PtiTable);
+
+    /// <summary>Magnitude (MTI.T): |x| per trit - (+, 0, +).</summary>
+    [Rebel6Intrinsic("MTI.T")]
+    public IntT Mti() => Tluti(this, MtiTable);
+
+    /// <summary>Cycle up (CYU.T): - -&gt; 0 -&gt; + -&gt; - per trit.</summary>
+    [Rebel6Intrinsic("CYU.T")]
+    public IntT Cyu() => Tluti(this, CyuTable);
+
+    /// <summary>Cycle down (CYD.T): - -&gt; + -&gt; 0 -&gt; - per trit.</summary>
+    [Rebel6Intrinsic("CYD.T")]
+    public IntT Cyd() => Tluti(this, CydTable);
+
+    /// <summary>Kleene implication per trit: a -&gt; b = max(-a, b). Canonical TLUT.T table (LI.T + TLUT.T idiom).</summary>
+    public static IntT Kimp(IntT a, IntT b) => Tlut(a, b, KimpTable);
+
+    /// <summary>Tritwise compare: sign(a - b) per lane. Canonical TLUT.T table (LI.T + TLUT.T idiom).</summary>
+    public static IntT Cmpt(IntT a, IntT b) => Tlut(a, b, CmptTable);
+
+    /// <summary>Consensus per trit: a when a == b, else 0. Canonical TLUT.T table (LI.T + TLUT.T idiom).</summary>
+    public static IntT Cons(IntT a, IntT b) => Tlut(a, b, ConsTable);
+
+    /// <summary>Tritwise minimum (AND.T; the immediate form is ANDI.T) - 24-lane Kleene AND.</summary>
+    [Rebel6Intrinsic("AND.T")]
+    [Rebel6Intrinsic("ANDI.T")]
     public static IntT operator &(IntT left, IntT right)
     {
         if (TernaryFom.Enabled) TernaryFom.TritwiseOps++;
         return new IntT(BalancedTernaryEncoding.MinSwar(left._packed, right._packed) & WordMask);
     }
 
+    /// <summary>Tritwise maximum (OR.T; the immediate form is ORI.T) - 24-lane Kleene OR.</summary>
+    [Rebel6Intrinsic("OR.T")]
+    [Rebel6Intrinsic("ORI.T")]
     public static IntT operator |(IntT left, IntT right)
     {
         if (TernaryFom.Enabled) TernaryFom.TritwiseOps++;
         return new IntT(BalancedTernaryEncoding.MaxSwar(left._packed, right._packed) & WordMask);
     }
 
+    /// <summary>Tritwise negated product (XOR.T; the immediate form is XORI.T): -(a*b) per lane.</summary>
+    [Rebel6Intrinsic("XOR.T")]
+    [Rebel6Intrinsic("XORI.T")]
     public static IntT operator ^(IntT left, IntT right)
     {
         if (TernaryFom.Enabled) TernaryFom.TritwiseOps++;
@@ -296,14 +519,17 @@ public readonly struct IntT : IEquatable<IntT>, IComparable<IntT>
 
     /// <summary>Signed shift, negative fill (SHN.T; the immediate form is SHIN.T).</summary>
     [Rebel6Intrinsic("SHN.T")]
+    [Rebel6Intrinsic("SHIN.T")]
     public IntT ShiftN(int amount) => Shift(amount, new Trit(-1));
 
     /// <summary>Signed shift, zero fill (SHZ.T; the immediate form is SHIZ.T).</summary>
     [Rebel6Intrinsic("SHZ.T")]
+    [Rebel6Intrinsic("SHIZ.T")]
     public IntT ShiftZ(int amount) => Shift(amount, new Trit(0));
 
     /// <summary>Signed shift, positive fill (SHP.T; the immediate form is SHIP.T).</summary>
     [Rebel6Intrinsic("SHP.T")]
+    [Rebel6Intrinsic("SHIP.T")]
     public IntT ShiftP(int amount) => Shift(amount, new Trit(1));
 
     /// <summary>

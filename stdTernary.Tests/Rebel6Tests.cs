@@ -354,6 +354,362 @@ public class Rebel6IntTTests
 }
 
 [TestClass]
+public class Rebel6MulhTests
+{
+    private const long Modulus = 282_429_536_481L;          // 3^24
+    private const long Max = 141_214_768_240L;              // (3^24 - 1) / 2
+
+    /// <summary>MULH.T:MUL.T must compose to the exact 48-trit product.</summary>
+    private static void AssertComposition(long a, long b)
+    {
+        IntT x = new IntT(a), y = new IntT(b);
+        long low = (x * y).ToInt64();          // MUL.T: balanced wrap mod 3^24
+        long high = IntT.Mulh(x, y).ToInt64(); // MULH.T: (exact - low) / 3^24
+
+        // Low word is the balanced residue, so |low| <= Max always.
+        Assert.IsLessThanOrEqualTo(Max, Math.Abs(low), $"low out of balanced range for {a} * {b}");
+
+        // BigInteger reference, independent of the library's Int128 arithmetic.
+        System.Numerics.BigInteger exact = (System.Numerics.BigInteger)a * b;
+        System.Numerics.BigInteger recomposed =
+            (System.Numerics.BigInteger)high * Modulus + low;
+        Assert.AreEqual(exact, recomposed, $"MULH:MUL composition broken for {a} * {b}");
+
+        // Cross-check with Int128 as well.
+        Assert.AreEqual((Int128)a * b, (Int128)high * Modulus + low);
+    }
+
+    [TestMethod]
+    public void MulhComposesTheExactProductOnBoundaries()
+    {
+        long[] edges = { 0, 1, -1, 2, -2, Max, -Max, Max - 1, -(Max - 1), 3, 27, -27 };
+        foreach (long a in edges)
+            foreach (long b in edges)
+                AssertComposition(a, b);
+    }
+
+    [TestMethod]
+    public void MulhComposesTheExactProductOnRandomOperands()
+    {
+        var random = new Random(2467);
+        for (int i = 0; i < 500; i++)
+        {
+            long a = random.NextInt64(-Max, Max + 1);
+            long b = random.NextInt64(-Max, Max + 1);
+            AssertComposition(a, b);
+        }
+    }
+
+    [TestMethod]
+    public void MulhOfSmallOperandsIsZeroAndOfMaxIsLarge()
+    {
+        // A product inside the single-word range has high word 0.
+        Assert.AreEqual(IntT.Zero, IntT.Mulh(new IntT(1000), new IntT(1000)));
+        Assert.AreEqual(IntT.Zero, IntT.Mulh(IntT.MaxValue, IntT.One));
+        // Max * Max: high = (Max^2 - wrap(Max^2)) / 3^24.
+        Int128 exact = (Int128)Max * Max;
+        long low = (IntT.MaxValue * IntT.MaxValue).ToInt64();
+        Assert.AreEqual((long)((exact - low) / Modulus), IntT.Mulh(IntT.MaxValue, IntT.MaxValue).ToInt64());
+    }
+}
+
+[TestClass]
+public class Rebel6PackedTests
+{
+    private const long Max = 141_214_768_240L;
+
+    private static int ReferenceLaneSum(IntT a, IntT b)
+    {
+        // Scalar reference: decode both words to trits via the string form.
+        string sa = a.TernaryString, sb = b.TernaryString;
+        int sum = 0;
+        for (int i = 0; i < IntT.TritCount; i++)
+        {
+            int ta = sa[i] == '+' ? 1 : sa[i] == '-' ? -1 : 0;
+            int tb = sb[i] == '+' ? 1 : sb[i] == '-' ? -1 : 0;
+            sum += ta * tb;
+        }
+        return sum;
+    }
+
+    private static IntT RandomWord(Random random) => new IntT(random.NextInt64(-Max, Max + 1));
+
+    [TestMethod]
+    public void TmacMatchesTheScalarReferenceLoop()
+    {
+        var random = new Random(2468);
+        for (int i = 0; i < 300; i++)
+        {
+            IntT a = RandomWord(random), b = RandomWord(random), acc = RandomWord(random);
+            long expected = (acc + new IntT(ReferenceLaneSum(a, b))).ToInt64();
+            Assert.AreEqual(expected, IntT.Tmac(a, b, acc).ToInt64());
+        }
+
+        // All-ones lanes: TMAC of MAX (24 '+' trits) with itself sums to +24.
+        Assert.AreEqual(24L, IntT.Tmac(IntT.MaxValue, IntT.MaxValue, IntT.Zero).ToInt64());
+        Assert.AreEqual(-24L, IntT.Tmac(IntT.MaxValue, IntT.MinValue, IntT.Zero).ToInt64());
+
+        // The accumulate wraps balanced mod 3^24 like ADD.T.
+        Assert.AreEqual(IntT.MinValue + new IntT(23),
+                        IntT.Tmac(IntT.MaxValue, IntT.MaxValue, IntT.MaxValue));
+
+        // TDOT.T pseudo == TMAC.T with a zero accumulator.
+        IntT x = RandomWord(random), y = RandomWord(random);
+        Assert.AreEqual(IntT.Tmac(x, y, IntT.Zero), IntT.Tdot(x, y));
+        Assert.AreEqual(ReferenceLaneSum(x, y), (int)IntT.Tdot(x, y).ToInt64());
+    }
+
+    [TestMethod]
+    public void TsumIsTheHorizontalTritSum()
+    {
+        Assert.AreEqual(0, IntT.Zero.TritSum());
+        Assert.AreEqual(24, IntT.MaxValue.TritSum());
+        Assert.AreEqual(-24, IntT.MinValue.TritSum());
+        Assert.AreEqual(1, IntT.One.TritSum());
+        Assert.AreEqual(0, IntT.Parse("+-").TritSum());
+
+        var random = new Random(2469);
+        for (int i = 0; i < 300; i++)
+        {
+            IntT v = RandomWord(random);
+            int expected = v.TernaryString.Sum(c => c == '+' ? 1 : c == '-' ? -1 : 0);
+            Assert.AreEqual(expected, v.TritSum());
+            // TSUM(a) == TDOT(a, all-ones word).
+            Assert.AreEqual(expected, (int)IntT.Tdot(v, IntT.MaxValue).ToInt64());
+        }
+    }
+
+    [TestMethod]
+    public void QntTernarizesAgainstTheThreshold()
+    {
+        IntT t = new IntT(100);
+        Assert.AreEqual(IntT.One, IntT.Qnt(new IntT(101), t));
+        Assert.AreEqual(IntT.Zero, IntT.Qnt(new IntT(100), t));
+        Assert.AreEqual(IntT.Zero, IntT.Qnt(IntT.Zero, t));
+        Assert.AreEqual(IntT.Zero, IntT.Qnt(new IntT(-100), t));
+        Assert.AreEqual(IntT.NegativeOne, IntT.Qnt(new IntT(-101), t));
+
+        // Zero threshold: QNT.T is the sign function.
+        var random = new Random(2470);
+        for (int i = 0; i < 200; i++)
+        {
+            IntT v = RandomWord(random);
+            Assert.AreEqual(v.Sign, (int)IntT.Qnt(v, IntT.Zero).ToInt64());
+        }
+
+        // Randomized threshold semantics.
+        for (int i = 0; i < 200; i++)
+        {
+            long x = random.NextInt64(-Max, Max + 1);
+            long th = random.NextInt64(0, Max + 1);
+            long expected = x > th ? 1 : x < -th ? -1 : 0;
+            Assert.AreEqual(expected, IntT.Qnt(new IntT(x), new IntT(th)).ToInt64(), $"QNT({x}, {th})");
+        }
+    }
+
+    [TestMethod]
+    public void HmaxPicksTheLargestTryteLane()
+    {
+        var random = new Random(2471);
+        for (int i = 0; i < 300; i++)
+        {
+            // Compose a word from four known 6-trit lane values in +/-364.
+            long[] lanes = new long[4];
+            IntT word = IntT.Zero;
+            for (int lane = 0; lane < 4; lane++)
+            {
+                lanes[lane] = random.NextInt64(-364, 365);
+                word += new IntT(lanes[lane]) << (lane * 6);
+            }
+            Assert.AreEqual(lanes.Max(), word.Hmax().ToInt64(),
+                $"HMAX of lanes [{string.Join(", ", lanes)}]");
+        }
+
+        Assert.AreEqual(0L, IntT.Zero.Hmax().ToInt64());
+        Assert.AreEqual(364L, IntT.MaxValue.Hmax().ToInt64());
+        Assert.AreEqual(-364L, IntT.MinValue.Hmax().ToInt64());
+    }
+
+    [TestMethod]
+    public void SltIsABinaryPredicateNotAThreeWayCompare()
+    {
+        var random = new Random(2472);
+        for (int i = 0; i < 200; i++)
+        {
+            IntT a = RandomWord(random), b = RandomWord(random);
+            long expected = a.CompareTo(b) < 0 ? 1 : 0;
+            Assert.AreEqual(expected, IntT.Slt(a, b).ToInt64());
+        }
+        Assert.AreEqual(IntT.One, IntT.Slt(IntT.MinValue, IntT.MaxValue));
+        Assert.AreEqual(IntT.Zero, IntT.Slt(IntT.MaxValue, IntT.MinValue));  // CMP.T would say +1... SLT says 0
+        Assert.AreEqual(IntT.Zero, IntT.Slt(new IntT(42), new IntT(42)));
+    }
+}
+
+[TestClass]
+public class Rebel6ZtlTests
+{
+    private static readonly sbyte[] TritValues = { -1, 0, 1 };
+
+    /// <summary>A 24-lane input word whose lane i carries inputs[i % inputs.Length].</summary>
+    private static IntT LanePattern(params sbyte[] inputs)
+    {
+        IntT word = IntT.Zero;
+        for (int i = IntT.TritCount - 1; i >= 0; i--)
+            word = (word << 1) + new IntT(inputs[i % inputs.Length]);
+        return word;
+    }
+
+    private static sbyte LaneAt(IntT word, int index)
+    {
+        char c = word.TernaryString[IntT.TritCount - 1 - index];
+        return (sbyte)(c == '+' ? 1 : c == '-' ? -1 : 0);
+    }
+
+    [TestMethod]
+    public void TlutiCoversAll27UnaryGatesExhaustively()
+    {
+        // The full 1-input gate space: 3^3 = 27 truth tables x 3 inputs each.
+        IntT input = LanePattern(-1, 0, 1);   // every lane triple cycles -,0,+
+        foreach (sbyte fN in TritValues)
+        foreach (sbyte fZ in TritValues)
+        foreach (sbyte fP in TritValues)
+        {
+            IntT table = IntT.UnaryGateTable(fN, fZ, fP);
+            IntT result = IntT.Tluti(input, table);
+            for (int i = 0; i < IntT.TritCount; i++)
+            {
+                sbyte a = LaneAt(input, i);
+                sbyte expected = a < 0 ? fN : a == 0 ? fZ : fP;
+                Assert.AreEqual(expected, LaneAt(result, i), $"table ({fN},{fZ},{fP}), input {a}");
+            }
+        }
+    }
+
+    [TestMethod]
+    public void TlutCoversAll19683BinaryGatesExhaustively()
+    {
+        // Lanes 0..8 enumerate all 9 input pairs; the full 2-input gate space
+        // is every 9-trit table: 3^9 = 19,683 gates x 9 input pairs each.
+        sbyte[] aLanes = { -1, -1, -1, 0, 0, 0, 1, 1, 1 };
+        sbyte[] bLanes = { -1, 0, 1, -1, 0, 1, -1, 0, 1 };
+        IntT a = LanePattern(aLanes);
+        IntT b = LanePattern(bLanes);
+
+        var entries = new sbyte[9];
+        for (int gate = 0; gate < 19683; gate++)
+        {
+            int g = gate;
+            for (int k = 0; k < 9; k++)
+            {
+                entries[k] = (sbyte)(g % 3 - 1);
+                g /= 3;
+            }
+            IntT table = IntT.BinaryGateTable(entries);
+            IntT result = IntT.Tlut(a, b, table);
+            for (int i = 0; i < 9; i++)
+            {
+                int index = (aLanes[i] * 3 + bLanes[i]) + 4;
+                Assert.AreEqual(entries[index], LaneAt(result, i),
+                    $"gate {gate}, pair ({aLanes[i]},{bLanes[i]})");
+            }
+        }
+    }
+
+    [TestMethod]
+    public void CanonicalUnaryGatesMatchTheirNormativeTables()
+    {
+        IntT input = LanePattern(-1, 0, 1);
+        for (int i = 0; i < IntT.TritCount; i++)
+        {
+            int x = LaneAt(input, i);
+            Assert.AreEqual(x < 0 ? 1 : -1, (int)LaneAt(input.Nti(), i), "NTI");        // (+, -, -)
+            Assert.AreEqual(x > 0 ? -1 : 1, (int)LaneAt(input.Pti(), i), "PTI");        // (+, +, -)
+            Assert.AreEqual(Math.Abs(x), (int)LaneAt(input.Mti(), i), "MTI");           // (+, 0, +)
+            Assert.AreEqual(x == 1 ? -1 : x + 1, (int)LaneAt(input.Cyu(), i), "CYU");   // - -> 0 -> + -> -
+            Assert.AreEqual(x == -1 ? 1 : x - 1, (int)LaneAt(input.Cyd(), i), "CYD");   // - -> + -> 0 -> -
+        }
+
+        // Cycle laws: CYU then CYD is the identity; CYU^3 == identity.
+        IntT v = new IntT(-987_654_321L);
+        Assert.AreEqual(v, v.Cyu().Cyd());
+        Assert.AreEqual(v, v.Cyu().Cyu().Cyu());
+        // MTI == STI of NTI's complement structure aside: |x| per trit is idempotent.
+        Assert.AreEqual(v.Mti(), v.Mti().Mti());
+    }
+
+    [TestMethod]
+    public void CanonicalBinaryGatesMatchTheirNormativeTables()
+    {
+        sbyte[] aLanes = { -1, -1, -1, 0, 0, 0, 1, 1, 1 };
+        sbyte[] bLanes = { -1, 0, 1, -1, 0, 1, -1, 0, 1 };
+        IntT a = LanePattern(aLanes);
+        IntT b = LanePattern(bLanes);
+
+        IntT kimp = IntT.Kimp(a, b);
+        IntT cmpt = IntT.Cmpt(a, b);
+        IntT cons = IntT.Cons(a, b);
+
+        for (int i = 0; i < IntT.TritCount; i++)
+        {
+            int x = LaneAt(a, i), y = LaneAt(b, i);
+            Assert.AreEqual(Math.Max(-x, y), (int)LaneAt(kimp, i), $"KIMP({x},{y})");
+            Assert.AreEqual(Math.Sign(x - y), (int)LaneAt(cmpt, i), $"CMPT({x},{y})");
+            Assert.AreEqual(x == y ? x : 0, (int)LaneAt(cons, i), $"CONS({x},{y})");
+        }
+    }
+
+    [TestMethod]
+    public void TlutReproducesTheBaseTritwiseOps()
+    {
+        // AND.T, OR.T and XOR.T are single TLUT.T tables - build them and
+        // check against the operators on random words.
+        IntT andTable = IntT.BinaryGateTable(-1, -1, -1, -1, 0, 0, -1, 0, 1);  // min
+        IntT orTable = IntT.BinaryGateTable(-1, 0, 1, 0, 0, 1, 1, 1, 1);       // max
+        IntT xorTable = IntT.BinaryGateTable(-1, 0, 1, 0, 0, 0, 1, 0, -1);     // -(a*b)
+
+        var random = new Random(2473);
+        for (int i = 0; i < 200; i++)
+        {
+            IntT x = new IntT(random.NextInt64(-141_214_768_240L, 141_214_768_241L));
+            IntT y = new IntT(random.NextInt64(-141_214_768_240L, 141_214_768_241L));
+            Assert.AreEqual(x & y, IntT.Tlut(x, y, andTable));
+            Assert.AreEqual(x | y, IntT.Tlut(x, y, orTable));
+            Assert.AreEqual(x ^ y, IntT.Tlut(x, y, xorTable));
+        }
+    }
+
+    [TestMethod]
+    public void TlutIgnoresTheTableWordsUpperTrits()
+    {
+        IntT a = LanePattern(-1, 0, 1);
+        IntT b = LanePattern(1, -1, 0);
+        IntT table = IntT.BinaryGateTable(0, -1, -1, 1, 0, -1, 1, 1, 0);
+        // Junk in trits 9..23 of the table word must not change the result.
+        IntT junk = new IntT(123_456_789L) << 9;
+        Assert.AreEqual(IntT.Tlut(a, b, table), IntT.Tlut(a, b, table + junk));
+        // Same for TLUTI above trit 2.
+        IntT utable = IntT.UnaryGateTable(1, -1, 0);
+        IntT ujunk = new IntT(-42) << 3;
+        Assert.AreEqual(IntT.Tluti(a, utable), IntT.Tluti(a, utable + ujunk));
+    }
+
+    [TestMethod]
+    public void TryteTlutMatchesWordSemanticsPerLane()
+    {
+        Tryte a = new Tryte("+-0+-0");
+        Tryte b = new Tryte("++--00");
+        IntT cmptTable = IntT.BinaryGateTable(0, -1, -1, 1, 0, -1, 1, 1, 0);   // sign(a - b)
+
+        // Per lane (MST first): (+,+) (-,+) (0,-) (+,-) (-,0) (0,0) -> 0 - + + - 0
+        Assert.AreEqual("0-++-0", Tryte.TLUT(a, b, cmptTable).TryteString);
+
+        IntT ntiTable = IntT.UnaryGateTable(1, -1, -1);
+        Assert.AreEqual("-+--+-", Tryte.TLUTI(a, ntiTable).TryteString);
+    }
+}
+
+[TestClass]
 public class TritMedianTests
 {
     [TestMethod]
@@ -475,8 +831,12 @@ public class Rebel6IntrinsicMapTests
         string[] expected =
         {
             "ADD.T", "SUB.T", "STI.T", "CMP.T", "MIN.T", "MAX.T", "MAJV.T", "MINV.T",
-            "ROT.T", "ROTR.T", "SHN.T", "SHZ.T", "SHP.T", "SHIZ.T", "CLZT.T", "TCNT.T",
-            "MUL.T", "DIV.T", "REM.T", "MOD.T", "MAC.T", "MV2.T",
+            "ROT.T", "ROTR.T", "SHN.T", "SHZ.T", "SHP.T", "SHIN.T", "SHIZ.T", "SHIP.T",
+            "CLZT.T", "TCNT.T",
+            "MUL.T", "MULH.T", "DIV.T", "REM.T", "MOD.T", "MAC.T", "MV2.T",
+            "AND.T", "ANDI.T", "OR.T", "ORI.T", "XOR.T", "XORI.T", "SLT.T", "SLTI.T",
+            "TMAC.T", "TDOT.T", "TSUM.T", "QNT.T", "HMAX.T",
+            "TLUT.T", "TLUTI.T", "NTI.T", "PTI.T", "MTI.T", "CYU.T", "CYD.T",
         };
 
         foreach (string mnemonic in expected)

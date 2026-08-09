@@ -215,6 +215,48 @@ public struct Tryte : IEquatable<Tryte>, IComparable<Tryte>
     public static Tryte MINV(Tryte a, Tryte b, Tryte c)
         => new Tryte(BalancedTernaryEncoding.Negate(BalancedTernaryEncoding.MajoritySwar(a._packed, b._packed, c._packed)));
 
+    /// <summary>
+    /// Programmable 2-input tritwise gate (TLUT.T) applied per trit lane at
+    /// tryte width: result[i] = table[a[i], b[i]]. The 9-trit truth table lives
+    /// in the low trits of the <paramref name="table"/> word (as in the
+    /// instruction, where the table occupies a register): the entry for the
+    /// pair (ta, tb) at trit position (ta * 3 + tb) + 4. Upper trits ignored.
+    /// </summary>
+    [Rebel6Intrinsic("TLUT.T")]
+    public static Tryte TLUT(Tryte a, Tryte b, IntT table)
+    {
+        if (TernaryFom.Enabled) TernaryFom.TritwiseOps++;
+        ulong result = 0UL;
+        for (int i = 0; i < _tritCount; i++)
+        {
+            int ta = BalancedTernaryEncoding.DecodeTrit(a._packed, i);
+            int tb = BalancedTernaryEncoding.DecodeTrit(b._packed, i);
+            sbyte r = BalancedTernaryEncoding.DecodeTrit(table.Packed, (ta * 3 + tb) + 4);
+            result = BalancedTernaryEncoding.SetTrit(result, i, r);
+        }
+        return new Tryte(result);
+    }
+
+    /// <summary>
+    /// Programmable 1-input tritwise gate (TLUTI.T) applied per trit lane at
+    /// tryte width: result[i] = table[a[i]], the 3-trit truth table in the low
+    /// trits of the <paramref name="table"/> word - entry for input ta at trit
+    /// position ta + 1. Upper trits ignored.
+    /// </summary>
+    [Rebel6Intrinsic("TLUTI.T")]
+    public static Tryte TLUTI(Tryte a, IntT table)
+    {
+        if (TernaryFom.Enabled) TernaryFom.TritwiseOps++;
+        ulong result = 0UL;
+        for (int i = 0; i < _tritCount; i++)
+        {
+            int ta = BalancedTernaryEncoding.DecodeTrit(a._packed, i);
+            sbyte r = BalancedTernaryEncoding.DecodeTrit(table.Packed, ta + 1);
+            result = BalancedTernaryEncoding.SetTrit(result, i, r);
+        }
+        return new Tryte(result);
+    }
+
     public static Trit COMPARET(Tryte a, Tryte b)
     {
         int comparison = BalancedTernaryEncoding.Compare(a._packed, b._packed, _tritCount);
