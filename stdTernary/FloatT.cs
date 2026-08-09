@@ -1,171 +1,303 @@
 using System;
+using System.Numerics;
 
 namespace stdTernary;
 
+/// <summary>
+/// trifloat24 - the 24-trit balanced-ternary floating-point format of the REBEL-6
+/// ISA (ternary-workbench/docs/rebel6-trifloat24.md), packed into the low 48 bits
+/// of a <see cref="ulong"/> (2 bits per trit, same encoding as <see cref="IntT"/>).
+///
+/// Format (spec section 2): an 18-trit balanced significand S (which carries the
+/// sign of the whole number - there is no sign field), a 1-trit class C
+/// (0 = finite, + = infinity, - = NaN) and a 5-trit unbiased balanced exponent E.
+/// Value of a finite number: v = S x 3^E with E in [-121, +121].
+///
+/// Semantics implemented per the spec:
+///  - Truncation rounding: dropping trailing trits IS round-to-nearest in
+///    balanced ternary (spec section 1.1), so every operation computes an exact
+///    (integer or rational) result and truncates.
+///  - Gradual underflow, never flush-to-zero: the exponent clamps at E_min and
+///    the significand keeps leading zeros (spec section 3), preserving
+///    x - y == 0  iff  x == y.
+///  - Canonical form (spec section 3.4): every produced finite value is
+///    normalized (leading significand trit non-zero) unless E == E_min; zero is
+///    S = 0, E = 0, C = 0. Non-canonical input is normalized on read
+///    (<see cref="FromPacked"/>), the spec's recommended software choice.
+///  - No signed zero, no exponent bias, full +/-121 exponent range usable.
+///
+/// Decisions the spec leaves to the implementation (section 7), as taken here:
+///  - NaN is quiet; payloads are not preserved - any NaN operand produces the
+///    canonical NaN (S = 0, E = 0, C = -). There is no signaling NaN.
+///  - C = + with S = 0 is invalid and reads as NaN.
+///  - Division by zero of a non-zero finite value yields infinity with the sign
+///    of the dividend; 0/0, Inf/Inf and Inf - Inf yield NaN.
+///  - Finite overflow (|result| > MaxValue) yields infinity.
+///  - Exact halfway division results (possible because quotients are rationals,
+///    e.g. 1/2 - the spec's no-ties argument section 1.1 covers terminating
+///    expansions only) round toward zero.
+///  - Conversions to integer are saturating: NaN converts to 0, +/-Inf and
+///    out-of-range finites to IntT.MaxValue/MinValue; fractional trits are
+///    dropped (balanced truncation = round to nearest integer).
+/// </summary>
 public readonly struct FloatT : IEquatable<FloatT>, IComparable<FloatT>
 {
-    public const int TotalTritCount = 32;
-    public const int SignificandTritCount = 26;
-    public const int ExponentTritCount = TotalTritCount - SignificandTritCount;
+    public const int TotalTritCount = 24;
+    public const int SignificandTritCount = 18;
+    public const int ExponentTritCount = 5;
 
-    private const int WorkingTritCount = SignificandTritCount * 2 + 4;
+    // ---------------------------------------------------------------------
+    // Field layout seam - spec section 5.1: THE FIELD ORDER IS AN OPEN QUESTION,
+    // to be decided by benchmarking the softfloat library, not assumed.
+    // Default (spec section 2, significand-first, little-endian by tryte):
+    //   trits 0-17 significand | trit 18 class | trits 19-23 exponent
+    // The alternative exponent-first order is obtained by changing ONLY these
+    // three offsets (Exponent 0, Class 5, Significand 6); every pack/unpack in
+    // this file goes through them.
+    // ---------------------------------------------------------------------
+    private const int SignificandOffset = 0;
+    private const int ClassOffset = SignificandOffset + SignificandTritCount; // trit 18
+    private const int ExponentOffset = ClassOffset + 1;                       // trits 19..23
 
-    private static readonly int MaxExponent = ComputeMaxExponent();
-    private static readonly int MinExponent = -MaxExponent;
-    private static readonly ulong SignificandMask = (SignificandTritCount >= 32)
-        ? ulong.MaxValue
-        : (1UL << (SignificandTritCount * 2)) - 1UL;
+    /// <summary>(3^18 - 1) / 2: the significand range is +/-193,710,244.</summary>
+    public const long MaxSignificandMagnitude = 193_710_244L;
+
+    /// <summary>(3^5 - 1) / 2 = 121. Balanced, unbiased; E_min = -121.</summary>
+    public const int MaxExponent = 121;
+    public const int MinExponent = -MaxExponent;
+
+    /// <summary>(3^17 + 1) / 2: smallest magnitude with a non-zero leading trit.</summary>
+    private const long MinNormalMagnitude = 64_570_082L;
+
+    private const ulong SignificandMask = ((1UL << (SignificandTritCount * 2)) - 1UL) << (SignificandOffset * 2);
+    private const ulong ExponentMask = ((1UL << (ExponentTritCount * 2)) - 1UL) << (ExponentOffset * 2);
 
     private readonly ulong _packed;
 
+    /// <summary>Raw constructor - callers must supply canonical encodings.</summary>
     private FloatT(ulong packed)
     {
         _packed = packed;
     }
 
-    private FloatT(int exponent, ulong significand)
-    {
-        _packed = Compose(exponent, significand);
-    }
+    // ---------------------------------------------------------------------
+    // Special values and constants
+    // ---------------------------------------------------------------------
 
     public static FloatT Zero { get; } = new FloatT(0UL);
+    public static FloatT NaN { get; } = new FloatT(PackFields(0, -1, 0));
+    public static FloatT PositiveInfinity { get; } = new FloatT(PackFields(1, 1, 0));
+    public static FloatT NegativeInfinity { get; } = new FloatT(PackFields(-1, 1, 0));
 
-    public int Exponent => ExtractExponent(_packed);
+    /// <summary>Largest finite value: (3^18-1)/2 x 3^121.</summary>
+    public static FloatT MaxValue { get; } = new FloatT(PackFields(MaxSignificandMagnitude, 0, MaxExponent));
+    public static FloatT MinValue { get; } = new FloatT(PackFields(-MaxSignificandMagnitude, 0, MaxExponent));
 
-    public ulong SignificandPacked => _packed & SignificandMask;
+    /// <summary>Smallest positive value, the minimal subnormal: 1 x 3^-121.</summary>
+    public static FloatT Epsilon { get; } = new FloatT(PackFields(1, 0, MinExponent));
 
-    public bool IsZero => SignificandPacked == 0UL;
+    /// <summary>Smallest positive normalized value: (3^17+1)/2 x 3^-121.</summary>
+    public static FloatT MinNormal { get; } = new FloatT(PackFields(MinNormalMagnitude, 0, MinExponent));
+
+    public static FloatT One { get; } = RoundPack(1, 0);
+
+    // ---------------------------------------------------------------------
+    // Field access
+    // ---------------------------------------------------------------------
+
+    /// <summary>The full 24-trit encoding (low 48 bits).</summary>
+    public ulong Packed => _packed;
+
+    /// <summary>The 18-trit balanced significand S. Carries the sign of the number.</summary>
+    public long Significand => BalancedTernaryEncoding.ToInt64(SignificandPacked, SignificandTritCount);
+
+    public ulong SignificandPacked => (_packed & SignificandMask) >> (SignificandOffset * 2);
 
     public string SignificandString => BalancedTernaryEncoding.ToTernaryString(SignificandPacked, SignificandTritCount);
 
+    /// <summary>The 5-trit balanced exponent E. Unbiased.</summary>
+    public int Exponent => (int)BalancedTernaryEncoding.ToInt64((_packed & ExponentMask) >> (ExponentOffset * 2), ExponentTritCount);
+
+    /// <summary>The class trit: 0 = finite, +1 = infinity, -1 = NaN.</summary>
+    public sbyte ClassTrit => BalancedTernaryEncoding.DecodeTrit(_packed, ClassOffset);
+
+    public bool IsFinite => ClassTrit == 0;
+    public bool IsInfinity => ClassTrit > 0 && !BalancedTernaryEncoding.IsZero(SignificandPacked, SignificandTritCount);
+    public bool IsNaN => ClassTrit < 0 || (ClassTrit > 0 && BalancedTernaryEncoding.IsZero(SignificandPacked, SignificandTritCount));
+    public bool IsZero => IsFinite && SignificandPacked == 0UL;
+    public bool IsSubnormal => IsFinite && !IsZero && Exponent == MinExponent
+                               && BalancedTernaryEncoding.HighestNonZeroTrit(SignificandPacked, SignificandTritCount) < SignificandTritCount - 1;
+
+    /// <summary>Sign of the value: the sign of the significand's leading non-zero trit. NaN has sign 0.</summary>
+    public int Sign => IsNaN ? 0 : Math.Sign(Significand);
+
+    // ---------------------------------------------------------------------
+    // Raw encode / decode
+    // ---------------------------------------------------------------------
+
+    /// <summary>
+    /// Assembles a raw (not necessarily canonical) trifloat24 encoding from its
+    /// three fields. Pair with <see cref="FromPacked"/> to obtain a value.
+    /// </summary>
+    public static ulong PackFields(long significand, sbyte classTrit, int exponent)
+    {
+        if (Math.Abs(significand) > MaxSignificandMagnitude)
+            throw new ArgumentOutOfRangeException(nameof(significand));
+        if (exponent > MaxExponent || exponent < MinExponent)
+            throw new ArgumentOutOfRangeException(nameof(exponent));
+
+        ulong packed = BalancedTernaryEncoding.FromInt64(significand, SignificandTritCount) << (SignificandOffset * 2);
+        packed |= BalancedTernaryEncoding.FromInt64(exponent, ExponentTritCount) << (ExponentOffset * 2);
+        packed = BalancedTernaryEncoding.SetTrit(packed, ClassOffset, classTrit);
+        return packed;
+    }
+
+    /// <summary>
+    /// Reads a raw encoding, normalizing on read (spec section 3.4's recommended
+    /// consumer behaviour): a non-canonical finite value is normalized, infinity
+    /// is re-canonicalized to S = +/-1, E = 0, and C = + with S = 0 reads as NaN.
+    /// </summary>
+    public static FloatT FromPacked(ulong raw)
+    {
+        raw &= (1UL << (TotalTritCount * 2)) - 1UL;
+        var candidate = new FloatT(raw);
+        sbyte classTrit = candidate.ClassTrit;
+
+        if (classTrit < 0)
+            return NaN;
+        if (classTrit > 0)
+        {
+            long s = candidate.Significand;
+            if (s == 0)
+                return NaN; // invalid encoding (spec section 4 recommendation: reject)
+            return s > 0 ? PositiveInfinity : NegativeInfinity;
+        }
+
+        return RoundPack(candidate.Significand, candidate.Exponent);
+    }
+
+    /// <summary>Returns the canonical form of this value (normalize-on-read of the own encoding).</summary>
+    public FloatT Normalize() => FromPacked(_packed);
+
+    // ---------------------------------------------------------------------
+    // Conversions
+    // ---------------------------------------------------------------------
+
+    public static implicit operator FloatT(double value) => FromDouble(value);
+    public static implicit operator double(FloatT value) => value.ToDouble();
+
+    public static FloatT FromDouble(double value)
+    {
+        if (double.IsNaN(value))
+            return NaN;
+        if (double.IsPositiveInfinity(value))
+            return PositiveInfinity;
+        if (double.IsNegativeInfinity(value))
+            return NegativeInfinity;
+        if (value == 0.0)
+            return Zero;
+
+        // Exact binary decomposition: value = mantissa * 2^exp2, then round the
+        // exact rational to the nearest trifloat24. No double arithmetic is used.
+        long bits = BitConverter.DoubleToInt64Bits(value);
+        int biasedExponent = (int)((bits >> 52) & 0x7FF);
+        long mantissa = bits & 0xF_FFFF_FFFF_FFFFL;
+        int exp2 = biasedExponent == 0 ? -1074 : biasedExponent - 1075;
+        if (biasedExponent != 0)
+            mantissa |= 1L << 52;
+        if (bits < 0)
+            mantissa = -mantissa;
+
+        BigInteger numerator = mantissa;
+        BigInteger denominator = BigInteger.One;
+        if (exp2 >= 0)
+            numerator <<= exp2;
+        else
+            denominator <<= -exp2;
+
+        return RoundPackRational(numerator, denominator, 0);
+    }
+
+    /// <summary>Nearest-double approximation of the value (the two formats are incomparable supersets).</summary>
+    public double ToDouble()
+    {
+        if (IsNaN)
+            return double.NaN;
+        if (IsInfinity)
+            return Sign > 0 ? double.PositiveInfinity : double.NegativeInfinity;
+        if (IsZero)
+            return 0.0;
+
+        long s = Significand;
+        int e = Exponent;
+        if (e >= 0)
+            return (double)(s * BigInteger.Pow(3, e));
+
+        // Scale into an integer wide enough that the BigInteger->double conversion
+        // dominates the error (3^121 < 2^192, so 260 binary guard bits suffice).
+        const int GuardBits = 260;
+        BigInteger q = (new BigInteger(s) << GuardBits) / BigInteger.Pow(3, -e);
+        return (double)q * Math.Pow(2.0, -GuardBits);
+    }
+
+    /// <summary>Word-to-float conversion (FCVT.T.W): exact for values up to 18 trits, else rounded by truncation.</summary>
+    [Rebel6Intrinsic("FCVT.T.W")]
+    public static FloatT FromInt(IntT value) => RoundPack(value.ToInt64(), 0);
+
+    /// <summary>
+    /// Float-to-word conversion (FCVT.W.T), saturating: fractional trits are
+    /// dropped (balanced truncation = round to nearest integer), out-of-range
+    /// magnitudes clamp to IntT.MaxValue/MinValue, NaN converts to zero.
+    /// </summary>
+    [Rebel6Intrinsic("FCVT.W.T")]
+    public IntT ToIntT()
+    {
+        if (IsNaN)
+            return IntT.Zero;
+        if (IsInfinity)
+            return Sign > 0 ? IntT.MaxValue : IntT.MinValue;
+        if (IsZero)
+            return IntT.Zero;
+
+        Int128 magnitude = Significand;
+        int exponent = Exponent;
+
+        while (exponent < 0 && magnitude != 0)
+        {
+            DropTrit(ref magnitude);
+            exponent++;
+        }
+        while (exponent > 0)
+        {
+            magnitude *= 3;
+            exponent--;
+            if (Int128.Abs(magnitude) > IntT.MaxMagnitude)
+                return Sign > 0 ? IntT.MaxValue : IntT.MinValue; // saturate early - sign cannot flip
+        }
+
+        if (Int128.Abs(magnitude) > IntT.MaxMagnitude)
+            return magnitude > 0 ? IntT.MaxValue : IntT.MinValue;
+        return new IntT((long)magnitude);
+    }
+
     public override string ToString()
     {
+        if (IsNaN)
+            return "NaN";
+        if (IsInfinity)
+            return Sign > 0 ? "+Inf" : "-Inf";
         if (IsZero)
             return "0";
 
         return $"{SignificandString} × 3^{Exponent}";
     }
 
-    public static implicit operator FloatT(double value) => FromDouble(value);
-    public static implicit operator double(FloatT value) => value.ToDouble();
-
-    public double ToDouble()
-    {
-        if (IsZero)
-            return 0.0;
-
-        double significand = BalancedTernaryEncoding.ToInt64(SignificandPacked, SignificandTritCount);
-        return significand * Math.Pow(3.0, Exponent);
-    }
-
-    public static FloatT FromDouble(double value)
-    {
-        if (value == 0.0)
-            return Zero;
-
-        int exponent = 0;
-        double magnitude = Math.Abs(value);
-        if (!double.IsFinite(magnitude))
-            throw new ArgumentOutOfRangeException(nameof(value), "Cannot convert non-finite value to FloatT.");
-
-        while (magnitude >= Math.Pow(3.0, SignificandTritCount - 1))
-        {
-            magnitude /= 3.0;
-            exponent++;
-        }
-
-        while (magnitude < Math.Pow(3.0, SignificandTritCount - 2))
-        {
-            magnitude *= 3.0;
-            exponent--;
-        }
-
-        long rounded = (long)Math.Round(magnitude, MidpointRounding.ToZero);
-        ulong significand = BalancedTernaryEncoding.FromInt64(Math.Sign(value) < 0 ? -rounded : rounded, SignificandTritCount);
-
-        return new FloatT(exponent, significand);
-    }
-
-    public IntT ToIntT()
-    {
-        if (IsZero)
-            return IntT.Zero;
-
-        if (Exponent < 0)
-        {
-            // Truncate the fractional trits on the 26-trit significand BEFORE the
-            // value is wrapped into the 24-trit IntT word (truncation and modular
-            // wrap do not commute). Zero trits are encoded as 00, so a machine
-            // shift by 2*count IS a truncating ternary shift.
-            int count = -Exponent;
-            ulong shifted = count >= SignificandTritCount ? 0UL : SignificandPacked >> (count * 2);
-            return new IntT(BalancedTernaryEncoding.ToInt64(shifted, SignificandTritCount));
-        }
-
-        // For non-negative exponents wrap-then-scale equals scale-then-wrap, and the
-        // IntT left shift is exactly multiplication by 3^Exponent mod 3^24.
-        long significand = BalancedTernaryEncoding.ToInt64(SignificandPacked, SignificandTritCount);
-        return new IntT(significand) << Exponent;
-    }
-
-    public static FloatT FromInt(IntT value)
-    {
-        if (value == IntT.Zero)
-            return Zero;
-
-        ulong packed = value.Packed;
-        int msb = BalancedTernaryEncoding.HighestNonZeroTrit(packed, IntT.TritCount);
-        if (msb < 0)
-            return Zero;
-
-        // The normalized significand has its top trit at position 25, beyond the
-        // 24-trit IntT word, so the scaling is done in 64-bit arithmetic (26 trits
-        // span ~42 bits) rather than with IntT shifts.
-        int exponent = msb - (SignificandTritCount - 1);
-        long mantissa = value.ToInt64();
-        for (int i = exponent; i < 0; i++)
-            mantissa *= 3;
-        ulong significand = BalancedTernaryEncoding.FromInt64(mantissa, SignificandTritCount);
-
-        return new FloatT(exponent, significand);
-    }
-
-    public FloatT Normalize()
-    {
-        int exponent = Exponent;
-        ulong significand = SignificandPacked;
-        Normalize(ref exponent, ref significand);
-        return new FloatT(Compose(exponent, significand));
-    }
-
-    public FloatT Negate()
-    {
-        if (IsZero)
-            return this;
-
-        Span<sbyte> digits = stackalloc sbyte[SignificandTritCount];
-        BalancedTernaryEncoding.Decode(SignificandPacked, digits, SignificandTritCount);
-        for (int i = 0; i < SignificandTritCount; i++)
-        {
-            digits[i] = (sbyte)(-digits[i]);
-        }
-
-        ulong negSignificand = BalancedTernaryEncoding.Encode(digits, SignificandTritCount);
-        return new FloatT(Compose(Exponent, negSignificand));
-    }
-
-    internal FloatT AdjustByTrit(int delta)
-    {
-        if (delta == 0)
-            return this;
-
-        int exponent = Exponent;
-        Span<int> digits = stackalloc int[WorkingTritCount];
-        LoadDigits(SignificandPacked, digits);
-        digits[0] += delta;
-        NormalizeDigits(digits);
-        return CreateFromDigits(digits, exponent);
-    }
+    // ---------------------------------------------------------------------
+    // Comparison. FCMP.T is NaN-aware: relational operators treat NaN as
+    // unordered (IEEE-style: every comparison with NaN is false, != is true),
+    // while CompareTo provides the total order .NET sorting requires
+    // (NaN first, as with System.Double).
+    // ---------------------------------------------------------------------
 
     public bool Equals(FloatT other) => _packed == other._packed;
 
@@ -173,528 +305,330 @@ public readonly struct FloatT : IEquatable<FloatT>, IComparable<FloatT>
 
     public override int GetHashCode() => _packed.GetHashCode();
 
+    [Rebel6Intrinsic("FCMP.T")]
     public int CompareTo(FloatT other)
     {
-        if (IsZero && other.IsZero)
-            return 0;
-        if (IsZero)
-            return Math.Sign(-other.Exponent);
-        if (other.IsZero)
-            return Math.Sign(Exponent);
-
-        if (Exponent != other.Exponent)
-            return Exponent > other.Exponent ? 1 : -1;
-
-        return BalancedTernaryEncoding.Compare(SignificandPacked, other.SignificandPacked, SignificandTritCount);
+        if (IsNaN)
+            return other.IsNaN ? 0 : -1;
+        if (other.IsNaN)
+            return 1;
+        return CompareValues(this, other);
     }
 
-    public static bool operator ==(FloatT left, FloatT right) => left.Equals(right);
-    public static bool operator !=(FloatT left, FloatT right) => !left.Equals(right);
-    public static bool operator <(FloatT left, FloatT right) => left.CompareTo(right) < 0;
-    public static bool operator >(FloatT left, FloatT right) => left.CompareTo(right) > 0;
-    public static bool operator <=(FloatT left, FloatT right) => left.CompareTo(right) <= 0;
-    public static bool operator >=(FloatT left, FloatT right) => left.CompareTo(right) >= 0;
+    /// <summary>Three-way compare of two non-NaN values by value (canonical-form-aware).</summary>
+    private static int CompareValues(FloatT left, FloatT right)
+    {
+        int leftSign = left.Sign;
+        int rightSign = right.Sign;
+        if (leftSign != rightSign)
+            return leftSign < rightSign ? -1 : 1;
+        if (leftSign == 0)
+            return 0;
+
+        if (left.IsInfinity || right.IsInfinity)
+        {
+            if (left.IsInfinity && right.IsInfinity)
+                return 0;
+            // Same sign, exactly one infinite.
+            return left.IsInfinity ? leftSign : -leftSign;
+        }
+
+        // Finite, same non-zero sign. Compare magnitude orders first, then align
+        // and compare exactly (18-trit significands 17 trits apart fit a long).
+        long ls = left.Significand, rs = right.Significand;
+        int leftOrder = MsdIndex(ls) + left.Exponent;
+        int rightOrder = MsdIndex(rs) + right.Exponent;
+        if (leftOrder != rightOrder)
+            return (leftOrder > rightOrder) == (leftSign > 0) ? 1 : -1;
+
+        int shift = left.Exponent - right.Exponent; // |shift| <= 17 when orders match
+        long la = ls, ra = rs;
+        if (shift >= 0)
+            la *= Pow3(shift);
+        else
+            ra *= Pow3(-shift);
+        return la.CompareTo(ra);
+    }
+
+    public static bool operator ==(FloatT left, FloatT right)
+        => !left.IsNaN && !right.IsNaN && left._packed == right._packed;
+
+    public static bool operator !=(FloatT left, FloatT right) => !(left == right);
+
+    public static bool operator <(FloatT left, FloatT right)
+        => !left.IsNaN && !right.IsNaN && CompareValues(left, right) < 0;
+
+    public static bool operator >(FloatT left, FloatT right)
+        => !left.IsNaN && !right.IsNaN && CompareValues(left, right) > 0;
+
+    public static bool operator <=(FloatT left, FloatT right)
+        => !left.IsNaN && !right.IsNaN && CompareValues(left, right) <= 0;
+
+    public static bool operator >=(FloatT left, FloatT right)
+        => !left.IsNaN && !right.IsNaN && CompareValues(left, right) >= 0;
+
+    // ---------------------------------------------------------------------
+    // Arithmetic
+    // ---------------------------------------------------------------------
 
     public static FloatT operator +(FloatT left, FloatT right) => Add(left, right);
     public static FloatT operator -(FloatT left, FloatT right) => Subtract(left, right);
     public static FloatT operator *(FloatT left, FloatT right) => Multiply(left, right);
     public static FloatT operator /(FloatT left, FloatT right) => Divide(left, right);
-
     public static FloatT operator -(FloatT value) => value.Negate();
 
-    private static ulong Compose(int exponent, ulong significand)
+    /// <summary>
+    /// Negation is digit-wise negation of the significand (spec section 2.1) -
+    /// exact and total. NaN stays NaN; infinities flip sign.
+    /// </summary>
+    public FloatT Negate()
     {
-        Normalize(ref exponent, ref significand);
-
-        ulong packed = significand & SignificandMask;
-        ulong exponentPacked = BalancedTernaryEncoding.FromInt64(exponent, ExponentTritCount);
-
-        for (int i = 0; i < ExponentTritCount; i++)
-        {
-            sbyte digit = BalancedTernaryEncoding.DecodeTrit(exponentPacked, i);
-            packed = BalancedTernaryEncoding.SetTrit(packed, SignificandTritCount + i, digit);
-        }
-
-        return packed;
+        if (IsNaN)
+            return NaN;
+        if (IsInfinity)
+            return Sign > 0 ? NegativeInfinity : PositiveInfinity;
+        if (IsZero)
+            return Zero; // the single zero (no signed zero)
+        return new FloatT(PackFields(-Significand, 0, Exponent));
     }
 
+    [Rebel6Intrinsic("FADD.T")]
     private static FloatT Add(FloatT left, FloatT right)
     {
+        if (left.IsNaN || right.IsNaN)
+            return NaN;
+        if (left.IsInfinity || right.IsInfinity)
+        {
+            if (!left.IsInfinity)
+                return right;
+            if (!right.IsInfinity)
+                return left;
+            return left.Sign == right.Sign ? left : NaN; // Inf - Inf
+        }
         if (left.IsZero)
             return right;
         if (right.IsZero)
             return left;
 
-        int targetExponent = Math.Max(left.Exponent, right.Exponent);
+        if (left.Exponent < right.Exponent)
+            (left, right) = (right, left);
 
-        Span<int> leftDigits = stackalloc int[WorkingTritCount];
-        Span<int> rightDigits = stackalloc int[WorkingTritCount];
-        LoadDigits(left.SignificandPacked, leftDigits);
-        LoadDigits(right.SignificandPacked, rightDigits);
-
-        AlignDigits(leftDigits, targetExponent - left.Exponent);
-        AlignDigits(rightDigits, targetExponent - right.Exponent);
-
-        Span<int> result = stackalloc int[WorkingTritCount];
-        for (int i = 0; i < WorkingTritCount; i++)
+        int shift = left.Exponent - right.Exponent;
+        if (shift >= 20)
         {
-            result[i] = leftDigits[i] + rightDigits[i];
-        }
-
-        NormalizeDigits(result);
-        return CreateFromDigits(result, targetExponent);
-    }
-
-    private static FloatT Subtract(FloatT left, FloatT right)
-    {
-        if (right.IsZero)
+            // The smaller operand is below half an ulp of any possible result
+            // (|S2| <= (3^18-1)/2 < 3^(shift-1)/2, and normalization after the add
+            // can lower the result exponent by at most one), so truncation rounds
+            // it away entirely and the larger operand - already canonical - is
+            // the exact answer. Ties are impossible: 3^k/2 is not an integer.
             return left;
-        if (left.IsZero)
-            return right.Negate();
-
-        int targetExponent = Math.Max(left.Exponent, right.Exponent);
-
-        Span<int> leftDigits = stackalloc int[WorkingTritCount];
-        Span<int> rightDigits = stackalloc int[WorkingTritCount];
-        LoadDigits(left.SignificandPacked, leftDigits);
-        LoadDigits(right.SignificandPacked, rightDigits);
-
-        AlignDigits(leftDigits, targetExponent - left.Exponent);
-        AlignDigits(rightDigits, targetExponent - right.Exponent);
-
-        Span<int> result = stackalloc int[WorkingTritCount];
-        for (int i = 0; i < WorkingTritCount; i++)
-        {
-            result[i] = leftDigits[i] - rightDigits[i];
         }
 
-        NormalizeDigits(result);
-        return CreateFromDigits(result, targetExponent);
+        // Exact aligned sum: |S1| * 3^19 + |S2| < 2^61, comfortably in range.
+        long sum = left.Significand * Pow3(shift) + right.Significand;
+        return RoundPack(sum, right.Exponent);
     }
 
+    [Rebel6Intrinsic("FSUB.T")]
+    private static FloatT Subtract(FloatT left, FloatT right) => Add(left, right.Negate());
+
+    [Rebel6Intrinsic("FMUL.T")]
     private static FloatT Multiply(FloatT left, FloatT right)
     {
-        if (left.IsZero || right.IsZero)
-            return Zero;
-
-        Span<int> leftDigits = stackalloc int[WorkingTritCount];
-        Span<int> rightDigits = stackalloc int[WorkingTritCount];
-        LoadDigits(left.SignificandPacked, leftDigits);
-        LoadDigits(right.SignificandPacked, rightDigits);
-
-        Span<int> product = stackalloc int[WorkingTritCount];
-        for (int i = 0; i < SignificandTritCount; i++)
+        if (left.IsNaN || right.IsNaN)
+            return NaN;
+        if (left.IsInfinity || right.IsInfinity)
         {
-            for (int j = 0; j < SignificandTritCount; j++)
-            {
-                product[i + j] += leftDigits[i] * rightDigits[j];
-            }
+            if (left.IsZero || right.IsZero)
+                return NaN; // Inf * 0
+            return left.Sign * right.Sign > 0 ? PositiveInfinity : NegativeInfinity;
         }
 
-        NormalizeDigits(product);
-        int exponent = checked(left.Exponent + right.Exponent);
-        return CreateFromDigits(product, exponent);
+        // The exact product spans at most 36 trits; a single truncation rounds it.
+        return RoundPack((Int128)left.Significand * right.Significand,
+                         left.Exponent + right.Exponent);
     }
 
+    [Rebel6Intrinsic("FDIV.T")]
     private static FloatT Divide(FloatT left, FloatT right)
     {
+        if (left.IsNaN || right.IsNaN)
+            return NaN;
+        if (left.IsInfinity)
+        {
+            if (right.IsInfinity)
+                return NaN; // Inf / Inf
+            // Zero is unsigned, so Inf / 0 keeps the dividend's sign.
+            int sign = right.IsZero ? left.Sign : left.Sign * right.Sign;
+            return sign > 0 ? PositiveInfinity : NegativeInfinity;
+        }
+        if (right.IsInfinity)
+            return Zero;
         if (right.IsZero)
-            throw new DivideByZeroException("Attempted to divide by zero FloatT.");
+        {
+            if (left.IsZero)
+                return NaN; // 0 / 0
+            return left.Sign > 0 ? PositiveInfinity : NegativeInfinity;
+        }
         if (left.IsZero)
             return Zero;
 
-        int leftSign = SignOfSignificand(left.SignificandPacked);
-        int rightSign = SignOfSignificand(right.SignificandPacked);
-        int resultSign = leftSign * rightSign;
-
-        Span<int> numerator = stackalloc int[WorkingTritCount];
-        Span<int> denominator = stackalloc int[WorkingTritCount];
-        LoadDigits(left.SignificandPacked, numerator);
-        LoadDigits(right.SignificandPacked, denominator);
-
-        if (leftSign < 0)
-            ApplySign(numerator, -1);
-        if (rightSign < 0)
-            ApplySign(denominator, -1);
-
-        NormalizeDigits(numerator);
-        NormalizeDigits(denominator);
-
-        if (DigitsAreZero(denominator))
-            throw new DivideByZeroException("Attempted to divide by zero FloatT.");
-
-        ShiftLeftDigits(numerator, SignificandTritCount);
-
-        Span<int> quotient = stackalloc int[WorkingTritCount];
-        quotient.Clear();
-
-        DividePositiveDigits(numerator, denominator, quotient);
-
-        if (resultSign < 0)
-        {
-            ApplySign(quotient, -1);
-        }
-
-        NormalizeDigits(quotient);
-
-        int exponent = left.Exponent - right.Exponent - SignificandTritCount;
-        return CreateFromDigits(quotient, exponent);
+        return RoundPackRational(left.Significand, right.Significand,
+                                 left.Exponent - right.Exponent);
     }
 
-    private static int ExtractExponent(ulong packed)
+    /// <summary>
+    /// Fused multiply-add (FMA.T): a * b + c with a single rounding - the exact
+    /// product is added at full precision before truncation.
+    /// </summary>
+    [Rebel6Intrinsic("FMA.T")]
+    public static FloatT FusedMultiplyAdd(FloatT a, FloatT b, FloatT c)
     {
-        long exponent = 0;
-        for (int i = SignificandTritCount + ExponentTritCount - 1; i >= SignificandTritCount; i--)
+        if (a.IsNaN || b.IsNaN || c.IsNaN)
+            return NaN;
+        if (a.IsInfinity || b.IsInfinity)
         {
-            exponent = exponent * 3 + BalancedTernaryEncoding.DecodeTrit(packed, i);
+            if (a.IsZero || b.IsZero)
+                return NaN; // Inf * 0
+            int productSign = a.Sign * b.Sign;
+            if (c.IsInfinity && c.Sign != productSign)
+                return NaN; // Inf - Inf
+            return productSign > 0 ? PositiveInfinity : NegativeInfinity;
         }
-        return (int)exponent;
+        if (c.IsInfinity)
+            return c;
+
+        Int128 product = (Int128)a.Significand * b.Significand;
+        if (product == 0)
+            return c;
+        int productExponent = a.Exponent + b.Exponent;
+        if (c.IsZero)
+            return RoundPack(product, productExponent);
+
+        // Single rounding over the exact sum. The 36-trit product and the 18-trit
+        // addend can sit up to ~484 exponents apart, so the alignment is done in
+        // BigInteger arithmetic; the rational rounder then truncates once.
+        int baseExponent = Math.Min(productExponent, c.Exponent);
+        BigInteger sum = (BigInteger)product * BigInteger.Pow(3, productExponent - baseExponent)
+                       + (BigInteger)c.Significand * BigInteger.Pow(3, c.Exponent - baseExponent);
+        return RoundPackRational(sum, BigInteger.One, baseExponent);
     }
 
-    private static void Normalize(ref int exponent, ref ulong significand)
+    /// <summary>Adds one ulp times <paramref name="delta"/> (used by MathT.TritIncrement/TritDecrement).</summary>
+    internal FloatT AdjustByTrit(int delta)
     {
-        if (BalancedTernaryEncoding.IsZero(significand, SignificandTritCount))
-        {
-            exponent = 0;
-            significand = 0;
-            return;
-        }
-
-        int msb = BalancedTernaryEncoding.HighestNonZeroTrit(significand, SignificandTritCount);
-        int shift = SignificandTritCount - 1 - msb;
-
-        if (shift > 0)
-        {
-            significand = ShiftLeftSignificand(significand, shift);
-            exponent -= shift;
-        }
-        else if (shift < 0)
-        {
-            significand = ShiftRightSignificand(significand, -shift);
-            exponent += -shift;
-        }
-
-        if (exponent > MaxExponent || exponent < MinExponent)
-            throw new OverflowException("Exponent out of range for FloatT.");
+        if (!IsFinite || delta == 0)
+            return this;
+        if (IsZero)
+            return RoundPack(delta, MinExponent);
+        return RoundPack((Int128)Significand + delta, Exponent);
     }
 
-    private static ulong ShiftLeftSignificand(ulong packed, int count)
+    // ---------------------------------------------------------------------
+    // Rounding core
+    // ---------------------------------------------------------------------
+
+    /// <summary>
+    /// Canonical finite value nearest to significand x 3^exponent, following the
+    /// format's rounding and underflow rules: balanced truncation of trailing
+    /// trits (= round-to-nearest, carry-free per digit), gradual underflow with
+    /// the exponent clamped at E_min, and overflow to infinity.
+    /// </summary>
+    private static FloatT RoundPack(Int128 significand, int exponent)
     {
-        if (count == 0)
-            return packed;
-        if (count < 0)
-            return ShiftRightSignificand(packed, -count);
-        if (count >= SignificandTritCount)
-        {
-            if (!BalancedTernaryEncoding.IsZero(packed, SignificandTritCount))
-                throw new OverflowException("Significand shift overflow.");
-            return 0UL;
-        }
-
-        Span<sbyte> digits = stackalloc sbyte[SignificandTritCount];
-        BalancedTernaryEncoding.Decode(packed, digits, SignificandTritCount);
-
-        for (int i = SignificandTritCount - count; i < SignificandTritCount; i++)
-        {
-            if (digits[i] != 0)
-                throw new OverflowException("Significand shift overflow.");
-        }
-
-        for (int i = SignificandTritCount - 1; i >= count; i--)
-        {
-            digits[i] = digits[i - count];
-        }
-
-        for (int i = 0; i < count; i++)
-        {
-            digits[i] = 0;
-        }
-
-        return BalancedTernaryEncoding.Encode(digits, SignificandTritCount);
-    }
-
-    private static ulong ShiftRightSignificand(ulong packed, int count)
-    {
-        if (count == 0)
-            return packed;
-        if (count < 0)
-            return ShiftLeftSignificand(packed, -count);
-        if (count >= SignificandTritCount)
-            return 0UL;
-
-        Span<sbyte> digits = stackalloc sbyte[SignificandTritCount];
-        BalancedTernaryEncoding.Decode(packed, digits, SignificandTritCount);
-
-        for (int i = 0; i < SignificandTritCount - count; i++)
-        {
-            digits[i] = digits[i + count];
-        }
-
-        for (int i = SignificandTritCount - count; i < SignificandTritCount; i++)
-        {
-            digits[i] = 0;
-        }
-
-        return BalancedTernaryEncoding.Encode(digits, SignificandTritCount);
-    }
-
-    private static void LoadDigits(ulong packed, Span<int> destination)
-    {
-        destination.Clear();
-        Span<sbyte> digits = stackalloc sbyte[SignificandTritCount];
-        BalancedTernaryEncoding.Decode(packed, digits, SignificandTritCount);
-        for (int i = 0; i < SignificandTritCount; i++)
-        {
-            destination[i] = digits[i];
-        }
-    }
-
-    private static void AlignDigits(Span<int> digits, int shift)
-    {
-        if (shift > 0)
-        {
-            ShiftRightDigits(digits, shift);
-        }
-        else if (shift < 0)
-        {
-            ShiftLeftDigits(digits, -shift);
-        }
-    }
-
-    private static void ShiftLeftDigits(Span<int> digits, int count)
-    {
-        if (count <= 0)
-        {
-            if (count < 0)
-                ShiftRightDigits(digits, -count);
-            return;
-        }
-
-        int length = digits.Length;
-        if (count >= length)
-        {
-            if (!DigitsAreZero(digits))
-                throw new OverflowException("Ternary shift left overflow.");
-            digits.Clear();
-            return;
-        }
-        for (int i = length - count; i < length; i++)
-        {
-            if (digits[i] != 0)
-                throw new OverflowException("Ternary shift left overflow.");
-        }
-
-        for (int i = length - 1; i >= count; i--)
-        {
-            digits[i] = digits[i - count];
-        }
-
-        for (int i = 0; i < count; i++)
-        {
-            digits[i] = 0;
-        }
-    }
-
-    private static void ShiftRightDigits(Span<int> digits, int count)
-    {
-        if (count <= 0)
-        {
-            if (count < 0)
-                ShiftLeftDigits(digits, -count);
-            return;
-        }
-
-        int length = digits.Length;
-        if (count >= length)
-        {
-            digits.Clear();
-            return;
-        }
-
-        for (int i = 0; i < length - count; i++)
-        {
-            digits[i] = digits[i + count];
-        }
-
-        for (int i = length - count; i < length; i++)
-        {
-            digits[i] = 0;
-        }
-    }
-
-    private static void NormalizeDigits(Span<int> digits)
-    {
-        int carry = 0;
-        for (int i = 0; i < digits.Length; i++)
-        {
-            int total = digits[i] + carry;
-            carry = 0;
-
-            while (total > 1)
-            {
-                total -= 3;
-                carry++;
-            }
-
-            while (total < -1)
-            {
-                total += 3;
-                carry--;
-            }
-
-            digits[i] = total;
-        }
-
-        if (carry != 0)
-            throw new OverflowException("Balanced ternary normalization overflowed working precision.");
-    }
-
-    private static int HighestNonZero(ReadOnlySpan<int> digits)
-    {
-        for (int i = digits.Length - 1; i >= 0; i--)
-        {
-            if (digits[i] != 0)
-                return i;
-        }
-        return -1;
-    }
-
-    private static int CompareDigits(ReadOnlySpan<int> left, ReadOnlySpan<int> right)
-    {
-        int leftMsb = HighestNonZero(left);
-        int rightMsb = HighestNonZero(right);
-
-        if (leftMsb != rightMsb)
-            return leftMsb > rightMsb ? 1 : -1;
-
-        for (int i = leftMsb; i >= 0; i--)
-        {
-            int l = left[i];
-            int r = right[i];
-            if (l != r)
-                return l > r ? 1 : -1;
-        }
-
-        return 0;
-    }
-
-    private static void SubtractDigits(Span<int> left, ReadOnlySpan<int> right)
-    {
-        for (int i = 0; i < left.Length; i++)
-        {
-            left[i] -= right[i];
-        }
-    }
-
-    private static bool DigitsAreZero(ReadOnlySpan<int> digits)
-    {
-        foreach (int digit in digits)
-        {
-            if (digit != 0)
-                return false;
-        }
-        return true;
-    }
-
-    private static void DividePositiveDigits(Span<int> remainder, ReadOnlySpan<int> divisor, Span<int> quotient)
-    {
-        Span<int> shiftedDivisor = stackalloc int[WorkingTritCount];
-        Span<int> divisorCopy = stackalloc int[WorkingTritCount];
-        divisor.CopyTo(divisorCopy);
-        NormalizeDigits(remainder);
-        NormalizeDigits(divisorCopy);
-
-        while (CompareDigits(remainder, divisorCopy) >= 0)
-        {
-            int remainderMsb = HighestNonZero(remainder);
-            int divisorMsb = HighestNonZero(divisorCopy);
-            int shift = remainderMsb - divisorMsb;
-
-            divisorCopy.CopyTo(shiftedDivisor);
-            ShiftLeftDigits(shiftedDivisor, shift);
-
-            if (CompareDigits(remainder, shiftedDivisor) < 0)
-            {
-                shift--;
-                if (shift < 0)
-                    break;
-                divisorCopy.CopyTo(shiftedDivisor);
-                ShiftLeftDigits(shiftedDivisor, shift);
-            }
-
-            SubtractDigits(remainder, shiftedDivisor);
-            NormalizeDigits(remainder);
-
-            quotient[shift] += 1;
-        }
-
-        NormalizeDigits(quotient);
-    }
-
-    private static void ApplySign(Span<int> digits, int sign)
-    {
-        if (sign == 1)
-            return;
-        if (sign != -1)
-            throw new ArgumentException("Sign must be -1 or 1", nameof(sign));
-
-        for (int i = 0; i < digits.Length; i++)
-        {
-            digits[i] = -digits[i];
-        }
-    }
-
-    private static int SignOfSignificand(ulong packed)
-    {
-        int msb = BalancedTernaryEncoding.HighestNonZeroTrit(packed, SignificandTritCount);
-        if (msb < 0)
-            return 0;
-        sbyte trit = BalancedTernaryEncoding.DecodeTrit(packed, msb);
-        return trit > 0 ? 1 : -1;
-    }
-
-    private static FloatT CreateFromDigits(Span<int> digits, int exponent)
-    {
-        NormalizeDigits(digits);
-
-        int highest = HighestNonZero(digits);
-        if (highest < 0)
+        if (significand == 0)
             return Zero;
 
-        int desired = SignificandTritCount - 1;
-        if (highest > desired)
+        // Truncate while the significand is too wide or the exponent is below the
+        // floor (the latter is the gradual-underflow path - digits are dropped,
+        // the value is never flushed).
+        while (Int128.Abs(significand) > MaxSignificandMagnitude || exponent < MinExponent)
         {
-            int shift = highest - desired;
-            ShiftRightDigits(digits, shift);
-            exponent = checked(exponent + shift);
-        }
-        else if (highest < desired)
-        {
-            int shift = desired - highest;
-            ShiftLeftDigits(digits, shift);
-            exponent = checked(exponent - shift);
+            DropTrit(ref significand);
+            exponent++;
+            if (significand == 0)
+                return Zero; // underflowed below half the smallest subnormal
         }
 
-        if (exponent > MaxExponent || exponent < MinExponent)
-            throw new OverflowException("Exponent out of range for FloatT.");
-
-        Span<sbyte> packedDigits = stackalloc sbyte[SignificandTritCount];
-        for (int i = 0; i < SignificandTritCount; i++)
+        // Canonical form: normalize unless the exponent floor stops us.
+        while (exponent > MinExponent && Int128.Abs(significand) < MinNormalMagnitude)
         {
-            packedDigits[i] = (sbyte)digits[i];
+            significand *= 3;
+            exponent--;
         }
 
-        ulong packed = BalancedTernaryEncoding.Encode(packedDigits, SignificandTritCount);
-        return new FloatT(exponent, packed);
+        if (exponent > MaxExponent)
+            return significand > 0 ? PositiveInfinity : NegativeInfinity;
+
+        return new FloatT(PackFields((long)significand, 0, exponent));
     }
 
-    private static int ComputeMaxExponent()
+    /// <summary>
+    /// Canonical finite value nearest to (numerator / denominator) x 3^exponent.
+    /// The quotient is carried to at least two guard trits and rounded to the
+    /// nearest integer using the exact remainder (halfway cases toward zero);
+    /// the guard trits are then dropped by ordinary balanced truncation.
+    /// </summary>
+    private static FloatT RoundPackRational(BigInteger numerator, BigInteger denominator, int exponent)
     {
-        int value = 1;
-        for (int i = 0; i < ExponentTritCount; i++)
+        if (numerator.IsZero)
+            return Zero;
+
+        int sign = numerator.Sign * denominator.Sign;
+        BigInteger n = BigInteger.Abs(numerator);
+        BigInteger d = BigInteger.Abs(denominator);
+
+        BigInteger lower = d * GuardThreshold;       // quotient >= 3^19: >= 2 guard trits
+        while (n < lower)
         {
-            value = checked(value * 3);
+            n *= 3;
+            exponent--;
         }
-        return (value - 1) / 2;
+        BigInteger upper = lower * 3;
+        while (n >= upper)
+        {
+            d *= 3;
+            upper *= 3;
+            exponent++;
+        }
+
+        BigInteger q = BigInteger.DivRem(n, d, out BigInteger r);
+        if (r * 2 > d)
+            q += 1; // nearest; exact halves (r*2 == d) stay truncated toward zero
+
+        Int128 rounded = (Int128)q;
+        return RoundPack(sign < 0 ? -rounded : rounded, exponent);
     }
+
+    /// <summary>Removes the least significant balanced trit: carry-free round-to-nearest by one digit.</summary>
+    private static void DropTrit(ref Int128 value)
+    {
+        Int128 r = value % 3;
+        if (r == 2)
+            r = -1;
+        else if (r == -2)
+            r = 1;
+        value = (value - r) / 3;
+    }
+
+    /// <summary>Index of the most significant non-zero trit of a non-zero significand (0..17).</summary>
+    private static int MsdIndex(long significand)
+    {
+        long magnitude = Math.Abs(significand);
+        int index = 0;
+        // The digit at position i is non-zero iff |value| > (3^i - 1) / 2.
+        while (index < SignificandTritCount - 1 && magnitude > (Pow3(index + 1) - 1) / 2)
+            index++;
+        return index;
+    }
+
+    private static long Pow3(int exponent)
+    {
+        long result = 1;
+        for (int i = 0; i < exponent; i++)
+            result *= 3;
+        return result;
+    }
+
+    private static readonly BigInteger GuardThreshold = BigInteger.Pow(3, SignificandTritCount + 1);
 }
