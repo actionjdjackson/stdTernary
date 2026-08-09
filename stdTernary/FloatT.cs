@@ -91,19 +91,21 @@ public readonly struct FloatT : IEquatable<FloatT>, IComparable<FloatT>
         if (IsZero)
             return IntT.Zero;
 
+        if (Exponent < 0)
+        {
+            // Truncate the fractional trits on the 26-trit significand BEFORE the
+            // value is wrapped into the 24-trit IntT word (truncation and modular
+            // wrap do not commute). Zero trits are encoded as 00, so a machine
+            // shift by 2*count IS a truncating ternary shift.
+            int count = -Exponent;
+            ulong shifted = count >= SignificandTritCount ? 0UL : SignificandPacked >> (count * 2);
+            return new IntT(BalancedTernaryEncoding.ToInt64(shifted, SignificandTritCount));
+        }
+
+        // For non-negative exponents wrap-then-scale equals scale-then-wrap, and the
+        // IntT left shift is exactly multiplication by 3^Exponent mod 3^24.
         long significand = BalancedTernaryEncoding.ToInt64(SignificandPacked, SignificandTritCount);
-        IntT value = new IntT(significand);
-
-        if (Exponent > 0)
-        {
-            value = value << Exponent;
-        }
-        else if (Exponent < 0)
-        {
-            value = value >> (-Exponent);
-        }
-
-        return value;
+        return new IntT(significand) << Exponent;
     }
 
     public static FloatT FromInt(IntT value)
@@ -116,9 +118,14 @@ public readonly struct FloatT : IEquatable<FloatT>, IComparable<FloatT>
         if (msb < 0)
             return Zero;
 
+        // The normalized significand has its top trit at position 25, beyond the
+        // 24-trit IntT word, so the scaling is done in 64-bit arithmetic (26 trits
+        // span ~42 bits) rather than with IntT shifts.
         int exponent = msb - (SignificandTritCount - 1);
-        IntT mantissa = exponent >= 0 ? (value >> exponent) : (value << (-exponent));
-        ulong significand = BalancedTernaryEncoding.FromInt64(mantissa.ToInt64(), SignificandTritCount);
+        long mantissa = value.ToInt64();
+        for (int i = exponent; i < 0; i++)
+            mantissa *= 3;
+        ulong significand = BalancedTernaryEncoding.FromInt64(mantissa, SignificandTritCount);
 
         return new FloatT(exponent, significand);
     }

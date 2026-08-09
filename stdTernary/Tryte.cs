@@ -196,6 +196,14 @@ public struct Tryte : IEquatable<Tryte>, IComparable<Tryte>
 
     public Tryte IMP(Tryte other) => new Tryte(ImpPacked(_packed, other._packed));
 
+    /// <summary>Per-trit 3-input majority (MAJV.T) = the median of the three trits at each position.</summary>
+    public static Tryte MAJV(Tryte a, Tryte b, Tryte c)
+        => new Tryte(BalancedTernaryEncoding.MajoritySwar(a._packed, b._packed, c._packed));
+
+    /// <summary>Per-trit 3-input minority (MINV.T) = the negated median at each position.</summary>
+    public static Tryte MINV(Tryte a, Tryte b, Tryte c)
+        => new Tryte(BalancedTernaryEncoding.Negate(BalancedTernaryEncoding.MajoritySwar(a._packed, b._packed, c._packed)));
+
     public static Trit COMPARET(Tryte a, Tryte b)
     {
         int comparison = BalancedTernaryEncoding.Compare(a._packed, b._packed, _tritCount);

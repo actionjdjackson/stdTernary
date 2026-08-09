@@ -521,9 +521,9 @@ namespace stdTernary
         // IntT/IntB/UIntT all SIMULATE arithmetic with a per-digit software loop over a
         // ulong. The honest "binary on binary hardware" reference is a single native
         // machine instruction, measured here. Notes on fairness:
-        //  * Range: 32 trits = 3^32 ~ 2^50.7, so IntT/UIntT hold ~51 bits of range.
-        //    IntB uses 64 bits (over-wide); native `long` is 64-bit, native `int` 32-bit.
-        //    A range-fair binary width for the ternary types would be ~51 bits.
+        //  * Range: IntT is the 24-trit REBEL-6 word = 3^24 ~ 2^38, so it holds ~38
+        //    bits of range. IntB uses 64 bits (over-wide); native `long` is 64-bit,
+        //    native `int` 32-bit. A range-fair binary width for IntT would be ~38 bits.
         //  * These baselines keep the same RNG-in-loop structure as the other benchmarks,
         //    so RNG/allocation overhead is shared. Even so the arithmetic itself is
         //    effectively free; the true per-op gap (see the isolated add-only microbench)

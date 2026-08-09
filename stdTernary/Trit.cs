@@ -180,6 +180,20 @@ public struct Trit : IEquatable<Trit>, IComparable<Trit>
         return this;
     }
 
+    /// <summary>Median of three trits - the per-trit form of the REBEL-6 MAJV.T majority vote.</summary>
+    public static Trit Median(Trit a, Trit b, Trit c)
+    {
+        int lo = Math.Min(a._value, b._value);
+        int hi = Math.Max(a._value, b._value);
+        return new Trit((sbyte)Math.Max(lo, Math.Min(hi, c._value)));
+    }
+
+    /// <summary>3-input majority vote (= <see cref="Median"/>).</summary>
+    public static Trit MAJV(Trit a, Trit b, Trit c) => Median(a, b, c);
+
+    /// <summary>3-input minority vote (= negated <see cref="Median"/>).</summary>
+    public static Trit MINV(Trit a, Trit b, Trit c) => Median(a, b, c).NEG();
+
     public static Trit COMPARET(Trit a, Trit b)
     {
         if (a._value < b._value)

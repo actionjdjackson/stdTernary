@@ -8,8 +8,9 @@ namespace stdTernary.Eval;
 
 /// <summary>
 /// Self-contained evaluation harness (no BenchmarkDotNet, so it runs anywhere):
-///   1. Correctness fuzzing of the new SWAR IntT against 64-bit reference semantics
-///      and against the legacy digit-serial implementation.
+///   1. Correctness fuzzing of the SWAR IntT (24-trit REBEL-6 word, balanced wrap
+///      mod 3^24) against 64-bit reference semantics and - where the semantics
+///      coincide - against the legacy 32-trit digit-serial implementation.
 ///   2. Micro-benchmarks: legacy IntT vs SWAR IntT vs native long.
 ///   3. Quicksort evaluation: optimized ternary 3-way quicksort with the
 ///      Frieder figure-of-merit report against binary references.
@@ -34,7 +35,7 @@ public static class Program
     {
         Console.WriteLine("== 1. Correctness fuzzing (SWAR IntT vs 64-bit reference vs legacy) ==");
         var rng = new XorShift(0xC0FFEE);
-        long half = 926510094425920; // (3^32 - 1) / 2
+        long half = IntT.MaxMagnitude; // (3^24 - 1) / 2
         int n = 200_000;
         int shiftChecks = 0;
 
@@ -55,17 +56,13 @@ public static class Program
             Check(Math.Sign(ta.CompareTo(tb)) == Math.Sign(a.CompareTo(b)), $"cmp {a},{b}");
             Check(ta.Sign == Math.Sign(a), $"sign {a}");
 
-            // Add / sub (reference is exact; overflow must throw in both worlds)
-            CheckOp(a, b, half, () => (ta + tb).ToInt64(), (x, y) => x + y, "add");
-            CheckOp(a, b, half, () => (ta - tb).ToInt64(), (x, y) => x - y, "sub");
+            // Add / sub / mul wrap balanced mod 3^24 (REBEL-6 register semantics)
+            Check((ta + tb).ToInt64() == Wrap((Int128)a + b), $"add {a},{b}");
+            Check((ta - tb).ToInt64() == Wrap((Int128)a - b), $"sub {a},{b}");
+            Check((ta * tb).ToInt64() == Wrap((Int128)a * b), $"mul {a},{b}");
 
             // Negate
             Check((-ta).ToInt64() == -a, $"neg {a}");
-
-            // Mul (use small operands to stay mostly in range, but keep overflow cases)
-            long sa = a % 100_000_000, sb = b % 100_000_000;
-            var tsa = new IntT(sa); var tsb = new IntT(sb);
-            CheckOp(sa, sb, half, () => (tsa * tsb).ToInt64(), (x, y) => x * y, "mul");
 
             // Div / mod
             if (b != 0)
@@ -74,13 +71,15 @@ public static class Program
                 Check((ta % tb).ToInt64() == a % b, $"mod {a}%{b}");
             }
 
-            // Shifts vs legacy semantics (truncating)
+            // Shifts: left shift wraps (drops trits at and above 24); right shift is a
+            // balanced digit truncation, identical to the legacy semantics for values
+            // that fit in 24 trits.
             int k = (int)(rng.Next() % 32);
-            Check((ta << k).ToInt64() == (la << k).ToInt64(), $"shl {a}<<{k}");
+            Check((ta << k).ToInt64() == Wrap((Int128)a * Pow3(Math.Min(k, IntT.TritCount))), $"shl {a}<<{k}");
             Check((ta >> k).ToInt64() == (la >> k).ToInt64(), $"shr {a}>>{k}");
             shiftChecks++;
 
-            // Tritwise ops vs legacy
+            // Tritwise ops vs legacy (per-trit, so width-independent for in-range values)
             Check((ta & tb).ToInt64() == (la & lb).ToInt64(), $"and {a},{b}");
             Check((ta | tb).ToInt64() == (la | lb).ToInt64(), $"or {a},{b}");
             Check((ta ^ tb).ToInt64() == (la ^ lb).ToInt64(), $"xor {a},{b}");
@@ -91,9 +90,11 @@ public static class Program
         Check(IntT.MinValue.ToInt64() == -half, "MinValue");
         Check((IntT.MaxValue + IntT.MinValue).ToInt64() == 0, "max+min");
         Check(default(IntT).ToInt64() == 0, "default(IntT) == 0");
-        CheckThrows<OverflowException>(() => _ = IntT.MaxValue + IntT.One, "overflow add");
-        CheckThrows<OverflowException>(() => _ = IntT.MaxValue * new IntT(2), "overflow mul");
-        CheckThrows<DivideByZeroException>(() => _ = IntT.One / IntT.Zero, "div by zero");
+        Check(IntT.MaxValue + IntT.One == IntT.MinValue, "wrap add: MAX + 1 == MIN");
+        Check(IntT.MaxValue * new IntT(2) == IntT.NegativeOne, "wrap mul: MAX * 2 == -1");
+        Check(IntT.One / IntT.Zero == IntT.Zero, "div by zero: quotient 0, no trap");
+        Check(IntT.One % IntT.Zero == IntT.One, "rem by zero: dividend, no trap");
+        Check(-IntT.MinValue == IntT.MaxValue, "negation total");
         Check(IntT.Parse("+-0+").ToInt64() == 27 - 9 + 1, "parse");
 
         Console.WriteLine($"   PASS - {n:N0} random vectors x 12 properties + edge cases ({_checks:N0} checks total)");
@@ -108,33 +109,22 @@ public static class Program
         if (!ok) throw new Exception("CORRECTNESS FAILURE: " + what);
     }
 
-    private static void CheckOp(long a, long b, long half, Func<long> ternary, Func<long, long, long> reference, string name)
+    /// <summary>Reference balanced wrap: the unique value in +/-(3^24-1)/2 congruent mod 3^24.</summary>
+    private static long Wrap(Int128 value)
     {
-        _checks++;
-        long expected;
-        bool refOverflows;
-        try { expected = reference(a, b); refOverflows = Math.Abs(expected) > half; }
-        catch (OverflowException) { expected = 0; refOverflows = true; }
-
-        if (refOverflows)
-        {
-            try { ternary(); throw new Exception($"CORRECTNESS FAILURE: {name} {a},{b} should overflow"); }
-            catch (OverflowException) { /* expected */ }
-        }
-        else
-        {
-            long got = ternary();
-            if (got != expected)
-                throw new Exception($"CORRECTNESS FAILURE: {name} {a},{b}: got {got}, want {expected}");
-        }
+        long r = (long)(value % IntT.Modulus);
+        if (r > IntT.MaxMagnitude)
+            r -= IntT.Modulus;
+        else if (r < -IntT.MaxMagnitude)
+            r += IntT.Modulus;
+        return r;
     }
 
-    private static void CheckThrows<T>(Action a, string what) where T : Exception
+    private static long Pow3(int exponent)
     {
-        _checks++;
-        try { a(); }
-        catch (T) { return; }
-        throw new Exception($"CORRECTNESS FAILURE: {what} did not throw {typeof(T).Name}");
+        long result = 1;
+        for (int i = 0; i < exponent; i++) result *= 3;
+        return result;
     }
 
     // ==================================================================
@@ -146,7 +136,7 @@ public static class Program
         Console.WriteLine("== 2. Micro-benchmarks (ns/op, operands pre-constructed) ==");
         const int N = 4096;
         var rng = new XorShift(0xBEEF);
-        long half = 926510094425920;
+        long half = IntT.MaxMagnitude;
 
         var xs = new long[N]; var ys = new long[N];
         for (int i = 0; i < N; i++) { xs[i] = rng.NextInRange(half / 2); ys[i] = rng.NextInRange(half / 2) | 1; }
@@ -290,7 +280,7 @@ public static class Program
     private static (string, long[])[] Distributions(int n)
     {
         var rng = new XorShift(0xF00D);
-        long half = 926510094425920;
+        long half = IntT.MaxMagnitude;
 
         var random = new long[n];
         for (int i = 0; i < n; i++) random[i] = rng.NextInRange(half);

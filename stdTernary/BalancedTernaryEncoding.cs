@@ -237,6 +237,20 @@ internal static class BalancedTernaryEncoding
         return PackRails(p, n);
     }
 
+    /// <summary>
+    /// Tritwise 3-input majority = per-trit median of the three trits. A position is
+    /// +1 iff at least two inputs are +1 there, -1 iff at least two are -1, else 0. O(1).
+    /// </summary>
+    internal static ulong MajoritySwar(ulong a, ulong b, ulong c)
+    {
+        var (pa, na) = Rails(a);
+        var (pb, nb) = Rails(b);
+        var (pc, nc) = Rails(c);
+        ulong p = (pa & pb) | (pa & pc) | (pb & pc);
+        ulong n = (na & nb) | (na & nc) | (nb & nc);
+        return PackRails(p, n);
+    }
+
     /// <summary>Tritwise XOR with the library's semantics: 0 if either is 0, -1 if equal, +1 if different. O(1).</summary>
     internal static ulong XorSwar(ulong left, ulong right)
     {
