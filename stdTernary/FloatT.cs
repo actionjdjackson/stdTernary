@@ -47,17 +47,19 @@ public readonly struct FloatT : IEquatable<FloatT>, IComparable<FloatT>
     public const int ExponentTritCount = 5;
 
     // ---------------------------------------------------------------------
-    // Field layout seam - spec section 5.1: THE FIELD ORDER IS AN OPEN QUESTION,
-    // to be decided by benchmarking the softfloat library, not assumed.
-    // Default (spec section 2, significand-first, little-endian by tryte):
-    //   trits 0-17 significand | trit 18 class | trits 19-23 exponent
-    // The alternative exponent-first order is obtained by changing ONLY these
-    // three offsets (Exponent 0, Class 5, Significand 6); every pack/unpack in
-    // this file goes through them.
+    // Field layout - RATIFIED as exponent-first (spec section 5.1's question
+    // is closed: decided by the softfloat benchmark, recorded in
+    // ternary-workbench docs/rebel6-trifloat24.md section 5.1). Packed
+    // layout, trit offsets LST-first:
+    //   trits 0-4 exponent | trit 5 class | trits 6-23 significand
+    // This three-constant seam is no longer an open question; it remains
+    // only as documentation of the mechanism - every pack/unpack in this
+    // file goes through these offsets. The C++ stdTrifloat24.hpp carries
+    // the identical ratified layout.
     // ---------------------------------------------------------------------
-    private const int SignificandOffset = 0;
-    private const int ClassOffset = SignificandOffset + SignificandTritCount; // trit 18
-    private const int ExponentOffset = ClassOffset + 1;                       // trits 19..23
+    private const int ExponentOffset = 0;
+    private const int ClassOffset = ExponentOffset + ExponentTritCount; // trit 5
+    private const int SignificandOffset = ClassOffset + 1;              // trits 6..23
 
     /// <summary>(3^18 - 1) / 2: the significand range is +/-193,710,244.</summary>
     public const long MaxSignificandMagnitude = 193_710_244L;

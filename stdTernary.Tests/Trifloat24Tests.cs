@@ -25,6 +25,14 @@ public class Trifloat24Tests
     // the smallest exponent >= E_min whose nearest significand fits 18 trits,
     // rounding the exact rational anew at each candidate - no shared rounding
     // code with the library.
+    //
+    // Note the reference models NORMALIZE-THEN-TRUNCATE (round to the
+    // retained trit grid), not round-to-nearest-representable: it selects
+    // the smallest exponent whose ROUNDED significand fits, i.e. it first
+    // fixes the grid and only then rounds on that grid. At a band boundary
+    // (|S| = MaxSignificand) the two rules diverge, and the differential
+    // tests pass precisely because the reference and the library both take
+    // the retained-grid rule - see the BandBoundary_* tests.
     // =====================================================================
 
     private static BigInteger Pow3(int exponent) => BigInteger.Pow(3, exponent);
@@ -384,6 +392,125 @@ public class Trifloat24Tests
         FloatT half = FloatT.One / FloatT.FromInt(new IntT(2));
         Assert.AreEqual(MaxSignificand, half.Significand); // round(0.5 * 3^18) toward zero
         Assert.AreEqual(-18, half.Exponent);
+    }
+
+    // =====================================================================
+    // Packed layout (ratified exponent-first, spec section 5.1 closed):
+    // trits 0-4 exponent | trit 5 class | trits 6-23 significand, LST-first,
+    // 2 bits per trit (00 = 0, 01 = +1, 11 = -1). The constants below are
+    // cross-language fixtures - the C++ test_trifloat24.cpp
+    // (test_packed_layout_constants) asserts the identical hex values.
+    // =====================================================================
+
+    [TestMethod]
+    public void PackedLayoutIsRatifiedExponentFirst()
+    {
+        // 1.0 = 3^17 x 3^-17: E = -17 -> trits [+,0,+,-,0] -> bits 0xD1;
+        // S = 3^17 -> significand trit 17 = absolute trit 23 -> bit 46.
+        Assert.AreEqual(0x4000_0000_00D1UL, FloatT.One.Packed);
+
+        // Canonical NaN: S = 0, E = 0, C = '-' at trit 5 -> bits 11:10 = 11.
+        Assert.AreEqual(0x0000_0000_0C00UL, FloatT.NaN.Packed);
+
+        // +/-Inf: C = '+' at trit 5, S = +/-1 at significand trit 0 (trit 6).
+        Assert.AreEqual(0x0000_0000_1400UL, FloatT.PositiveInfinity.Packed);
+        Assert.AreEqual(0x0000_0000_3400UL, FloatT.NegativeInfinity.Packed);
+
+        // MaxValue: all-plus significand and all-plus exponent.
+        Assert.AreEqual(0x5555_5555_5155UL, FloatT.MaxValue.Packed);
+
+        // Epsilon: S = +1 at trit 6, E = -121 (all-minus exponent, bits 0x3FF).
+        Assert.AreEqual(0x0000_0000_13FFUL, FloatT.Epsilon.Packed);
+
+        // Field placement is directly observable from the packed word.
+        Assert.AreEqual(-17, FloatT.One.Exponent);
+        Assert.AreEqual(129_140_163L, FloatT.One.Significand); // 3^17
+    }
+
+    // =====================================================================
+    // Band-boundary rounding (updated spec section 6, truncation-wording
+    // ruling): rounding is NORMALIZE-THEN-TRUNCATE - the result grid (the
+    // retained trits) is fixed first, then the value is rounded on that
+    // grid. At the top of a band, where the significand magnitude passes
+    // M = MaxSignificand = 193710244, this differs from rounding to the
+    // nearest representable. The values below are cross-language fixtures
+    // shared with the C++ test_trifloat24.cpp band-boundary tests.
+    // =====================================================================
+
+    [TestMethod]
+    public void BandBoundary_TruncationRoundsToRetainedGridNotNearestRepresentable()
+    {
+        // Exact value M + 2/3 (via the exact sum M*3^0 + 2*3^-1). The nearest
+        // representable is M*3^0, at distance 2/3; but the exponent-0 grid
+        // would need significand M+1 > M, so normalize-then-truncate rounds
+        // on the retained coarser grid (ulp 3^1) and lands on
+        // (M+2)*3^0 = 64570082*3^1, at distance 4/3 - the coarse-grid point
+        // wins over the nearer finer-grid value.
+        FloatT x = FloatT.FromPacked(FloatT.PackFields(MaxSignificand, 0, 0));
+        FloatT twoThirds = FloatT.FromPacked(FloatT.PackFields(2, 0, -1));
+        FloatT coarse = FloatT.FromPacked(FloatT.PackFields(64_570_082L, 0, 1)); // (M+2)*3^0
+
+        Assert.AreEqual(coarse.Packed, (x + twoThirds).Packed);
+        Assert.AreEqual(coarse.Negate().Packed, (x.Negate() + twoThirds.Negate()).Packed);
+
+        // Below half a coarse ulp the fine-grid value keeps winning:
+        // M + 1/3 rounds down to M*3^0.
+        FloatT oneThird = FloatT.FromPacked(FloatT.PackFields(1, 0, -1));
+        Assert.AreEqual(x.Packed, (x + oneThird).Packed);
+
+        // The BigInteger reference takes the same retained-grid rule.
+        AssertSameValue(RefRound(3 * (BigInteger)MaxSignificand + 2, BigInteger.One, -1),
+                        x + twoThirds, "M + 2/3 vs reference");
+    }
+
+    [TestMethod]
+    public void BandBoundary_ExactTieRoundsAwayFromZero()
+    {
+        // (M+1)*3^0 is EXACTLY halfway between M*3^0 and (M+2)*3^0. In
+        // normalize-then-truncate the dropped trit at the band edge is -1
+        // (M+1 = 2 mod 3), so the tie resolves AWAY from zero, to
+        // (M+2)*3^0 - the opposite of division's toward-zero tie rule
+        // (spec section 4.2), which applies to non-terminating quotients only.
+        FloatT x = FloatT.FromPacked(FloatT.PackFields(MaxSignificand, 0, 0));
+        FloatT coarse = FloatT.FromPacked(FloatT.PackFields(64_570_082L, 0, 1)); // (M+2)*3^0
+
+        Assert.AreEqual(coarse.Packed, (x + FloatT.One).Packed);                    // +tie: away
+        Assert.AreEqual(coarse.Negate().Packed, (x.Negate() - FloatT.One).Packed);  // -tie: away
+
+        // Contrast: the division tie at 1/2 truncates toward zero (section 4.2).
+        FloatT half = FloatT.One / FloatT.FromInt(new IntT(2));
+        Assert.AreEqual(MaxSignificand, half.Significand);
+        Assert.AreEqual(-18, half.Exponent);
+
+        // The BigInteger reference resolves the band-edge tie the same way.
+        AssertSameValue(RefRound((BigInteger)MaxSignificand + 1, BigInteger.One, 0),
+                        x + FloatT.One, "(M+1)*3^0 tie vs reference");
+    }
+
+    [TestMethod]
+    public void BandBoundary_GapAboveMaxValueOverflowsToInfinity()
+    {
+        // At E = E_max = +121 the coarse grid above M*3^121 holds no finite
+        // value: normalize-then-truncate carries into exponent 122, so exact
+        // values in the gap become +/-Inf even though the largest finite
+        // (MaxValue) is the nearest representable.
+        FloatT thirdUlp = FloatT.FromPacked(FloatT.PackFields(1, 0, 120)); // (1/3)*3^121
+        FloatT twoThirdsUlp = FloatT.FromPacked(FloatT.PackFields(2, 0, 120)); // (2/3)*3^121
+        FloatT oneUlp = FloatT.FromPacked(FloatT.PackFields(1, 0, FloatT.MaxExponent)); // 3^121
+
+        // Below half a coarse ulp: still MaxValue.
+        Assert.AreEqual(FloatT.MaxValue.Packed, (FloatT.MaxValue + thirdUlp).Packed);
+        // In the gap (nearest representable is MaxValue): infinity.
+        Assert.AreEqual(FloatT.PositiveInfinity.Packed, (FloatT.MaxValue + twoThirdsUlp).Packed);
+        // The exact tie (M+1)*3^121: away from zero = infinity.
+        Assert.AreEqual(FloatT.PositiveInfinity.Packed, (FloatT.MaxValue + oneUlp).Packed);
+        // Both signs.
+        Assert.AreEqual(FloatT.NegativeInfinity.Packed, (FloatT.MinValue - twoThirdsUlp).Packed);
+        Assert.AreEqual(FloatT.NegativeInfinity.Packed, (FloatT.MinValue - oneUlp).Packed);
+
+        // The BigInteger reference overflows the same way.
+        AssertSameValue(RefRound(3 * (BigInteger)MaxSignificand + 2, BigInteger.One, 120),
+                        FloatT.MaxValue + twoThirdsUlp, "gap above MaxValue vs reference");
     }
 
     // =====================================================================
